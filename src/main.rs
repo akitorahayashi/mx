@@ -1,7 +1,5 @@
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
-use mix::commands::{
-    self, CopyOutcome, ListEntry, SlashGenerationOutcome, SlashRequest, SlashTarget,
-};
+use mix::commands::{self, CopyOutcome, ListEntry, SlashRequest, SlashTarget};
 use mix::error::AppError;
 
 #[derive(Parser)]
@@ -88,10 +86,20 @@ fn handle_slash(target: SlashArg) -> Result<(), AppError> {
         SlashArg::Gemini => SlashRequest::Only(SlashTarget::Gemini),
     };
 
+    // Execute generation
     let artifacts = commands::generate_slash_commands(request)?;
-    println!("✨ Generated {} artifact(s):", artifacts.len());
-    for SlashGenerationOutcome { target, path } in artifacts {
-        println!("- {:>6} -> {}", target.label(), path.display());
+
+    // Aggregate results by target
+    let mut counts = std::collections::BTreeMap::new();
+    for artifact in artifacts {
+        *counts.entry(artifact.target).or_insert(0) += 1;
     }
+
+    // Display summary
+    println!("✨ Generation complete:");
+    for (target, count) in counts {
+        println!("  - {}: {} file(s)", target.label(), count);
+    }
+
     Ok(())
 }

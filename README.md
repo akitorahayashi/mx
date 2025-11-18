@@ -43,6 +43,8 @@ mix slash claude
 
 # Generate everything (Codex, Claude, Gemini) in one pass
 mix slash all
+
+Note: `mix slash` commands display a progress bar during generation and show a summary of generated artifacts at the end.
 ```
 
 ### Environment overrides

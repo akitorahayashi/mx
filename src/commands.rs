@@ -67,7 +67,9 @@ pub fn generate_slash_commands(
         SlashRequest::All => SlashTarget::ALL.to_vec(),
         SlashRequest::Only(target) => vec![target],
     };
+    // Pass callback to core logic
     let artifacts = generate_slash_commands::generate(&storage, &targets)?;
+
     Ok(artifacts
         .into_iter()
         .map(|artifact| SlashGenerationOutcome { target: artifact.target, path: artifact.path })
