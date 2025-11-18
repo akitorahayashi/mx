@@ -59,15 +59,21 @@ pub fn list_snippets() -> Result<Vec<ListEntry>, AppError> {
         .collect())
 }
 
-pub fn generate_slash_commands(
+pub fn generate_slash_commands<F>(
     request: SlashRequest,
-) -> Result<Vec<SlashGenerationOutcome>, AppError> {
+    on_progress: F,
+) -> Result<Vec<SlashGenerationOutcome>, AppError>
+where
+    F: FnMut(usize, usize),
+{
     let storage = SnippetStorage::new_default()?;
     let targets: Vec<SlashTarget> = match request {
         SlashRequest::All => SlashTarget::ALL.to_vec(),
         SlashRequest::Only(target) => vec![target],
     };
-    let artifacts = generate_slash_commands::generate(&storage, &targets)?;
+    // コールバックをCoreへ渡す
+    let artifacts = generate_slash_commands::generate(&storage, &targets, on_progress)?;
+
     Ok(artifacts
         .into_iter()
         .map(|artifact| SlashGenerationOutcome { target: artifact.target, path: artifact.path })
