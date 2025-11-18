@@ -39,7 +39,7 @@ fn generate_slash_commands_for_claude() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
 
-    let artifacts = generate_slash_commands(SlashRequest::Only(SlashTarget::Claude), |_, _| {})
+    let artifacts = generate_slash_commands(SlashRequest::Only(SlashTarget::Claude))
         .expect("slash generation succeeds");
     assert!(!artifacts.is_empty());
 

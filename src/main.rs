@@ -1,8 +1,5 @@
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
-use indicatif::{ProgressBar, ProgressStyle}; // 追加
-use mix::commands::{
-    self, CopyOutcome, ListEntry, SlashGenerationOutcome, SlashRequest, SlashTarget,
-};
+use mix::commands::{self, CopyOutcome, ListEntry, SlashGenerationOutcome, SlashRequest, SlashTarget};
 use mix::error::AppError;
 
 #[derive(Parser)]
@@ -89,35 +86,19 @@ fn handle_slash(target: SlashArg) -> Result<(), AppError> {
         SlashArg::Gemini => SlashRequest::Only(SlashTarget::Gemini),
     };
 
-    // プログレスバーの設定
-    let pb = ProgressBar::new(0);
-    pb.set_style(
-        ProgressStyle::with_template(
-            // 黄緑色 (green) を使用したスタイル設定
-            "{spinner:.green} [{elapsed_precise}] {bar:40.green/white} {pos:>3}/{len:3} {msg}",
-        )
-        .unwrap()
-        .progress_chars("=>-"),
-    );
-    pb.set_message("Generating assets...");
+    // Execute generation
+    let artifacts = commands::generate_slash_commands(request)?;
 
-    // 実行（クロージャで進捗を受け取る）
-    let artifacts = commands::generate_slash_commands(request, |current, total| {
-        if current == 0 {
-            pb.set_length(total as u64);
-        }
-        pb.set_position(current as u64);
-    })?;
+    // Aggregate results by target
+    let mut counts = std::collections::BTreeMap::new();
+    for artifact in artifacts {
+        *counts.entry(artifact.target).or_insert(0) += 1;
+    }
 
-    // 完了処理
-    pb.finish_and_clear();
-
-    // 最後にサマリーを表示
-    println!("✨ Generated {} artifact(s):", artifacts.len());
-    for SlashGenerationOutcome { target, path } in artifacts {
-        // pureのような少しリッチな表示にするならここも色付け可能ですが、
-        // まずは出力順序の修正を優先しています。
-        println!("- {:>6} -> {}", target.label(), path.display());
+    // Display summary
+    println!("✨ Generation complete:");
+    for (target, count) in counts {
+        println!("  - {}: {} file(s)", target.label(), count);
     }
 
     Ok(())

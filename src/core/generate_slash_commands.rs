@@ -32,27 +32,15 @@ pub(crate) struct SlashGenerationOutcome {
     pub path: PathBuf,
 }
 
-pub(crate) fn generate<F>(
+pub(crate) fn generate(
     storage: &SnippetStorage,
     targets: &[SlashTarget],
-    mut on_progress: F,
-) -> Result<Vec<SlashGenerationOutcome>, AppError>
-where
-    F: FnMut(usize, usize), // (current, total)
-{
+) -> Result<Vec<SlashGenerationOutcome>, AppError> {
     if targets.is_empty() {
         return Ok(Vec::new());
     }
 
     let config = SlashConfig::load_required(storage)?;
-
-    // 事前に総作業量を計算
-    let total_ops = config.iter().count() * targets.len();
-    let mut current_op = 0;
-
-    // 初期状態を通知
-    on_progress(current_op, total_ops);
-
     let mut destinations = BTreeMap::new();
     for target in targets {
         let dest = destination_for_target(*target)?;
@@ -76,10 +64,6 @@ where
             }
             fs::write(&output_path, rendered)?;
             artifacts.push(SlashGenerationOutcome { target: *target, path: output_path });
-
-            // 進捗を通知
-            current_op += 1;
-            on_progress(current_op, total_ops);
         }
     }
 
@@ -200,7 +184,7 @@ commands:
         env::set_var("MIX_GEMINI_DIR", &gemini_dir);
 
         let mut artifacts =
-            generate(&storage.storage, &SlashTarget::ALL, |_, _| {}).expect("generation succeeds");
+            generate(&storage.storage, &SlashTarget::ALL).expect("generation succeeds");
         artifacts.sort_by(|a, b| a.target.cmp(&b.target));
         assert_eq!(artifacts.len(), 3);
         for artifact in artifacts {
