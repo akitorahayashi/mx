@@ -52,32 +52,30 @@ pub fn resolve_path(key: &str) -> PathBuf {
 ///
 /// Returns an error if:
 /// - The key contains `..` (parent directory reference)
-/// - The resolved path would escape the .mix directory
-pub fn validate_path(key: &str, resolved: &Path, mix_dir: &Path) -> Result<(), AppError> {
-    // Check for path traversal in the key itself
+/// - The resolved path contains absolute paths or traversal components
+pub fn validate_path(key: &str, resolved: &Path) -> Result<(), AppError> {
+    // First, perform a simple string check on the input key. This is a fast
+    // rejection for the most common traversal attempts.
     if key.contains("..") {
         return Err(AppError::path_traversal(
             "Invalid path. Cannot create files outside of .mix directory.",
         ));
     }
 
-    // Check that resolved path stays within .mix directory
-    let target_path = mix_dir.join(resolved);
-
-    // Use components to ensure no traversal
+    // For a more robust check, inspect the components of the resolved path.
+    // This correctly handles various edge cases like absolute paths on both
+    // Unix and Windows, without needing the path to exist on disk (which is
+    // a flaw in the canonicalize approach).
     for component in resolved.components() {
-        if matches!(component, std::path::Component::ParentDir) {
-            return Err(AppError::path_traversal(
-                "Invalid path. Cannot create files outside of .mix directory.",
-            ));
-        }
-    }
+        match component {
+            // Only allow normal path components and current directory references.
+            std::path::Component::Normal(_) | std::path::Component::CurDir => (),
 
-    // Additional check: ensure the target is indeed under mix_dir
-    // This catches edge cases where canonicalization might reveal traversal
-    if let Ok(canonical_mix) = mix_dir.canonicalize() {
-        if let Ok(canonical_target) = target_path.canonicalize() {
-            if !canonical_target.starts_with(&canonical_mix) {
+            // Reject anything else. This covers:
+            // - `RootDir` (`/`): Blocks absolute paths.
+            // - `ParentDir` (`..`): Blocks traversal not caught by the string check.
+            // - `Prefix` (`C:`): Blocks Windows absolute paths.
+            _ => {
                 return Err(AppError::path_traversal(
                     "Invalid path. Cannot create files outside of .mix directory.",
                 ));
@@ -87,7 +85,6 @@ pub fn validate_path(key: &str, resolved: &Path, mix_dir: &Path) -> Result<(), A
 
     Ok(())
 }
-
 pub fn touch(key: &str) -> Result<TouchOutcome, AppError> {
     let root = find_project_root()?;
     let mix_dir = root.join(".mix");
@@ -108,8 +105,8 @@ pub fn touch(key: &str) -> Result<TouchOutcome, AppError> {
     // 3. Resolve key to relative path (alias or dynamic)
     let relative_path = resolve_path(key);
 
-    // 4. Validate path for security (no traversal)
-    validate_path(key, &relative_path, &mix_dir)?;
+    // 4. Validate path for security (no traversal or absolute paths)
+    validate_path(key, &relative_path)?;
 
     let target_path = mix_dir.join(&relative_path);
 
@@ -192,23 +189,20 @@ mod tests {
 
     #[test]
     fn test_validate_path_simple_ok() {
-        let mix_dir = PathBuf::from("/tmp/.mix");
         let resolved = PathBuf::from("test.md");
-        assert!(validate_path("test", &resolved, &mix_dir).is_ok());
+        assert!(validate_path("test", &resolved).is_ok());
     }
 
     #[test]
     fn test_validate_path_nested_ok() {
-        let mix_dir = PathBuf::from("/tmp/.mix");
         let resolved = PathBuf::from("a/b/c.md");
-        assert!(validate_path("a/b/c", &resolved, &mix_dir).is_ok());
+        assert!(validate_path("a/b/c", &resolved).is_ok());
     }
 
     #[test]
     fn test_validate_path_traversal_dotdot() {
-        let mix_dir = PathBuf::from("/tmp/.mix");
         let resolved = PathBuf::from("../hack.md");
-        let result = validate_path("../hack", &resolved, &mix_dir);
+        let result = validate_path("../hack", &resolved);
         assert!(result.is_err());
         if let Err(AppError::PathTraversal(msg)) = result {
             assert!(msg.contains("outside of .mix"));
@@ -219,9 +213,8 @@ mod tests {
 
     #[test]
     fn test_validate_path_traversal_embedded() {
-        let mix_dir = PathBuf::from("/tmp/.mix");
         let resolved = PathBuf::from("foo/../bar.md");
-        let result = validate_path("foo/../bar", &resolved, &mix_dir);
+        let result = validate_path("foo/../bar", &resolved);
         assert!(result.is_err());
     }
 
