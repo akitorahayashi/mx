@@ -1,7 +1,8 @@
-use std::path::{Path, PathBuf};
 use crate::error::AppError;
 use std::fs;
+use std::fs::OpenOptions;
 use std::io::Write;
+use std::path::PathBuf;
 
 pub struct TouchOutcome {
     pub key: String,
@@ -15,14 +16,15 @@ pub fn touch(key: &str) -> Result<TouchOutcome, AppError> {
 
     // 1. Create .mix directory
     if !mix_dir.exists() {
-        fs::create_dir(&mix_dir).map_err(|e| AppError::Io(e))?;
+        fs::create_dir(&mix_dir)?;
     }
 
-    // 2. Create .gitignore
+    // 2. Create .gitignore atomically
     let gitignore = mix_dir.join(".gitignore");
-    if !gitignore.exists() {
-        let mut file = fs::File::create(&gitignore).map_err(|e| AppError::Io(e))?;
-        writeln!(file, "*").map_err(|e| AppError::Io(e))?;
+    let gitignore_exists = gitignore.exists();
+    if !gitignore_exists {
+        let mut file = OpenOptions::new().write(true).create_new(true).open(&gitignore)?;
+        writeln!(file, "*")?;
     }
 
     // 3. Map key to file path
@@ -41,23 +43,18 @@ pub fn touch(key: &str) -> Result<TouchOutcome, AppError> {
     // Ensure parent directory exists
     if let Some(parent) = target_path.parent() {
         if !parent.exists() {
-            fs::create_dir_all(parent).map_err(|e| AppError::Io(e))?;
+            fs::create_dir_all(parent)?;
         }
     }
 
-    // 4. Create file if not exists
-    let existed = if target_path.exists() {
-        true
-    } else {
-        fs::File::create(&target_path).map_err(|e| AppError::Io(e))?;
-        false
+    // 4. Create file atomically if not exists
+    let existed = match OpenOptions::new().write(true).create_new(true).open(&target_path) {
+        Ok(_) => false,
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => true,
+        Err(e) => return Err(e.into()),
     };
 
-    Ok(TouchOutcome {
-        key: key.to_string(),
-        path: target_path,
-        existed,
-    })
+    Ok(TouchOutcome { key: key.to_string(), path: target_path, existed })
 }
 
 fn find_project_root() -> Result<PathBuf, AppError> {
@@ -71,8 +68,8 @@ fn find_project_root() -> Result<PathBuf, AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use serial_test::serial;
+    use tempfile::tempdir;
 
     #[test]
     #[serial]

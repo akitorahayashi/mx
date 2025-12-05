@@ -19,9 +19,7 @@ enum Commands {
     List,
     /// Create context files
     #[command(alias = "t")]
-    Touch {
-        key: String,
-    },
+    Touch { key: String },
 }
 
 fn main() {
@@ -52,11 +50,7 @@ fn handle_copy(name: &str) -> Result<(), AppError> {
 
 fn handle_touch(key: &str) -> Result<(), AppError> {
     let outcome = commands::touch_context(key)?;
-    let status = if outcome.existed {
-        "found"
-    } else {
-        "created"
-    };
+    let status = if outcome.existed { "found" } else { "created" };
     println!("✅ Context file {status}: {}", outcome.path.display());
     Ok(())
 }

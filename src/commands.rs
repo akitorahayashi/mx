@@ -54,9 +54,5 @@ pub fn list_snippets() -> Result<Vec<ListEntry>, AppError> {
 
 pub fn touch_context(key: &str) -> Result<TouchOutcome, AppError> {
     let outcome = touch::touch(key)?;
-    Ok(TouchOutcome {
-        key: outcome.key,
-        path: outcome.path,
-        existed: outcome.existed,
-    })
+    Ok(TouchOutcome { key: outcome.key, path: outcome.path, existed: outcome.existed })
 }

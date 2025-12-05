@@ -14,13 +14,11 @@ pub(crate) fn list(storage: &SnippetStorage) -> Result<Vec<ListEntry>, AppError>
 
     let mut entries: Vec<ListEntry> = snippets
         .into_iter()
-        .map(|snippet| {
-            ListEntry {
-                key: snippet.key,
-                relative_path: snippet.relative_path,
-                title: None,
-                description: None,
-            }
+        .map(|snippet| ListEntry {
+            key: snippet.key,
+            relative_path: snippet.relative_path,
+            title: None,
+            description: None,
         })
         .collect();
 
