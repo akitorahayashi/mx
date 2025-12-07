@@ -26,7 +26,7 @@ The project started from `rs-cli-tmpl`, keeping the layered architecture (CLI â†
 
 ```bash
 # List available snippets
-mix list
+mix list (alias: ls)
 
 # Show version
 mix --version
@@ -41,7 +41,7 @@ mix t pdt      # Creates .mix/pending/tasks.md
 mix t tk1      # Creates .mix/tasks/tasks1.md (dynamic numbered alias)
 
 # Clean context files
-mix clean      # Deletes the entire .mix/ directory
+mix clean (alias: cl)      # Deletes the entire .mix/ directory
 mix clean tk   # Deletes only .mix/tasks.md
 mix clean tk1  # Deletes only .mix/tasks/tasks1.md
 

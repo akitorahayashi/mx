@@ -17,11 +17,13 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// List all available snippets
+    #[command(visible_alias = "ls")]
     List,
     /// Create context files
-    #[command(alias = "t")]
+    #[command(visible_alias = "t")]
     Touch { key: String },
     /// Clean context files or directory
+    #[command(visible_alias = "cl")]
     Clean {
         /// Optional key to clean a specific file (e.g., 'tk', 'tk1')
         key: Option<String>,
