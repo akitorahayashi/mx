@@ -56,6 +56,8 @@ mix t config.yaml     # Creates .mix/config.yaml (preserves extension)
 | Key  | Path                        |
 |------|-----------------------------|
 | tk   | `.mix/tasks.md`             |
+| tko  | `.mix/tasks_outline.md`     |
+| is   | `.mix/issue.md`             |
 | rq   | `.mix/requirements.md`      |
 | rv   | `.mix/review.md`            |
 | df   | `.mix/diff.md`              |
