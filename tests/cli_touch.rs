@@ -201,3 +201,18 @@ fn test_touch_nested_with_extension() {
     assert!(temp.path().join(".mix/docs/spec.yaml").exists());
     assert!(temp.path().join(".mix/docs").is_dir());
 }
+
+#[test]
+fn test_touch_pending_prefix() {
+    let temp = tempdir().unwrap();
+    let mut cmd = Command::cargo_bin("mix").unwrap();
+
+    cmd.current_dir(&temp)
+        .arg("t")
+        .arg("pd-testdoc")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("✅ Context file created"));
+
+    assert!(temp.path().join(".mix/pending/testdoc.md").exists());
+}

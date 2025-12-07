@@ -32,6 +32,11 @@ pub struct TouchOutcome {
 /// 1. Check if key matches a predefined alias
 /// 2. If not, treat as a relative path and auto-append `.md` if no extension present
 pub fn resolve_path(key: &str) -> PathBuf {
+    // 0. Handle "pd-" prefix for pending directory (NEW)
+    if let Some(remainder) = key.strip_prefix("pd-") {
+        return PathBuf::from("pending").join(resolve_path(remainder));
+    }
+
     // 1. Check alias map
     if let Some(mapped) = ALIASES.get(key) {
         return PathBuf::from(mapped);
@@ -150,6 +155,35 @@ mod tests {
     use tempfile::tempdir;
 
     // === resolve_path tests ===
+
+    #[test]
+    fn test_resolve_path_prefix_pd_simple() {
+        // pd-filename -> pending/filename.md
+        let path = resolve_path("pd-filename");
+        assert_eq!(path, PathBuf::from("pending/filename.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_prefix_pd_alias_tk() {
+        // pd-tk -> pending/tasks.md (tk -> tasks.md)
+        let path = resolve_path("pd-tk");
+        assert_eq!(path, PathBuf::from("pending/tasks.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_prefix_pd_nested() {
+        // pd-sdd/tk -> pending/sdd/tk.md
+        let path = resolve_path("pd-sdd/tk");
+        assert_eq!(path, PathBuf::from("pending/sdd/tk.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_prefix_pd_recursive_alias() {
+        // pd-pdt -> pending/pending/tasks.md (pdt -> pending/tasks.md)
+        // This is redundant, but the logic is correct.
+        let path = resolve_path("pd-pdt");
+        assert_eq!(path, PathBuf::from("pending/pending/tasks.md"));
+    }
 
     #[test]
     fn test_resolve_path_alias_tk() {
