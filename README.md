@@ -26,7 +26,7 @@ The project started from `rs-cli-tmpl`, keeping the layered architecture (CLI â†
 
 ```bash
 # List available snippets
-mix list
+mix list (alias: ls)
 
 # Show version
 mix --version
@@ -38,6 +38,12 @@ mix wc
 mix touch tk   # Creates .mix/tasks.md
 mix t rq       # Creates .mix/requirements.md
 mix t pdt      # Creates .mix/pending/tasks.md
+mix t tk1      # Creates .mix/tasks/tasks1.md (dynamic numbered alias)
+
+# Clean context files
+mix clean (alias: cl)      # Deletes the entire .mix/ directory
+mix clean tk   # Deletes only .mix/tasks.md
+mix clean tk1  # Deletes only .mix/tasks/tasks1.md
 
 # Dynamic path support (new!)
 mix t myfile          # Creates .mix/myfile.md (auto-appends .md)
@@ -59,6 +65,8 @@ mix t config.yaml     # Creates .mix/config.yaml (preserves extension)
 | er   | `.mix/error.md`             |
 
 ### Dynamic Path Resolution
+
+- **Numbered Aliases**: `tk` followed by a number (e.g., `tk1`, `tk2`) maps to `tasks/tasks{N}.md`.
 
 When no alias matches, the input is treated as a relative path:
 
