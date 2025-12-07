@@ -66,6 +66,9 @@ mix t config.yaml     # Creates .mix/config.yaml (preserves extension)
 
 ### Dynamic Path Resolution
 
+- **Pending Prefix**: `pd-` prefix places the file under `pending/`.
+    - `mix t pd-tk` -> `.mix/pending/tasks.md`
+    - `mix t pd-feature/spec` -> `.mix/pending/feature/spec.md`
 - **Numbered Aliases**: `tk` followed by a number (e.g., `tk1`, `tk2`) maps to `tasks/tasks{N}.md`.
 
 When no alias matches, the input is treated as a relative path:

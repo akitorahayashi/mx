@@ -32,21 +32,30 @@ pub struct TouchOutcome {
 /// 1. Check if key matches a predefined alias
 /// 2. If not, treat as a relative path and auto-append `.md` if no extension present
 pub fn resolve_path(key: &str) -> PathBuf {
+    let mut current_key = key;
+    let mut prefix_path = PathBuf::new();
+
+    // 0. Handle "pd-" prefix iteratively
+    while let Some(remainder) = current_key.strip_prefix("pd-") {
+        prefix_path.push("pending");
+        current_key = remainder;
+    }
+
     // 1. Check alias map
-    if let Some(mapped) = ALIASES.get(key) {
-        return PathBuf::from(mapped);
+    if let Some(mapped) = ALIASES.get(current_key) {
+        return prefix_path.join(mapped);
     }
 
     // 2. Dynamic "tk{N}" Pattern
-    if let Some(remainder) = key.strip_prefix("tk") {
+    if let Some(remainder) = current_key.strip_prefix("tk") {
         // Ensure remainder is non-empty and all numeric
         if !remainder.is_empty() && remainder.chars().all(char::is_numeric) {
-            return PathBuf::from(format!("tasks/tasks{}.md", remainder));
+            return prefix_path.join(format!("tasks/tasks{}.md", remainder));
         }
     }
 
     // 3. Generate dynamic path
-    let mut path = PathBuf::from(key);
+    let mut path = prefix_path.join(current_key);
 
     // 4. Extension completion (if no extension specified)
     if path.extension().is_none() {
@@ -150,6 +159,42 @@ mod tests {
     use tempfile::tempdir;
 
     // === resolve_path tests ===
+
+    #[test]
+    fn test_resolve_path_prefix_pd_simple() {
+        // pd-filename -> pending/filename.md
+        let path = resolve_path("pd-filename");
+        assert_eq!(path, PathBuf::from("pending/filename.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_prefix_pd_alias_tk() {
+        // pd-tk -> pending/tasks.md (tk -> tasks.md)
+        let path = resolve_path("pd-tk");
+        assert_eq!(path, PathBuf::from("pending/tasks.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_prefix_pd_nested() {
+        // pd-sdd/tk -> pending/sdd/tk.md
+        let path = resolve_path("pd-sdd/tk");
+        assert_eq!(path, PathBuf::from("pending/sdd/tk.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_prefix_pd_recursive_alias() {
+        // pd-pdt -> pending/pending/tasks.md (pdt -> pending/tasks.md)
+        // This is redundant, but the logic is correct.
+        let path = resolve_path("pd-pdt");
+        assert_eq!(path, PathBuf::from("pending/pending/tasks.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_prefix_pd_iterative_depth() {
+        // pd-pd-tk -> pending/pending/tasks.md
+        let path = resolve_path("pd-pd-tk");
+        assert_eq!(path, PathBuf::from("pending/pending/tasks.md"));
+    }
 
     #[test]
     fn test_resolve_path_alias_tk() {
