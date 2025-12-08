@@ -6,9 +6,6 @@
    `~/.config/mix/commands/` into your clipboard.
 2. **Context Orchestration** – type `mix touch <key>` (alias `mix t`) to create or manage context files in your project.
 
-The project started from `rs-cli-tmpl`, keeping the layered architecture (CLI → command handlers → core logic
-→ storage) while replacing the sample CRUD commands with real snippet-aware behaviors.
-
 ## Storage layout
 
 ```text
@@ -55,14 +52,16 @@ mix t config.yaml     # Creates .mix/config.yaml (preserves extension)
 
 | Key  | Path                        |
 |------|-----------------------------|
-| tk   | `.mix/tasks.md`             |
+| df   | `.mix/diff.md`              |
+| er   | `.mix/error.md`             |
+| is   | `.mix/issue.md`             |
+| pdr  | `.mix/pending/requirements.md`|
+| pdt  | `.mix/pending/tasks.md`     |
 | rq   | `.mix/requirements.md`      |
 | rv   | `.mix/review.md`            |
-| df   | `.mix/diff.md`              |
-| pdt  | `.mix/pending/tasks.md`     |
-| pdr  | `.mix/pending/requirements.md`|
+| tk   | `.mix/tasks.md`             |
+| tko  | `.mix/tasks_outline.md`     |
 | wn   | `.mix/warnings.md`          |
-| er   | `.mix/error.md`             |
 
 ### Dynamic Path Resolution
 

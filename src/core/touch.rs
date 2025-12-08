@@ -10,6 +10,8 @@ use std::sync::LazyLock;
 static ALIASES: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
     let mut m = HashMap::new();
     m.insert("tk", "tasks.md");
+    m.insert("tko", "tasks_outline.md");
+    m.insert("is", "issue.md");
     m.insert("rq", "requirements.md");
     m.insert("rv", "review.md");
     m.insert("df", "diff.md");
@@ -197,15 +199,23 @@ mod tests {
     }
 
     #[test]
-    fn test_resolve_path_alias_tk() {
-        let path = resolve_path("tk");
-        assert_eq!(path, PathBuf::from("tasks.md"));
-    }
+    fn test_resolve_path_aliases() {
+        let cases = [
+            ("tk", "tasks.md"),
+            ("tko", "tasks_outline.md"),
+            ("is", "issue.md"),
+            ("rq", "requirements.md"),
+            ("rv", "review.md"),
+            ("df", "diff.md"),
+            ("pdt", "pending/tasks.md"),
+            ("pdr", "pending/requirements.md"),
+            ("wn", "warnings.md"),
+            ("er", "error.md"),
+        ];
 
-    #[test]
-    fn test_resolve_path_alias_pdt() {
-        let path = resolve_path("pdt");
-        assert_eq!(path, PathBuf::from("pending/tasks.md"));
+        for (alias, expected_path) in cases {
+            assert_eq!(resolve_path(alias), PathBuf::from(expected_path));
+        }
     }
 
     #[test]
