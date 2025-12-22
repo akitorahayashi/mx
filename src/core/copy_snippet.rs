@@ -2,6 +2,7 @@ use crate::core::clipboard::Clipboard;
 use crate::core::touch::{find_project_root, validate_path};
 use crate::error::AppError;
 use crate::storage::SnippetStorage;
+use std::borrow::Cow;
 use std::fs;
 use std::path::Path;
 
@@ -26,7 +27,7 @@ impl CopySnippet<'_> {
         let content = fs::read_to_string(&snippet.absolute_path)?;
         let project_root = find_project_root().ok();
         let expanded = expand_placeholders(&content, project_root.as_deref());
-        clipboard.copy(&expanded)?;
+        clipboard.copy(expanded.as_ref())?;
 
         Ok(CopyOutput {
             key: snippet.key,
@@ -36,13 +37,13 @@ impl CopySnippet<'_> {
     }
 }
 
-fn expand_placeholders(content: &str, project_root: Option<&Path>) -> String {
+fn expand_placeholders<'a>(content: &'a str, project_root: Option<&Path>) -> Cow<'a, str> {
     let Some(root) = project_root else {
-        return content.to_string();
+        return Cow::Borrowed(content);
     };
 
     if !content.contains("{{") {
-        return content.to_string();
+        return Cow::Borrowed(content);
     }
 
     let mut remainder = content;
@@ -60,13 +61,13 @@ fn expand_placeholders(content: &str, project_root: Option<&Path>) -> String {
             }
             None => {
                 output.push_str(&remainder[start..]);
-                return output;
+                return Cow::Owned(output);
             }
         }
     }
 
     output.push_str(remainder);
-    output
+    Cow::Owned(output)
 }
 
 fn render_placeholder(raw_token: &str, project_root: &Path) -> String {
