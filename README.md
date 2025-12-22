@@ -117,11 +117,3 @@ The workspace follows the original template’s testing culture:
 - **Integration crates** under `tests/` exercise both the CLI (`cli_commands.rs`, `cli_flow.rs`, `cli_touch.rs`) and the
   public library API (`commands_api.rs`). Shared helpers in `tests/common/` seed snippet catalogs inside a
   temporary HOME and expose utilities for overriding clipboard/destination paths.
-
-## Migrating from `reference/menv`
-
-1. Copy the existing markdown prompts into `~/.config/mix/commands/` while preserving subdirectories.
-2. Run `mix list` to verify the catalog.
-3. Use `mix touch` (or `mix t`) to manage your context files instead of legacy aliases.
-
-That’s it—you now have a single Rust binary covering both snippet copy flows and context orchestration.
