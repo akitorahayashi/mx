@@ -21,7 +21,12 @@ enum Commands {
     List,
     /// Create context files
     #[command(visible_alias = "t")]
-    Touch { key: String },
+    Touch {
+        key: String,
+        /// Paste content from clipboard into the new file
+        #[arg(short = 'p', long = "paste")]
+        paste: bool,
+    },
     /// Clean context files or directory
     #[command(visible_alias = "cl")]
     Clean {
@@ -35,7 +40,7 @@ fn main() {
 
     let result = match (cli.command, cli.snippet) {
         (Some(Commands::List), _) => handle_list(),
-        (Some(Commands::Touch { key }), _) => handle_touch(&key),
+        (Some(Commands::Touch { key, paste }), _) => handle_touch(&key, paste),
         (Some(Commands::Clean { key }), _) => handle_clean(key),
         (None, Some(snippet)) => handle_copy(&snippet),
         (None, None) => {
@@ -57,8 +62,8 @@ fn handle_copy(name: &str) -> Result<(), AppError> {
     Ok(())
 }
 
-fn handle_touch(key: &str) -> Result<(), AppError> {
-    let outcome = commands::touch_context(key)?;
+fn handle_touch(key: &str, paste: bool) -> Result<(), AppError> {
+    let outcome = commands::touch_context(key, paste)?;
     let status = if outcome.existed { "found" } else { "created" };
     println!("✅ Context file {status}: {}", outcome.path.display());
     Ok(())

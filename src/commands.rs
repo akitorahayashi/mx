@@ -59,7 +59,15 @@ pub fn list_snippets() -> Result<Vec<ListEntry>, AppError> {
         .collect())
 }
 
-pub fn touch_context(key: &str) -> Result<TouchOutcome, AppError> {
+pub fn touch_context(key: &str, paste: bool) -> Result<TouchOutcome, AppError> {
     let outcome = touch::touch(key)?;
+
+    // Only paste to newly created files
+    if paste && !outcome.existed {
+        let clipboard = clipboard_from_env()?;
+        let content = clipboard.paste()?;
+        std::fs::write(&outcome.path, content)?;
+    }
+
     Ok(TouchOutcome { key: outcome.key, path: outcome.path, existed: outcome.existed })
 }
