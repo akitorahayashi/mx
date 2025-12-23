@@ -7,6 +7,7 @@ use std::process::{Command, Stdio};
 
 pub(crate) trait Clipboard {
     fn copy(&self, text: &str) -> Result<(), AppError>;
+    fn paste(&self) -> Result<String, AppError>;
 }
 
 pub(crate) fn clipboard_from_env() -> Result<Box<dyn Clipboard>, AppError> {
@@ -38,7 +39,8 @@ impl ClipboardCommand {
 }
 
 pub(crate) struct SystemClipboard {
-    command: ClipboardCommand,
+    copy_command: ClipboardCommand,
+    paste_command: ClipboardCommand,
 }
 
 impl SystemClipboard {
@@ -49,13 +51,26 @@ impl SystemClipboard {
                 .next()
                 .ok_or_else(|| AppError::clipboard_error("MIX_CLIPBOARD_CMD is empty"))?;
             let args: Vec<String> = parts.map(|s| s.to_string()).collect();
-            return Ok(Self { command: ClipboardCommand { program: program.to_string(), args } });
+            // For custom commands, assume same command for both copy and paste (copy via stdin, paste via stdout)
+            let copy_cmd = ClipboardCommand { program: program.to_string(), args: args.clone() };
+            let paste_cmd = ClipboardCommand { program: program.to_string(), args };
+            return Ok(Self { copy_command: copy_cmd, paste_command: paste_cmd });
         }
 
         match env::consts::OS {
-            "macos" => Ok(Self { command: ClipboardCommand::new("pbcopy") }),
+            "macos" => Ok(Self {
+                copy_command: ClipboardCommand::new("pbcopy"),
+                paste_command: ClipboardCommand::new("pbpaste"),
+            }),
             "linux" => Self::detect_linux(),
-            "windows" => Ok(Self { command: ClipboardCommand::new("clip") }),
+            "windows" => Ok(Self {
+                copy_command: ClipboardCommand::new("clip"),
+                paste_command: ClipboardCommand::new("powershell").with_args([
+                    "-noprofile",
+                    "-command",
+                    "Get-Clipboard",
+                ]),
+            }),
             other => Err(AppError::clipboard_error(format!(
                 "Unsupported platform '{other}' for clipboard operations"
             ))),
@@ -64,12 +79,20 @@ impl SystemClipboard {
 
     fn detect_linux() -> Result<Self, AppError> {
         if Self::command_available("wl-copy", ["--version"]) {
-            return Ok(Self { command: ClipboardCommand::new("wl-copy") });
+            return Ok(Self {
+                copy_command: ClipboardCommand::new("wl-copy"),
+                paste_command: ClipboardCommand::new("wl-paste"),
+            });
         }
 
         if Self::command_available("xclip", ["-version"]) {
             return Ok(Self {
-                command: ClipboardCommand::new("xclip").with_args(["-selection", "clipboard"]),
+                copy_command: ClipboardCommand::new("xclip").with_args(["-selection", "clipboard"]),
+                paste_command: ClipboardCommand::new("xclip").with_args([
+                    "-selection",
+                    "clipboard",
+                    "-o",
+                ]),
             });
         }
 
@@ -93,15 +116,15 @@ impl SystemClipboard {
 
 impl Clipboard for SystemClipboard {
     fn copy(&self, text: &str) -> Result<(), AppError> {
-        let mut cmd = Command::new(&self.command.program);
-        cmd.args(&self.command.args);
+        let mut cmd = Command::new(&self.copy_command.program);
+        cmd.args(&self.copy_command.args);
         cmd.stdin(Stdio::piped());
         cmd.stdout(Stdio::null());
         cmd.stderr(Stdio::null());
         let mut child = cmd.spawn().map_err(|err| {
             AppError::clipboard_error(format!(
                 "Failed to run clipboard command '{}': {err}",
-                self.command.program
+                self.copy_command.program
             ))
         })?;
 
@@ -123,6 +146,31 @@ impl Clipboard for SystemClipboard {
             Err(AppError::clipboard_error(format!("Clipboard command exited with status {status}")))
         }
     }
+
+    fn paste(&self) -> Result<String, AppError> {
+        let output = Command::new(&self.paste_command.program)
+            .args(&self.paste_command.args)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .output()
+            .map_err(|err| {
+                AppError::clipboard_error(format!(
+                    "Failed to run paste command '{}': {err}",
+                    self.paste_command.program
+                ))
+            })?;
+
+        if output.status.success() {
+            String::from_utf8(output.stdout).map_err(|err| {
+                AppError::clipboard_error(format!("Clipboard content is not valid UTF-8: {err}"))
+            })
+        } else {
+            Err(AppError::clipboard_error(format!(
+                "Paste command exited with status {}",
+                output.status
+            )))
+        }
+    }
 }
 
 pub(crate) struct FileClipboard {
@@ -142,6 +190,10 @@ impl Clipboard for FileClipboard {
     fn copy(&self, text: &str) -> Result<(), AppError> {
         fs::write(&self.path, text).map_err(|err| AppError::clipboard_error(err.to_string()))
     }
+
+    fn paste(&self) -> Result<String, AppError> {
+        fs::read_to_string(&self.path).map_err(|err| AppError::clipboard_error(err.to_string()))
+    }
 }
 
 #[cfg(test)]
@@ -157,5 +209,27 @@ mod tests {
         clip.copy("example").expect("write should succeed");
         let saved = fs::read_to_string(&file).expect("file should exist");
         assert_eq!(saved, "example");
+    }
+
+    #[test]
+    fn file_clipboard_paste_reads_contents() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("clipboard.txt");
+        fs::write(&file, "test content").expect("write test file");
+        let clip = FileClipboard::new(file).expect("file clipboard should init");
+        let content = clip.paste().expect("paste should succeed");
+        assert_eq!(content, "test content");
+    }
+
+    #[test]
+    fn file_clipboard_roundtrip() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("clipboard.txt");
+        let clip = FileClipboard::new(file).expect("file clipboard should init");
+
+        let original = "roundtrip test\nwith newlines";
+        clip.copy(original).expect("copy should succeed");
+        let retrieved = clip.paste().expect("paste should succeed");
+        assert_eq!(retrieved, original);
     }
 }

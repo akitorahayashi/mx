@@ -37,10 +37,15 @@ mix t rq       # Creates .mix/requirements.md
 mix t pdt      # Creates .mix/pending/tasks.md
 mix t tk1      # Creates .mix/tasks/tasks1.md (dynamic numbered alias)
 
+# Paste clipboard content into new context files
+mix t tk --paste   # Creates .mix/tasks.md with clipboard content
+mix t rq -p        # Creates .mix/requirements.md with clipboard content (-p is short form)
+mix t docs/spec -p # Creates .mix/docs/spec.md with clipboard content
+
 # Clean context files
-mix clean (alias: cl)      # Deletes the entire .mix/ directory
-mix clean tk   # Deletes only .mix/tasks.md
-mix clean tk1  # Deletes only .mix/tasks/tasks1.md
+mix cl             # Deletes the entire .mix/ directory (alias for clean)
+mix cl tk          # Deletes only .mix/tasks.md
+mix cl tk1         # Deletes only .mix/tasks/tasks1.md
 
 # Dynamic path support (new!)
 mix t myfile          # Creates .mix/myfile.md (auto-appends .md)
@@ -79,6 +84,24 @@ When no alias matches, the input is treated as a relative path:
 - **Directory creation**: Parent directories are created automatically (e.g., `sdd/rq` creates `.mix/sdd/rq.md`)
 - **Security**: Path traversal attempts (using `..`) are rejected to prevent creating files outside `.mix/`
 
+### Paste from Clipboard
+
+The `--paste` (or `-p`) flag allows you to automatically paste clipboard contents when creating a new context file:
+
+```bash
+# Copy something from browser/editor, then:
+mix t rq --paste      # Creates .mix/requirements.md with clipboard content
+mix t er -p           # Creates .mix/error.md with clipboard content (short form)
+mix t logs/debug.txt -p  # Works with any path
+```
+
+**Important**: Paste only writes to *newly created* files. If the file already exists, the clipboard content is ignored to prevent accidental overwrites. This safety feature ensures you won't lose existing work.
+
+**Common workflow**:
+1. Copy error message or specification from browser
+2. Run `mix t er -p` to save it as `.mix/error.md`
+3. Reference it in your work or use template placeholders like `{{.mix/error.md}}`
+
 ### Template placeholders (dynamic context)
 
 - Write `{{relative/path.md}}` inside any snippet to inline the referenced file when the snippet is copied.
@@ -99,7 +122,7 @@ Combine this with the `mix t if`, `mix t rp`, or `mix t aif` aliases to keep con
 | Variable            | Purpose                                                                                 |
 |---------------------|-----------------------------------------------------------------------------------------|
 | `MIX_COMMANDS_ROOT` | Override the default `~/.config/mix` root (useful for testing or custom installations). |
-| `MIX_CLIPBOARD_FILE`| Write clipboard contents to a file instead of invoking pbcopy/wl-copy/xclip/clip.       |
+| `MIX_CLIPBOARD_FILE`| Use a file for clipboard operations (both read and write) instead of system clipboard.  |
 | `MIX_CLIPBOARD_CMD` | Provide a custom clipboard command if the auto-detected one is unavailable.             |
 
 ## Development guide

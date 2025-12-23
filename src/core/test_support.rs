@@ -48,6 +48,10 @@ impl Clipboard for RecordingClipboard {
         self.buffer.replace(text.to_string());
         Ok(())
     }
+
+    fn paste(&self) -> Result<String, AppError> {
+        Ok(self.buffer.borrow().clone())
+    }
 }
 
 pub(crate) struct RecordingClipboardHandle {
@@ -57,6 +61,11 @@ pub(crate) struct RecordingClipboardHandle {
 impl RecordingClipboardHandle {
     pub fn contents(&self) -> String {
         self.clipboard.buffer.borrow().clone()
+    }
+
+    #[allow(dead_code)]
+    pub fn set_contents(&self, content: &str) {
+        self.clipboard.buffer.replace(content.to_string());
     }
 
     pub fn as_ref(&self) -> &dyn Clipboard {
