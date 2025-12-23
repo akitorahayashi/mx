@@ -151,7 +151,7 @@ impl Clipboard for SystemClipboard {
         let output = Command::new(&self.paste_command.program)
             .args(&self.paste_command.args)
             .stdout(Stdio::piped())
-            .stderr(Stdio::null())
+            .stderr(Stdio::piped())
             .output()
             .map_err(|err| {
                 AppError::clipboard_error(format!(
@@ -165,9 +165,11 @@ impl Clipboard for SystemClipboard {
                 AppError::clipboard_error(format!("Clipboard content is not valid UTF-8: {err}"))
             })
         } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
             Err(AppError::clipboard_error(format!(
-                "Paste command exited with status {}",
-                output.status
+                "Paste command exited with status {}. Stderr: {}",
+                output.status,
+                stderr.trim()
             )))
         }
     }
@@ -192,7 +194,11 @@ impl Clipboard for FileClipboard {
     }
 
     fn paste(&self) -> Result<String, AppError> {
-        fs::read_to_string(&self.path).map_err(|err| AppError::clipboard_error(err.to_string()))
+        match fs::read_to_string(&self.path) {
+            Ok(content) => Ok(content),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+            Err(e) => Err(AppError::clipboard_error(e.to_string())),
+        }
     }
 }
 
@@ -231,5 +237,14 @@ mod tests {
         clip.copy(original).expect("copy should succeed");
         let retrieved = clip.paste().expect("paste should succeed");
         assert_eq!(retrieved, original);
+    }
+
+    #[test]
+    fn file_clipboard_paste_nonexistent_returns_empty() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("nonexistent.txt");
+        let clip = FileClipboard::new(file).expect("file clipboard should init");
+        let content = clip.paste().expect("paste should succeed on nonexistent file");
+        assert_eq!(content, "");
     }
 }

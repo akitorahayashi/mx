@@ -10,26 +10,41 @@ fn setup_clipboard_file(dir: &std::path::Path, content: &str) -> std::path::Path
     clipboard_file
 }
 
+/// Helper to run mix touch with paste flag and verify success
+fn run_touch_paste(
+    temp_dir: &std::path::Path,
+    clipboard_file: &std::path::Path,
+    key: &str,
+    flag: &str,
+) -> assert_cmd::assert::Assert {
+    let mut cmd = Command::cargo_bin("mix").unwrap();
+    cmd.current_dir(temp_dir)
+        .env("MIX_CLIPBOARD_FILE", clipboard_file)
+        .arg("t")
+        .arg(key)
+        .arg(flag)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("✅ Context file created"))
+}
+
+/// Helper to verify file content matches expected
+fn verify_file_content(file_path: &std::path::Path, expected_content: &str) {
+    assert!(file_path.exists());
+    let content = fs::read_to_string(file_path).expect("read file");
+    assert_eq!(content, expected_content);
+}
+
 #[test]
 fn test_touch_paste_creates_file_with_clipboard_content() {
     let temp = tempdir().unwrap();
     let clipboard_content = "This is the clipboard content\nWith multiple lines";
     let clipboard_file = setup_clipboard_file(temp.path(), clipboard_content);
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("tk")
-        .arg("--paste")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("✅ Context file created"));
+    run_touch_paste(temp.path(), &clipboard_file, "tk", "--paste");
 
     let tasks_file = temp.path().join(".mix/tasks.md");
-    assert!(tasks_file.exists());
-    let content = fs::read_to_string(&tasks_file).expect("read tasks file");
-    assert_eq!(content, clipboard_content);
+    verify_file_content(&tasks_file, clipboard_content);
 }
 
 #[test]
@@ -38,20 +53,10 @@ fn test_touch_paste_short_flag() {
     let clipboard_content = "Short flag test";
     let clipboard_file = setup_clipboard_file(temp.path(), clipboard_content);
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("rq")
-        .arg("-p")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("✅ Context file created"));
+    run_touch_paste(temp.path(), &clipboard_file, "rq", "-p");
 
     let requirements_file = temp.path().join(".mix/requirements.md");
-    assert!(requirements_file.exists());
-    let content = fs::read_to_string(&requirements_file).expect("read requirements file");
-    assert_eq!(content, clipboard_content);
+    verify_file_content(&requirements_file, clipboard_content);
 }
 
 #[test]
@@ -88,20 +93,10 @@ fn test_touch_paste_with_dynamic_path() {
     let clipboard_content = "Dynamic path content";
     let clipboard_file = setup_clipboard_file(temp.path(), clipboard_content);
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("docs/spec")
-        .arg("-p")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("✅ Context file created"));
+    run_touch_paste(temp.path(), &clipboard_file, "docs/spec", "-p");
 
     let spec_file = temp.path().join(".mix/docs/spec.md");
-    assert!(spec_file.exists());
-    let content = fs::read_to_string(&spec_file).expect("read spec file");
-    assert_eq!(content, clipboard_content);
+    verify_file_content(&spec_file, clipboard_content);
 }
 
 #[test]
@@ -110,20 +105,10 @@ fn test_touch_paste_with_nested_alias() {
     let clipboard_content = "Nested alias content";
     let clipboard_file = setup_clipboard_file(temp.path(), clipboard_content);
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("pdt")
-        .arg("--paste")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("✅ Context file created"));
+    run_touch_paste(temp.path(), &clipboard_file, "pdt", "--paste");
 
     let pending_tasks = temp.path().join(".mix/pending/tasks.md");
-    assert!(pending_tasks.exists());
-    let content = fs::read_to_string(&pending_tasks).expect("read pending tasks");
-    assert_eq!(content, clipboard_content);
+    verify_file_content(&pending_tasks, clipboard_content);
 }
 
 #[test]
@@ -132,20 +117,10 @@ fn test_touch_paste_with_different_extension() {
     let clipboard_content = r#"{"key": "value", "number": 42}"#;
     let clipboard_file = setup_clipboard_file(temp.path(), clipboard_content);
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("config.json")
-        .arg("-p")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("✅ Context file created"));
+    run_touch_paste(temp.path(), &clipboard_file, "config.json", "-p");
 
     let config_file = temp.path().join(".mix/config.json");
-    assert!(config_file.exists());
-    let content = fs::read_to_string(&config_file).expect("read config file");
-    assert_eq!(content, clipboard_content);
+    verify_file_content(&config_file, clipboard_content);
 }
 
 #[test]
@@ -153,20 +128,10 @@ fn test_touch_paste_empty_clipboard() {
     let temp = tempdir().unwrap();
     let clipboard_file = setup_clipboard_file(temp.path(), "");
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("empty")
-        .arg("-p")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("✅ Context file created"));
+    run_touch_paste(temp.path(), &clipboard_file, "empty", "-p");
 
     let empty_file = temp.path().join(".mix/empty.md");
-    assert!(empty_file.exists());
-    let content = fs::read_to_string(&empty_file).expect("read empty file");
-    assert_eq!(content, "");
+    verify_file_content(&empty_file, "");
 }
 
 #[test]
@@ -197,20 +162,10 @@ fn test_touch_paste_with_numbered_alias() {
     let clipboard_content = "Numbered alias test";
     let clipboard_file = setup_clipboard_file(temp.path(), clipboard_content);
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("tk1")
-        .arg("-p")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("✅ Context file created"));
+    run_touch_paste(temp.path(), &clipboard_file, "tk1", "-p");
 
     let numbered_file = temp.path().join(".mix/tasks/tasks1.md");
-    assert!(numbered_file.exists());
-    let content = fs::read_to_string(&numbered_file).expect("read numbered file");
-    assert_eq!(content, clipboard_content);
+    verify_file_content(&numbered_file, clipboard_content);
 }
 
 #[test]
@@ -219,16 +174,8 @@ fn test_touch_paste_multiline_content() {
     let clipboard_content = "Line 1\nLine 2\nLine 3\n\nLine 5 with blank line before";
     let clipboard_file = setup_clipboard_file(temp.path(), clipboard_content);
 
-    let mut cmd = Command::cargo_bin("mix").unwrap();
-    cmd.current_dir(&temp)
-        .env("MIX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("t")
-        .arg("multiline")
-        .arg("-p")
-        .assert()
-        .success();
+    run_touch_paste(temp.path(), &clipboard_file, "multiline", "-p");
 
     let multiline_file = temp.path().join(".mix/multiline.md");
-    let content = fs::read_to_string(&multiline_file).expect("read multiline file");
-    assert_eq!(content, clipboard_content);
+    verify_file_content(&multiline_file, clipboard_content);
 }
