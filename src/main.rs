@@ -43,7 +43,7 @@ fn main() {
 
     let result = match cli.command {
         Some(Commands::List) => handle_list(),
-        Some(Commands::Touch { key, paste }) => handle_touch(&key, paste),
+        Some(Commands::Touch { key, paste, force }) => handle_touch(&key, paste, force),
         Some(Commands::Clean { key }) => handle_clean(key),
         Some(Commands::Copy { snippet }) => handle_copy(&snippet),
         None => {

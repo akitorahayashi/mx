@@ -5,20 +5,12 @@ use predicates::prelude::*;
 use serial_test::serial;
 use std::fs;
 
-#[test]
-#[serial]
-fn copy_subcommand_works() {
+fn test_copy_variant(args: &[&str], clipboard_name: &str) {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
-    let clipboard = ctx.clipboard_file("clipboard.txt");
+    let clipboard = ctx.clipboard_file(clipboard_name);
 
-    // Test `mix copy wc`
-    ctx.cli()
-        .arg("copy")
-        .arg("wc")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Copied 'wc'"));
+    ctx.cli().args(args).assert().success().stdout(predicate::str::contains("Copied 'wc'"));
 
     let captured = fs::read_to_string(&clipboard).expect("clipboard file should exist");
     assert!(captured.contains("/wc"), "clipboard should hold snippet contents");
@@ -26,16 +18,14 @@ fn copy_subcommand_works() {
 
 #[test]
 #[serial]
+fn copy_subcommand_works() {
+    test_copy_variant(&["copy", "wc"], "clipboard.txt");
+}
+
+#[test]
+#[serial]
 fn copy_alias_c_works() {
-    let ctx = TestContext::new();
-    ctx.install_sample_catalog();
-    let clipboard = ctx.clipboard_file("clipboard_alias.txt");
-
-    // Test `mix c wc`
-    ctx.cli().arg("c").arg("wc").assert().success().stdout(predicate::str::contains("Copied 'wc'"));
-
-    let captured = fs::read_to_string(&clipboard).expect("clipboard file should exist");
-    assert!(captured.contains("/wc"), "clipboard should hold snippet contents");
+    test_copy_variant(&["c", "wc"], "clipboard_alias.txt");
 }
 
 #[test]
