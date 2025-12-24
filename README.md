@@ -30,6 +30,9 @@ mix --version
 
 # Copy a snippet into the clipboard (uses pbcopy/wl-copy/xclip/clip automatically)
 mix wc
+# Or use the explicit copy command (alias: c)
+mix copy wc
+mix c wc
 
 # Create context files (alias: mix t)
 mix touch tk   # Creates .mix/tasks.md

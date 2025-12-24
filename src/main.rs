@@ -33,6 +33,11 @@ enum Commands {
         /// Optional key to clean a specific file (e.g., 'tk', 'tk1')
         key: Option<String>,
     },
+    /// Copy a snippet to the clipboard
+    #[command(visible_alias = "c")]
+    Copy {
+        snippet: String,
+    },
 }
 
 fn main() {
@@ -42,6 +47,7 @@ fn main() {
         (Some(Commands::List), _) => handle_list(),
         (Some(Commands::Touch { key, paste }), _) => handle_touch(&key, paste),
         (Some(Commands::Clean { key }), _) => handle_clean(key),
+        (Some(Commands::Copy { snippet }), _) => handle_copy(&snippet),
         (None, Some(snippet)) => handle_copy(&snippet),
         (None, None) => {
             Cli::command().print_help().ok();
