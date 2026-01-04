@@ -1,5 +1,5 @@
 [package]
-name = "mix"
+name = "mx"
 version = "1.0.1"
 edition = "2021"
 
