@@ -170,7 +170,7 @@ pub fn find_project_root() -> Result<PathBuf, AppError> {
     // For now, assume current directory is root or we look for .git
     // But simplest is to use current directory.
     // If we want to be robust, we can look for .git up the tree.
-    // Given the request "Creates .mix/ in the project root", implies CWD usually.
+    // Given the request "Creates mx/ in the project root", implies CWD usually.
     std::env::current_dir().map_err(AppError::Io)
 }
 

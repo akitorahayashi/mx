@@ -39,9 +39,9 @@ fn clean_full_directory() {
         .arg("clean")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Removed mix directory"));
+        .stdout(predicate::str::contains("Removed mx directory"));
 
-    assert!(!dir.path().join("mix").exists());
+    assert!(!dir.path().join("mx").exists());
 }
 
 #[test]
@@ -115,8 +115,8 @@ fn clean_nested_and_dynamic() {
 fn clean_nonexistent_file() {
     let dir = tempdir().unwrap();
 
-    // Ensure mix exists
-    fs::create_dir(dir.path().join("mix")).unwrap();
+    // Ensure mx exists
+    fs::create_dir(dir.path().join("mx")).unwrap();
 
     Command::cargo_bin("mx")
         .unwrap()

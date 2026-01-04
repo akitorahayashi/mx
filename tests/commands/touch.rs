@@ -27,7 +27,7 @@ fn touch_creates_context_files() {
         .success()
         .stdout(predicate::str::contains("✅ Context file created"));
 
-    let mix_dir = temp.path().join("mix");
+    let mix_dir = temp.path().join("mx");
     assert!(mix_dir.exists());
     assert!(mix_dir.join(".gitignore").exists());
     assert!(mix_dir.join("tasks.md").exists());
@@ -183,7 +183,7 @@ fn touch_path_traversal_rejected() {
         .arg("../hack")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("outside of mix"));
+        .stderr(predicate::str::contains("outside of mx"));
 
     assert!(!temp.path().join("hack.md").exists());
     assert!(!temp.path().join("hack").exists());
@@ -200,7 +200,7 @@ fn touch_path_traversal_embedded_rejected() {
         .arg("foo/../bar")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("outside of mix"));
+        .stderr(predicate::str::contains("outside of mx"));
 }
 
 #[test]
