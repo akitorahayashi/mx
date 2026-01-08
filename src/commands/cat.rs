@@ -2,34 +2,8 @@ use crate::commands::touch::{find_project_root, resolve_path, validate_path};
 use crate::error::AppError;
 use std::fs;
 
-/// Displays the contents of a context file from the `.mx/` directory.
-///
-/// This command reuses the same path resolution logic as `touch`, supporting:
-/// - Predefined aliases (tk, rq, pdt, etc.)
-/// - Dynamic numbered aliases (tk1, tk2, etc.)
-/// - Pending prefix (pd-tk, pd-rq, etc.)
-/// - Custom relative paths with automatic .md extension
-///
-/// # Arguments
-///
-/// * `key` - The key to resolve to a file path (e.g., "tk", "rq", "docs/spec")
-///
-/// # Returns
-///
-/// The file contents as a String, or an error if:
-/// - The file does not exist
-/// - Path traversal is attempted
-/// - The project root cannot be found
-///
-/// # Examples
-///
-/// ```no_run
-/// use mx::cat_context;
-///
-/// // Read the tasks file
-/// let content = cat_context("tk").expect("Failed to read tasks");
-/// println!("{}", content);
-/// ```
+/// Internal implementation for displaying context file contents.
+/// Use the public `cat_context` function from the library root instead.
 pub fn cat(key: &str) -> Result<String, AppError> {
     // Find the project root directory (where .mx/ directory is or should be)
     let root = find_project_root()?;
@@ -44,20 +18,20 @@ pub fn cat(key: &str) -> Result<String, AppError> {
     let mx_dir = root.join(".mx");
     let full_path = mx_dir.join(&relative_path);
 
-    // Check if the file exists
-    if !full_path.exists() {
-        return Err(AppError::not_found(format!(
-            "⚠️ Context file not found: {}",
-            relative_path.display()
-        )));
-    }
-
-    // Check if it's a file (not a directory)
+    // Check if it's a file (is_file() already implies existence)
     if !full_path.is_file() {
-        return Err(AppError::not_found(format!(
-            "⚠️ Path is not a file: {}",
-            relative_path.display()
-        )));
+        // If it's not a file, it could be a directory or not exist at all
+        if full_path.exists() {
+            return Err(AppError::not_found(format!(
+                "⚠️ Path is not a file: {}",
+                relative_path.display()
+            )));
+        } else {
+            return Err(AppError::not_found(format!(
+                "⚠️ Context file not found: {}",
+                relative_path.display()
+            )));
+        }
     }
 
     // Read and return the file contents
@@ -72,11 +46,13 @@ pub fn cat(key: &str) -> Result<String, AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
     use std::env;
     use std::fs;
     use tempfile::tempdir;
 
     #[test]
+    #[serial]
     fn cat_reads_existing_file() {
         let temp = tempdir().unwrap();
         env::set_current_dir(&temp).unwrap();
@@ -94,6 +70,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cat_returns_error_for_missing_file() {
         let temp = tempdir().unwrap();
         env::set_current_dir(&temp).unwrap();
@@ -109,6 +86,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cat_rejects_path_traversal() {
         let temp = tempdir().unwrap();
         env::set_current_dir(&temp).unwrap();
@@ -119,6 +97,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cat_handles_empty_file() {
         let temp = tempdir().unwrap();
         env::set_current_dir(&temp).unwrap();
@@ -134,6 +113,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cat_resolves_aliases_correctly() {
         let temp = tempdir().unwrap();
         env::set_current_dir(&temp).unwrap();
@@ -155,6 +135,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn cat_errors_on_directory() {
         let temp = tempdir().unwrap();
         env::set_current_dir(&temp).unwrap();
