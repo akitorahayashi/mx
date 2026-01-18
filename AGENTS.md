@@ -36,7 +36,7 @@ It uses a layered architecture (CLI -> Commands -> Core -> Storage) and relies o
     - `mx list`: List all available snippets.
     - `mx command <snippet>`: Copy a specific snippet to the clipboard.
     - `mx touch <key>` / `mx t <key>`: Create context files in `.mx/` directory with clipboard content.
-        - Supports predefined aliases (tk, rq, rv, df, pdt, pdr, wn, er, rf, pl, atk)
+        - Supports predefined aliases (e.g., aif, atk, df, er, if, is, pdr, pdt, pl, rf, rp, rq, rv, tk, tko, wn)
         - Supports dynamic paths with auto `.md` extension and directory creation
         - Example: `mx t docs/spec` creates `.mx/docs/spec.md` with clipboard content
     - `mx cat <key>` / `mx ct <key>`: Display the contents of context files from `.mx/` directory.
