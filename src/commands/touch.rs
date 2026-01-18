@@ -11,6 +11,7 @@ use std::sync::LazyLock;
 static ALIASES: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
     let mut m = HashMap::new();
     m.insert("tk", "tasks.md");
+    m.insert("atk", "additional_tasks.md");
     m.insert("tko", "tasks_outline.md");
     m.insert("is", "issue.md");
     m.insert("rq", "requirements.md");
@@ -21,8 +22,10 @@ static ALIASES: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(||
     m.insert("wn", "warnings.md");
     m.insert("er", "error.md");
     m.insert("if", "info.md");
-    m.insert("rp", "report.md");
     m.insert("aif", "additional_info.md");
+    m.insert("rf", "reference.md");
+    m.insert("rp", "report.md");
+    m.insert("pl", "plan.md");
     m
 });
 
