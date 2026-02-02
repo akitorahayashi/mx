@@ -1,0 +1,40 @@
+schema_version: 1
+
+# Metadata
+id: "ev1snp"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "taxonomy"
+confidence: "high"
+
+# Content
+title: "Inconsistent Terminology for Snippets/Commands"
+statement: |
+  The concept of a reusable text fragment is referred to as "Snippet" in internal types, list output, and some documentation, but as "Command" in the CLI subcommand, storage directory structure, and aliases.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/main.rs"
+    loc:
+      - "Command { snippet: String }"
+    note: "CLI subcommand is named 'Command', but takes a 'snippet' argument."
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "pub(crate) struct CopySnippet"
+    note: "Internal logic uses 'Snippet' naming."
+  - path: "src/storage.rs"
+    loc:
+      - "root.join(\"commands\")"
+    note: "Storage directory is hardcoded to 'commands'."
+  - path: "src/main.rs"
+    loc:
+      - "list_snippets()?"
+    note: "List operation refers to 'snippets'."
+  - path: "README.md"
+    loc:
+      - "mx command <snippet>"
+    note: "User documentation mixes both terms in the same instruction."
+
+tags:
+  - "naming-collision"
+  - "cli-consistency"

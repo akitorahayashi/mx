@@ -1,0 +1,38 @@
+schema_version: 1
+
+id: "nr7x9p"
+created_at: "2026-02-02T23:45:00Z"
+
+observer: "taxonomy"
+workstream: "generic"
+
+inputs:
+  change_summary_path: ".jules/changes/latest.yml"
+
+plan: |
+  1. Analyze codebase for naming inconsistencies.
+  2. Identify issues with 'Snippet' vs 'Command', 'Touch' semantics, and 'Project Root' definition.
+  3. Emit event files for each observation.
+  4. Update workstation history.
+
+actions:
+  - type: "create_event"
+    description: "Created snippet-vs-command.yml"
+  - type: "create_event"
+    description: "Created touch-naming.yml"
+  - type: "create_event"
+    description: "Created project-root-naming.yml"
+
+outcomes:
+  summary: "Identified 3 naming inconsistencies."
+  emitted_events:
+    - ".jules/workstreams/generic/exchange/events/pending/snippet-vs-command.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/touch-naming.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/project-root-naming.yml"
+  notes: |
+    Found significant ambiguity in the core concepts of the tool.
+
+perspective_updates:
+  goals_delta: []
+  learned_exclusions_delta: []
+  bias_adjustments: []
