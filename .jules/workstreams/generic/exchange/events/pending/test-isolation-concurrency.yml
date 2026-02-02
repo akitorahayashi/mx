@@ -1,0 +1,37 @@
+schema_version: 1
+
+# Metadata
+id: "ti30c9"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "qa"
+confidence: "high"
+
+# Content
+title: "Global State Leakage in Integration Tests Forces Serial Execution"
+statement: |
+  The `TestContext` helper in `tests/common/mod.rs` modifies the process-global `HOME` environment variable via `env::set_var`, forcing all dependent tests (`copy`, `list`) to run serially. Additionally, `clean` tests are marked `#[serial]` unnecessarily, further reducing feedback speed.
+
+# Evidence supporting the observation
+evidence:
+  - path: "tests/common/mod.rs"
+    loc:
+      - "impl TestContext"
+      - "env::set_var(\"HOME\", root.path())"
+    note: "Modifies global environment, preventing parallel test execution."
+
+  - path: "tests/commands/copy.rs"
+    loc:
+      - "#[serial]"
+    note: "Required due to global state modification in TestContext."
+
+  - path: "tests/commands/clean.rs"
+    loc:
+      - "#[serial]"
+    note: "Marked serial despite using isolated tempdir and no global state modification."
+
+tags:
+  - "test-isolation"
+  - "concurrency"
+  - "performance"
+  - "anti-pattern"
