@@ -1,0 +1,37 @@
+schema_version: 1
+
+# Metadata
+id: "naming"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "structural_arch"
+confidence: "medium"
+
+# Content
+title: "Inconsistent command module and function naming"
+statement: |
+  Command implementation modules and exported functions lack a consistent naming convention. Some map directly to the CLI command (e.g., `cat` -> `cat.rs`, `touch` -> `touch.rs`), while others diverge (e.g., `list` -> `list_snippets.rs`, `command/copy` -> `copy_snippet.rs`). This inconsistency increases cognitive load when navigating from CLI usage to code implementation.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "pub(crate) mod copy_snippet;"
+    note: "Maps to `mx command` (alias `c`). Expected `command.rs` or `copy.rs`."
+  - path: "src/commands/list_snippets.rs"
+    loc:
+      - "pub(crate) mod list_snippets;"
+    note: "Maps to `mx list` (alias `ls`). Expected `list.rs`."
+  - path: "src/commands/cat.rs"
+    loc:
+      - "pub(crate) mod cat;"
+    note: "Consistent mapping."
+  - path: "src/commands/touch.rs"
+    loc:
+      - "pub(crate) mod touch;"
+    note: "Consistent mapping."
+
+tags:
+  - "naming"
+  - "findability"
+  - "consistency"
