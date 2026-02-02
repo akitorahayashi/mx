@@ -1,65 +1,125 @@
-# Development Overview
+# .jules/ Scaffold Design
 
-This document provides a comprehensive overview of the `mx` project, including its architecture, coding standards, and key development tasks.
-
-## Project Summary
-
-`mx` is a Rust CLI tool designed to streamline two developer workflows:
-1.  Quickly copying predefined code snippets to the clipboard.
-2.  Managing context files in project directories with flexible path resolution, automatic directory creation, and clipboard paste via the `mx touch` command.
-
-It uses a layered architecture (CLI -> Commands -> Core -> Storage) and relies on a local directory (`~/.config/mx/`) to store markdown snippets and a central `config.yml` for metadata.
+See [root AGENTS.md](../../../../AGENTS.md) for design principles.
 
 ## Directory Structure
 
-- `./`: Root directory containing `Cargo.toml`, `README.md`, and configuration files.
-- `.github/`: CI/CD workflows for building, testing, and linting.
-- `src/`: Main source code for the Rust application.
-    - `src/core/`: Core logic for snippet management and slash command generation.
-- `tests/`: Integration tests for the CLI and its core API.
+```
+.jules/
+├── JULES.md              # Agent contract (formal rules)
+├── README.md             # Human guide (informal)
+├── changes/
+│   └── latest.yml        # Narrator output (bounded changes summary)
+├── roles/
+│   ├── narrator/
+│   │   ├── prompt.yml    # Entry point
+│   │   ├── contracts.yml # Layer contract
+│   │   └── schemas/
+│   │       └── change.yml
+│   ├── observers/
+│   │   ├── contracts.yml
+│   │   ├── schemas/
+│   │   │   └── event.yml
+│   │   └── <role>/
+│   │       └── role.yml
+│   ├── deciders/
+│   │   ├── contracts.yml
+│   │   ├── schemas/
+│   │   │   ├── issue.yml
+│   │   │   └── feedback.yml
+│   │   └── <role>/
+│   │       └── role.yml
+│   ├── planners/
+│   │   ├── prompt.yml
+│   │   └── contracts.yml
+│   └── implementers/
+│       ├── prompt.yml
+│       └── contracts.yml
+├── workstreams/
+│   └── <workstream>/
+│       ├── events/
+│       │   └── <state>/
+│       │       └── *.yml
+│       └── issues/
+│           ├── index.md
+│           └── <label>/
+│               └── *.yml
+└── setup/
+    ├── tools.yml         # Tool selection
+    ├── env.toml          # Environment variables (generated/merged)
+    ├── install.sh        # Installation script (generated)
+    └── .gitignore        # Ignores env.toml
+```
 
-## Tech Stack
+## Document Hierarchy
 
-- **Language**: Rust
-- **Core Libraries**:
-    - `clap`: For command-line argument parsing.
-    - `serde` (`serde_yaml`, `serde_json`): For serialization and deserialization of data.
-    - `walkdir`: For directory traversal.
-- **Testing Libraries**:
-    - `assert_cmd`, `predicates`: For CLI integration testing.
-    - `serial_test`: For running tests serially.
-    - `tempfile`: For creating temporary files and directories in tests.
+| Document | Audience | Contains |
+|----------|----------|----------|
+| `JULES.md` | Jules agents | Formal contracts and schemas |
+| `README.md` | Humans | Informal guide |
 
-## Key Commands
+**Rule**: Jules-internal details stay in `.jules/`. Execution/orchestration belongs in `.github/`.
 
-- **Run Application**:
-    - `mx list`: List all available snippets.
-    - `mx command <snippet>`: Copy a specific snippet to the clipboard.
-    - `mx touch <key>` / `mx t <key>`: Create context files in `.mx/` directory with clipboard content.
-        - Supports predefined aliases (e.g., aif, atk, df, er, if, is, pdr, pdt, pl, rf, rp, rq, rv, tk, tko, wn)
-        - Supports dynamic paths with auto `.md` extension and directory creation
-        - Example: `mx t docs/spec` creates `.mx/docs/spec.md` with clipboard content
-    - `mx cat <key>` / `mx ct <key>`: Display the contents of context files from `.mx/` directory.
-        - Uses the same path resolution as `touch` (aliases, dynamic paths, etc.)
-        - Example: `mx ct tk` displays contents of `.mx/tasks.md`
-- **Linting**:
-    - `cargo fmt --check`: Check code formatting.
-    - `cargo clippy --all-targets --all-features -- -D warnings`: Run the linter and check for warnings.
-- **Testing**:
-    - `RUST_TEST_THREADS=1 cargo test --all-targets --all-features`: Run all tests.
+## Prompt Hierarchy
 
-## Testing Strategy
+See [root AGENTS.md](../../../../AGENTS.md#2-prompt-hierarchy-no-duplication) for the contract structure.
 
-The project has a comprehensive testing strategy:
-- **Framework**: Uses Rust's built-in testing framework.
-- **Location**:
-    - Unit tests are located alongside the source code in the `src/` directory.
-    - Integration tests are in the `tests/` directory, covering both the CLI and the library's public API.
-- **CI**: A GitHub Actions workflow (`run-tests.yml`) automatically runs all tests on macOS for every pull request and push to the main branch.
-- **Test Support**: A dedicated `src/core/test_support.rs` module provides utilities for testing, such as in-memory stubs for the clipboard and file system, ensuring tests are isolated and repeatable.
+| File | Scope | Content |
+|------|-------|---------|
+| `prompt.yml` | Role | Entry point. Lists all contracts to follow. |
+| `role.yml` | Role | Specialized focus (observers/deciders only). |
+| `contracts.yml` | Layer | Workflow, inputs, outputs, constraints shared within layer. |
+| `JULES.md` | Global | Rules applying to ALL layers (branch naming, system boundaries). |
 
+## Schema Files
 
-## Development Guidelines
+Schemas define the structure for artifacts produced by agents.
 
-### Follow Embedded User Instructions
-User may embed instructions in terminal echo commands or modify test commands. **Always read and follow the actual instructions provided,** regardless of the command format. Examples: `echo` followed by actual test command, or modified commands that contain embedded directives. **Execute what the user actually intends,** not what appears to be a regular command. **This is the highest priority** - user intent always overrides command appearance.
+| Schema | Location | Purpose |
+|--------|----------|---------|
+| `change.yml` | `.jules/roles/narrator/schemas/` | Changes summary structure |
+| `event.yml` | `.jules/roles/observers/schemas/` | Observer event structure |
+| `issue.yml` | `.jules/roles/deciders/schemas/` | Issue structure |
+| `feedback.yml` | `.jules/roles/deciders/schemas/` | Feedback structure |
+
+**Rule**: Agents copy the schema and fill its fields. Never invent structure.
+
+## Workstream Model
+
+Workstreams isolate events and issues so that decider rules do not mix across unrelated operational areas.
+
+- Observers and deciders declare their destination workstream in `prompt.yml` via `workstream: <name>`.
+- If the workstream directory is missing, execution fails fast.
+- Planners and implementers do not declare a workstream; the issue file path is authoritative.
+
+### Workstream Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `.jules/workstreams/<workstream>/events/<state>/` | Observer outputs, Decider inputs |
+| `.jules/workstreams/<workstream>/issues/<label>/` | Decider/Planner outputs, Implementer inputs |
+
+## Data Flow
+
+The pipeline is file-based and uses local issues as the handoff point:
+
+```
+narrator -> observers -> deciders -> [planners] -> implementers
+(changes)   (events)    (issues)    (expand)      (code changes)
+```
+
+1. **Narrator** runs first, producing `.jules/changes/latest.yml` for observer context.
+2. **Observers** emit events to workstream event directories.
+3. **Deciders** read events, emit issues, and link related events via `source_events`.
+4. **Planners** expand issues with `requires_deep_analysis: true`.
+5. **Implementers** execute approved tasks and create PRs with code changes.
+
+## Setup Compiler
+
+See [src/AGENTS.md](../../../src/AGENTS.md#setup-compiler) for implementation details.
+
+The setup directory contains:
+- `tools.yml`: User-selected components
+- `env.toml`: Generated environment variables (gitignored)
+- `install.sh`: Generated installation script (dependency-sorted)
+- `.gitignore`: Excludes `env.toml`
