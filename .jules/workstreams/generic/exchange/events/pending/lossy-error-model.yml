@@ -1,0 +1,22 @@
+schema_version: 1
+id: wq4x4a
+issue_id: ''
+created_at: '2026-02-02'
+author_role: rustacean
+confidence: high
+title: lossy-error-model
+statement: The `AppError` type and its usage eagerly convert underlying errors (WalkDir,
+  IO) to strings, discarding type information and context needed for programmatic
+  handling or debugging.
+evidence:
+- path: src/storage.rs
+  loc:
+  - enumerate_snippets
+  note: WalkDir error converted to string via config_error
+- path: src/commands/clipboard.rs
+  loc:
+  - impl Clipboard for SystemClipboard
+  note: IO errors mapped to stringly-typed ClipboardError
+tags:
+- refactor
+- error-handling

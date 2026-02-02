@@ -1,0 +1,18 @@
+schema_version: 1
+id: uztfw1
+issue_id: ''
+created_at: '2026-02-02'
+author_role: rustacean
+confidence: high
+title: hidden-io-failures-in-placeholders
+statement: The `render_placeholder` function catches file read errors and returns
+  a formatted string instead of propagating the error. This hides failures and prevents
+  the caller from detecting missing dependencies or permission issues.
+evidence:
+- path: src/commands/copy_snippet.rs
+  loc:
+  - render_placeholder
+  note: catches fs::read_to_string error and returns formatted string
+tags:
+- defect
+- error-handling
