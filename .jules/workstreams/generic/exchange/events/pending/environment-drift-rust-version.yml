@@ -1,0 +1,25 @@
+schema_version: 1
+id: "ev2abc"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "devops"
+confidence: "high"
+title: "Environment Drift: CI uses Stable, Release uses 1.90.0"
+statement: |
+  The CI workflows (Build, Test, Lint) default to the 'stable' Rust toolchain via the setup action, while the Release workflow explicitly pins '1.90.0'. This creates a risk where code passes CI but fails Release (or vice versa) due to compiler differences.
+evidence:
+  - path: ".github/actions/setup/action.yml"
+    loc: "13"
+    note: "default: 'stable' overrides rust-toolchain.toml unless input provided"
+  - path: ".github/workflows/build.yml"
+    loc: "22"
+    note: "uses: ./.github/actions/setup (implicitly uses stable)"
+  - path: ".github/workflows/release.yml"
+    loc: "39"
+    note: "toolchain: 1.90.0 (explicitly pinned)"
+  - path: "rust-toolchain.toml"
+    loc: "2"
+    note: "channel = \"1.90.0\" (repo intent)"
+tags:
+  - "reproducibility"
+  - "consistency"
