@@ -1,0 +1,42 @@
+schema_version: 1
+
+id: "nr7x9p"
+created_at: "2026-02-02T23:28:46Z"
+
+range:
+  from_commit: "bf7f8aaa9d057a972b45bc091efa8f732316007b"
+  to_commit: "4cdfd92dc195d442efc4fdb90319c895fee9eb11"
+  selection_mode: bootstrap
+  selection_detail: "Last 20 commits with non-.jules/ changes"
+  excluded_paths:
+    - .jules/
+
+stats:
+  commits_total: 23
+  commits_included: 23
+  files_changed: 53
+  insertions: 2923
+  deletions: 972
+
+# Bounded sample list (sha + subject only). Not exhaustive; use stats for scale.
+commits:
+  - sha: "ca2441a"
+    subject: "feat: add `mx cat` command to display context file contents (#19)"
+  - sha: "38df470"
+    subject: "feat: migrate storage from `mx/` to `.mx/` (#18)"
+  - sha: "c0ef679"
+    subject: "refactor: update references from 'mix' to 'mx' throughout documentati… (#17)"
+  - sha: "63155e0"
+    subject: "Restructure: align with rs-cli-tmpl template (#15)"
+  - sha: "77dab2a"
+    subject: "feat: add warning on exist and force overwrite to touch command (#12)"
+
+summary:
+  overview: "Recent updates focus on renaming the tool from 'mix' to 'mx', restructuring the project to align with a template, and adding new commands like `mx cat` and `mx touch` (with force/warning). Storage was migrated to `.mx/`. CI/CD workflows were enhanced."
+  notable_changes:
+    - Renamed `mix` to `mx` globally.
+    - Added `mx cat` command.
+    - Migrated storage to `.mx/`.
+    - Enhanced `mx touch` with overwrite warnings.
+    - Added `mx paste` feature.
+  truncation_note: ""
