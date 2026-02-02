@@ -1,0 +1,22 @@
+schema_version: 1
+
+observer: "qa"
+workstream: "generic"
+
+updated_at: "2026-02-02T23:59:59Z"
+
+goals:
+  short_term:
+    - "Identify and report test isolation issues to improve feedback speed."
+
+biases:
+  assumptions: []
+  blind_spots: []
+  heuristics: []
+
+recent_runs:
+  - created_at: "2026-02-02T23:59:59Z"
+    summary: "Identified test isolation issues causing slow serial execution."
+    history_path: ".jules/workstreams/generic/workstations/qa/histories/20260202-abc1234.yml"
+
+learned_exclusions: []
