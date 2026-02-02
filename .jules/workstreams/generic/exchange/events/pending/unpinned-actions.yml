@@ -9,19 +9,24 @@ statement: |
   Multiple GitHub Actions are referenced by mutable tags (e.g., @v4) instead of immutable commit SHAs, exposing the pipeline to supply-chain attacks or unexpected breaking changes.
 evidence:
   - path: ".github/workflows/build.yml"
-    loc: "19"
+    loc:
+    - "19"
     note: "uses: actions/checkout@v4"
   - path: ".github/workflows/build.yml"
-    loc: "67"
+    loc:
+    - "67"
     note: "uses: actions/upload-artifact@v4"
   - path: ".github/workflows/release.yml"
-    loc: "38"
+    loc:
+    - "38"
     note: "uses: dtolnay/rust-toolchain@v1"
   - path: ".github/workflows/release.yml"
-    loc: "76"
+    loc:
+    - "76"
     note: "uses: softprops/action-gh-release@v2"
   - path: ".github/actions/setup/action.yml"
-    loc: "23"
+    loc:
+    - "23"
     note: "uses: actions/cache@v4"
 tags:
   - "supply-chain"
