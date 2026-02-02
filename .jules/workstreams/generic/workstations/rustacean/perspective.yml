@@ -1,0 +1,15 @@
+schema_version: 1
+observer: rustacean
+workstream: generic
+updated_at: '2026-02-02T23:41:06Z'
+goals:
+  short_term: []
+biases:
+  assumptions: []
+  blind_spots: []
+  heuristics: []
+recent_runs:
+- created_at: '2026-02-02T23:41:06Z'
+  summary: Analyzed codebase for ownership, error, and abstraction issues.
+  history_path: .jules/workstreams/generic/workstations/rustacean/histories/20260202-zk1tvw.yml
+learned_exclusions: []

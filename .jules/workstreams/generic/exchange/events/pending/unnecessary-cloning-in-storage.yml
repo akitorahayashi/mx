@@ -1,0 +1,18 @@
+schema_version: 1
+id: cjkw75
+issue_id: ''
+created_at: '2026-02-02'
+author_role: rustacean
+confidence: high
+title: unnecessary-cloning-in-storage
+statement: The `join_paths` function clones `relative_path` strings solely for the
+  purpose of joining them into a display string, creating unnecessary allocations.
+evidence:
+- path: src/storage.rs
+  loc:
+  - join_paths
+  note: maps with clone() before join
+tags:
+- refactor
+- performance
+- ownership
