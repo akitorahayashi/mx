@@ -1,0 +1,23 @@
+schema_version: 1
+
+id: "dle001"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "data_arch"
+confidence: "high"
+
+title: "Dead fields in ListEntry struct"
+statement: |
+  `ListEntry` struct contains `title` and `description` fields which are always `None` as metadata support has been deprecated/removed. This results in misleading data models and unnecessary Optional wrapping.
+
+evidence:
+  - path: "src/commands/list_snippets.rs"
+    loc:
+      - "struct ListEntry"
+      - "fn list"
+    note: "Fields are defined but always populated with None."
+
+tags:
+  - "dead-code"
+  - "data-model"
+  - "inefficiency"
