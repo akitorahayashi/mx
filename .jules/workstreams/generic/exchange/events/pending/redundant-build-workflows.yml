@@ -1,0 +1,21 @@
+schema_version: 1
+id: "ev3def"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "devops"
+confidence: "medium"
+title: "Redundant Build Logic in Release Workflow"
+statement: |
+  The Release workflow duplicates the build matrix and compilation steps from the Build workflow. This violation of DRY increases maintenance burden and risk of divergence.
+evidence:
+  - path: ".github/workflows/build.yml"
+    loc:
+    - "12-67"
+    note: "Build matrix and steps"
+  - path: ".github/workflows/release.yml"
+    loc:
+    - "18-77"
+    note: "Identical build matrix and steps duplicated here"
+tags:
+  - "maintainability"
+  - "dry"
