@@ -1,0 +1,33 @@
+schema_version: 1
+
+# Metadata
+id: "shared"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "structural_arch"
+confidence: "high"
+
+# Content
+title: "Shared path validation logic coupled to `touch` command"
+statement: |
+  General project path validation logic (`find_project_root`, `validate_path`) is hosted in `src/commands/touch.rs` but used by other commands (specifically `copy_snippet`). These utilities represent shared domain logic (project context awareness) and should be moved to a shared infrastructure or utility module to allow commands to be cohesive and independent.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/touch.rs"
+    loc:
+      - "pub fn find_project_root() -> Result<PathBuf, AppError>"
+    note: "Defines generic project root finding logic."
+  - path: "src/commands/touch.rs"
+    loc:
+      - "pub fn validate_path(key: &str, path: &Path) -> Result<(), AppError>"
+    note: "Defines generic path safety validation."
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "use crate::commands::touch::{find_project_root, validate_path};"
+    note: "Consumer of this shared logic outside of `touch`."
+
+tags:
+  - "cohesion"
+  - "shared-logic"
+  - "refactoring-opportunity"

@@ -1,0 +1,29 @@
+schema_version: 1
+
+# Metadata
+id: "latdep"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "structural_arch"
+confidence: "high"
+
+# Content
+title: "Lateral dependency between commands (`copy` -> `touch`)"
+statement: |
+  `src/commands/copy_snippet.rs` imports utility functions directly from `src/commands/touch.rs`, violating command independence and creating brittle coupling. This lateral dependency means changes to `touch` command implementation details could break `copy` command logic.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "use crate::commands::touch::{find_project_root, validate_path};"
+    note: "Direct import of `touch` module internals."
+  - path: "src/commands/touch.rs"
+    loc:
+      - "pub fn find_project_root() -> Result<PathBuf, AppError>"
+    note: "Generic utility hosted in specific command module."
+
+tags:
+  - "dependency-violation"
+  - "coupling"
+  - "cohesion"
