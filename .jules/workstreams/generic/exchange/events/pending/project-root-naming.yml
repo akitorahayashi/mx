@@ -1,0 +1,28 @@
+schema_version: 1
+
+# Metadata
+id: "ev3prt"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "taxonomy"
+confidence: "medium"
+
+# Content
+title: "Project Root Semantic Mismatch"
+statement: |
+  The term "Project Root" and documentation imply semantic detection (e.g., git root), but the implementation relies solely on the Current Working Directory.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/touch.rs"
+    loc:
+      - "std::env::current_dir().map_err(AppError::Io)"
+    note: "find_project_root() simply returns current_dir()."
+  - path: "README.md"
+    loc:
+      - "runs outside of a project (project root cannot be detected)"
+    note: "Implies a failure mode or detection logic that does not exist."
+
+tags:
+  - "naming-semantics"
+  - "doc-code-mismatch"

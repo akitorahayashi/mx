@@ -1,0 +1,28 @@
+schema_version: 1
+
+# Metadata
+id: "ev2tch"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "taxonomy"
+confidence: "medium"
+
+# Content
+title: "Touch Command Name Hides Pasting Behavior"
+statement: |
+  The `mx touch` command uses the Unix standard name "touch" (implying timestamp update or empty file creation) but defaults to pasting clipboard content into the file. This hidden side effect contradicts the established semantic of "touch".
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/touch.rs"
+    loc:
+      - "let clipboard = clipboard_from_env()?;"
+    note: "Clipboard access and pasting happens automatically in the main logic flow."
+  - path: "README.md"
+    loc:
+      - "mx touch <key> ... to create context files ... automatically pastes clipboard contents"
+    note: "Documentation confirms pasting is the default behavior, divergent from standard 'touch'."
+
+tags:
+  - "naming-semantics"
+  - "user-surprise"
