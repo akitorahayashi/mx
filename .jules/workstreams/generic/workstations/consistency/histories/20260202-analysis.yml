@@ -1,0 +1,36 @@
+schema_version: 1
+
+id: "hs001a"
+created_at: "2026-02-02T23:45:00Z"
+
+observer: "consistency"
+workstream: "generic"
+
+inputs:
+  change_summary_path: "" # Provided in prompt context
+
+plan: |
+  1. Explore codebase and docs for inconsistencies.
+  2. Verify aliases in `src/commands/touch.rs` vs `README.md`.
+  3. Verify CLI description in `src/main.rs`.
+  4. Create event file for findings.
+  5. Initialize workstation state.
+
+actions:
+  - "Read README.md and source code."
+  - "Checked src/commands/touch.rs for aliases."
+  - "Checked src/commands/list_snippets.rs for metadata support."
+  - "Checked src/main.rs for CLI help text."
+
+outcomes:
+  summary: "Identified documentation drift regarding aliases and legacy descriptions."
+  emitted_events:
+    - ".jules/workstreams/generic/exchange/events/pending/undocumented-aliases-and-legacy-docs.yml"
+  notes: |
+    Found `atk`, `rf`, `pl` in code but not in README.
+    Found "slash command generation" in CLI about text.
+
+perspective_updates:
+  goals_delta: []
+  learned_exclusions_delta: []
+  bias_adjustments: []
