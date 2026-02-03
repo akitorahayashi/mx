@@ -26,11 +26,7 @@ fn command_alias_c_works() {
     ctx.install_sample_catalog();
     let clipboard = ctx.clipboard_file("clipboard_alias.txt");
 
-    ctx.cli()
-        .args(["c", "wc"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Copied 'wc'"));
+    ctx.cli().args(["c", "wc"]).assert().success().stdout(predicate::str::contains("Copied 'wc'"));
 
     let captured = fs::read_to_string(&clipboard).expect("clipboard file should exist");
     assert!(captured.contains("/wc"), "clipboard should hold snippet contents");

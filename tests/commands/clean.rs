@@ -94,12 +94,7 @@ fn clean_nested_and_dynamic() {
     assert!(dir.path().join(".mx/tasks/tasks1.md").exists());
 
     // Clean tk1
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&dir)
-        .args(["clean", "tk1"])
-        .assert()
-        .success();
+    Command::cargo_bin("mx").unwrap().current_dir(&dir).args(["clean", "tk1"]).assert().success();
 
     assert!(!dir.path().join(".mx/tasks/tasks1.md").exists());
     // The parent 'tasks' directory should also be removed if empty
