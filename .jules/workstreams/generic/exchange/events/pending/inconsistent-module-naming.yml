@@ -1,0 +1,33 @@
+schema_version: 1
+
+# Metadata
+id: "c9h1l4"
+issue_id: ""
+created_at: "2024-05-21"
+author_role: "taxonomy"
+confidence: "medium"
+
+# Content
+title: "Inconsistent Module Naming (Plurality)"
+statement: |
+  `src/commands/copy_snippet.rs` uses singular naming, while `src/commands/list_snippets.rs` uses plural naming. Other modules (`cat.rs`, `touch.rs`) use verbs.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "mod copy_snippet"
+    note: "Singular 'snippet' in filename."
+  - path: "src/commands/list_snippets.rs"
+    loc:
+      - "mod list_snippets"
+    note: "Plural 'snippets' in filename."
+  - path: "src/commands/touch.rs"
+    loc:
+      - "mod touch"
+    note: "Verb only, no object."
+
+tags:
+  - "naming"
+  - "inconsistency"
+  - "modules"

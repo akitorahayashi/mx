@@ -1,0 +1,29 @@
+schema_version: 1
+
+# Metadata
+id: "e1j3n6"
+issue_id: ""
+created_at: "2024-05-21"
+author_role: "taxonomy"
+confidence: "high"
+
+# Content
+title: "Ambiguous Term 'Key'"
+statement: |
+  The term "Key" is used for both "snippet name/path" (in `storage.rs` and `list_snippets.rs`) and "context file alias/path" (in `touch.rs`, `cat.rs`). These are distinct domains (global snippets vs local context) but share the same generic name.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "SnippetFile.key"
+    note: "Refers to a global snippet identifier."
+  - path: "src/commands/touch.rs"
+    loc:
+      - "touch(..., key: &str, ...)"
+    note: "Refers to a local context file alias or path."
+
+tags:
+  - "naming"
+  - "ambiguity"
+  - "domain-language"

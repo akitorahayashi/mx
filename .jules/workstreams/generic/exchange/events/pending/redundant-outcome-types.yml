@@ -1,0 +1,32 @@
+schema_version: 1
+
+# Metadata
+id: "d0i2m5"
+issue_id: ""
+created_at: "2024-05-21"
+author_role: "taxonomy"
+confidence: "medium"
+
+# Content
+title: "Redundant Outcome Types"
+statement: |
+  `SnippetFile` (in `storage.rs`) and `CopyOutcome` (in `copy_snippet.rs`) share similar structures (key, relative path, absolute path). `ListEntry` is also similar but adds metadata.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "struct SnippetFile"
+    note: "Defines key, relative_path, absolute_path."
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "struct CopyOutcome"
+    note: "Defines key, relative_path, absolute_path (identical structure)."
+  - path: "src/commands/list_snippets.rs"
+    loc:
+      - "struct ListEntry"
+    note: "Defines key, relative_path, title, description."
+
+tags:
+  - "data-model"
+  - "redundancy"
