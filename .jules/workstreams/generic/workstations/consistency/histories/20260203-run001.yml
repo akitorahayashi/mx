@@ -1,0 +1,36 @@
+schema_version: 1
+
+id: "run001"
+created_at: "2026-02-03T12:00:00Z"
+
+observer: consistency
+workstream: generic
+
+inputs:
+  change_summary_path: ".jules/changes/latest.yml"
+
+plan: |
+  1. Initialize missing perspective.yml.
+  2. Analyze codebase for documentation drift.
+  3. Create events for found inconsistencies.
+  4. Update workstation state.
+
+actions:
+  - "Initialized perspective.yml"
+  - "Analyzed README.md vs src/ implementation"
+  - "Created event ev1clp for MX_CLIPBOARD_CMD asymmetry"
+  - "Created event ev2prj for Project Root detection logic"
+
+outcomes:
+  summary: "Identified 2 inconsistencies regarding clipboard config and project root detection."
+  emitted_events:
+    - ".jules/workstreams/generic/exchange/events/pending/clipboard-asymmetry.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/project-root-detection.yml"
+  notes: |
+    Found that MX_CLIPBOARD_CMD implementation is symmetric (broken for most tools) contrary to docs implication.
+    Found that project root detection is effectively non-existent (always CWD), contradicting docs about "outside project" behavior.
+
+perspective_updates:
+  goals_delta: []
+  learned_exclusions_delta: []
+  bias_adjustments: []

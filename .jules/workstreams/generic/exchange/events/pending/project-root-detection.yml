@@ -1,0 +1,33 @@
+schema_version: 1
+
+# Metadata
+id: "ev2prj"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "consistency"
+confidence: "high"
+
+# Content
+title: "Project root detection assumes CWD is always root"
+statement: |
+  Documentation states that when mx runs outside of a project, placeholders stay untouched. However, the implementation simply uses the current working directory as the project root in all cases (except OS error), making the "outside project" behavior unreachable and causing placeholders to fail with "[mx missing]" instead of being ignored.
+
+# Evidence supporting the observation
+evidence:
+  - path: "README.md"
+    loc:
+      - "Project Root"
+    note: "Docs claim mx detects when it is outside a project and disables placeholder expansion."
+  - path: "src/commands/touch.rs"
+    loc:
+      - "fn find_project_root"
+    note: "Implementation returns current_dir() unconditionally."
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "fn expand_placeholders"
+    note: "Placeholder expansion only skips if root is None, which never happens."
+
+tags:
+  - "bug"
+  - "documentation"
+  - "logic"

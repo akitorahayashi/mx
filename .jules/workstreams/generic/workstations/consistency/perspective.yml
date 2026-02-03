@@ -1,0 +1,21 @@
+schema_version: 1
+
+observer: consistency
+workstream: generic
+
+updated_at: "2026-02-03T12:00:00Z"
+
+goals:
+  short_term: []
+
+biases:
+  assumptions: []
+  blind_spots: []
+  heuristics: []
+
+recent_runs:
+  - created_at: "2026-02-03T12:00:00Z"
+    summary: "Identified 2 inconsistencies regarding clipboard config and project root detection."
+    history_path: ".jules/workstreams/generic/workstations/consistency/histories/20260203-run001.yml"
+
+learned_exclusions: []
