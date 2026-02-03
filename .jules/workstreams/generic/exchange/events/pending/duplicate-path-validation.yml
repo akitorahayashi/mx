@@ -1,0 +1,22 @@
+schema_version: 1
+id: "dupv01"
+issue_id: ""
+created_at: "2024-05-22"
+author_role: "rustacean"
+confidence: "medium"
+title: "Duplicate and inconsistent path validation logic"
+statement: |
+  Path validation logic is implemented twice with different strategies: `ensure_safe_segments` in `storage.rs` (checking for `..` and empty segments) and `validate_path` in `touch.rs` (using `Path::components`). This duplication creates maintenance overhead and potential security gaps if one implementation diverges or contains bugs not present in the other.
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "209-217"
+    note: "`ensure_safe_segments` uses string splitting."
+  - path: "src/commands/touch.rs"
+    loc:
+      - "88-117"
+    note: "`validate_path` uses `Path::components` iteration."
+tags:
+  - "duplication"
+  - "security"
+  - "rustacean"

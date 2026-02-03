@@ -1,0 +1,22 @@
+schema_version: 1
+id: "perf01"
+issue_id: ""
+created_at: "2024-05-22"
+author_role: "rustacean"
+confidence: "high"
+title: "Inefficient O(N) snippet resolution strategy"
+statement: |
+  The `resolve_snippet` method performs a full filesystem walk via `enumerate_snippets` for every lookup. This allocates a vector of all snippets, clones path strings, and sorts them, even when an exact match could be found directly. This creates unnecessary I/O and memory pressure, scaling linearly with the number of snippets.
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "144"
+    note: "`resolve_snippet` calls `enumerate_snippets()` which walks the entire directory."
+  - path: "src/storage.rs"
+    loc:
+      - "109-140"
+    note: "`enumerate_snippets` eagerly collects all files and sorts them."
+tags:
+  - "performance"
+  - "ownership"
+  - "rustacean"
