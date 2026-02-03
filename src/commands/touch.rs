@@ -69,7 +69,12 @@ pub fn resolve_path(key: &str) -> PathBuf {
 
     // 4. Extension completion (if no extension specified)
     if path.extension().is_none() {
-        path.set_extension("md");
+        // Only append .md if the file name does not start with a dot
+        // (to allow dotfiles like .gitignore, .env)
+        let file_name_str = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+        if !file_name_str.starts_with('.') {
+            path.set_extension("md");
+        }
     }
 
     path
@@ -296,6 +301,18 @@ mod tests {
     fn test_resolve_path_with_extension_md() {
         let path = resolve_path("notes.md");
         assert_eq!(path, PathBuf::from("notes.md"));
+    }
+
+    #[test]
+    fn test_resolve_path_dotfile_gitignore() {
+        let path = resolve_path(".gitignore");
+        assert_eq!(path, PathBuf::from(".gitignore"));
+    }
+
+    #[test]
+    fn test_resolve_path_dotfile_env() {
+        let path = resolve_path(".env");
+        assert_eq!(path, PathBuf::from(".env"));
     }
 
     // === validate_path tests ===
