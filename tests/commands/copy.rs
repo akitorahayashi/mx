@@ -1,17 +1,17 @@
-//! Integration tests for the `mx command` (copy snippet) command
+//! Integration tests for the `mx copy` (copy snippet) command
 
 use super::super::common::TestContext;
 use predicates::prelude::*;
 use std::fs;
 
 #[test]
-fn command_subcommand_works() {
+fn copy_subcommand_works() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
     let clipboard = ctx.clipboard_file("clipboard.txt");
 
     ctx.cli()
-        .args(["command", "wc"])
+        .args(["copy", "wc"])
         .assert()
         .success()
         .stdout(predicate::str::contains("Copied 'wc'"));
@@ -21,7 +21,7 @@ fn command_subcommand_works() {
 }
 
 #[test]
-fn command_alias_c_works() {
+fn copy_alias_c_works() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
     let clipboard = ctx.clipboard_file("clipboard_alias.txt");
@@ -33,13 +33,13 @@ fn command_alias_c_works() {
 }
 
 #[test]
-fn command_subcommand_missing_snippet_fails() {
+fn copy_subcommand_missing_snippet_fails() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
     let _ = ctx.clipboard_file("clipboard_fail.txt");
 
     ctx.cli()
-        .arg("command")
+        .arg("copy")
         .arg("unknown")
         .assert()
         .failure()

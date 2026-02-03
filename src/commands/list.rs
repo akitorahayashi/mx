@@ -3,7 +3,7 @@ use crate::storage::SnippetStorage;
 
 #[derive(Debug, Clone)]
 pub struct ListEntry {
-    pub key: String,
+    pub snippet: String,
     pub relative_path: String,
     pub title: Option<String>,
     pub description: Option<String>,
@@ -15,14 +15,14 @@ pub(crate) fn list(storage: &SnippetStorage) -> Result<Vec<ListEntry>, AppError>
     let mut entries: Vec<ListEntry> = snippets
         .into_iter()
         .map(|snippet| ListEntry {
-            key: snippet.key,
+            snippet: snippet.key,
             relative_path: snippet.relative_path,
             title: None,
             description: None,
         })
         .collect();
 
-    entries.sort_by(|a, b| a.key.cmp(&b.key));
+    entries.sort_by(|a, b| a.snippet.cmp(&b.snippet));
     Ok(entries)
 }
 
@@ -48,10 +48,10 @@ commands:
 
         let entries = list(&storage.storage).expect("list should succeed");
         assert_eq!(entries.len(), 2);
-        let wc = entries.iter().find(|e| e.key == "wc").unwrap();
+        let wc = entries.iter().find(|e| e.snippet == "wc").unwrap();
         assert_eq!(wc.title.as_deref(), None); // Metadata support removed
         assert_eq!(wc.description.as_deref(), None); // Metadata support removed
-        assert!(entries.iter().any(|e| e.key == "sn" && e.title.is_none()));
+        assert!(entries.iter().any(|e| e.snippet == "sn" && e.title.is_none()));
     }
 
     #[test]

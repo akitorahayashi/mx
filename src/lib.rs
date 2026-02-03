@@ -8,15 +8,15 @@ mod storage;
 use commands::cat;
 use commands::clean;
 use commands::clipboard::clipboard_from_env;
-use commands::copy_snippet::CopySnippet;
-use commands::list_snippets;
+use commands::copy::Copy;
+use commands::list;
 use commands::touch;
 use commands::touch::find_project_root;
 use error::AppError;
 
 pub use commands::clean::CleanOutcome;
-pub use commands::copy_snippet::CopyOutcome;
-pub use commands::list_snippets::ListEntry;
+pub use commands::copy::CopyOutcome;
+pub use commands::list::ListEntry;
 pub use commands::touch::TouchOutcome;
 pub use storage::SnippetStorage;
 
@@ -58,14 +58,14 @@ pub fn clean_context(key: Option<String>) -> Result<CleanOutcome, AppError> {
     clean::clean(&root, key)
 }
 
-pub fn copy_snippet(query: &str, storage: &SnippetStorage) -> Result<CopyOutcome, AppError> {
+pub fn copy_snippet(snippet: &str, storage: &SnippetStorage) -> Result<CopyOutcome, AppError> {
     let clipboard = clipboard_from_env()?;
     let root = find_project_root().ok();
-    CopySnippet { query }.execute(storage, clipboard.as_ref(), root.as_deref())
+    Copy { snippet }.execute(storage, clipboard.as_ref(), root.as_deref())
 }
 
 pub fn list_snippets(storage: &SnippetStorage) -> Result<Vec<ListEntry>, AppError> {
-    list_snippets::list(storage)
+    list::list(storage)
 }
 
 pub fn touch_context(key: &str, force: bool) -> Result<TouchOutcome, AppError> {
