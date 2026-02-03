@@ -24,48 +24,55 @@ summary: "Decouple core modules, modernize data models, and improve error handli
 # Content
 problem: |
   The core codebase suffers from significant technical debt including:
-  1. Tight coupling between command modules (e.g., `copy` and `cat` depending on `touch`).
-  2. Implicit dependencies on environment variables and global state in `SnippetStorage`.
-  3. Redundant and lossy data models (`SnippetFile` vs `CopyOutcome`, String-based errors).
-  4. Duplicated logic for path validation and ineffective project root detection.
-  5. Inefficient O(N) snippet resolution.
-  6. Missing unit tests for key library functions due to the above coupling.
+  1. **Circular & Hidden Coupling**: `src/commands/copy_snippet.rs` imports `validate_path` from `src/commands/touch.rs`, creating a hidden dependency. Library functions in `lib.rs` depend on `touch::find_project_root`.
+  2. **Implicit Environment State**: `SnippetStorage::from_env` and `clipboard_from_env` hardcode `MX_COMMANDS_ROOT` and `HOME` reads, making unit testing impossible without env manipulation.
+  3. **Redundant Data Models**: `SnippetFile` (storage) and `CopyOutcome` (command) are structurally identical but distinct types, preventing code reuse.
+  4. **Duplicated & Inconsistent Logic**: Path validation exists in both `storage.rs` (string-based) and `touch.rs` (component-based). Project root detection (`find_project_root`) is naive (cwd only).
+  5. **Stringly-Typed Errors**: `AppError` uses `String` variants (`ConfigError(String)`), losing type information and preventing programmatic error handling.
+  6. **Inefficient Resolution**: `resolve_snippet` performs a full directory walk (O(N)) for every lookup.
 
 impact: |
-  These issues make the codebase fragile, difficult to test, and hard to extend. The lack of unit tests increases the risk of regressions. The inefficient snippet resolution scales poorly.
+  These issues make the codebase fragile, difficult to test, and hard to extend. The lack of unit tests increases the risk of regressions. The inefficient snippet resolution scales poorly. The coupling prevents clean separation of concerns, making it hard to add new commands without entangling them with `touch`.
 
 desired_outcome: |
   A clean, decoupled architecture where:
-  1. `SnippetStorage` and `Clipboard` are injectable dependencies.
-  2. Core logic (path validation, project detection) is centralized in `lib.rs` or dedicated modules.
-  3. Data models are unified (Single Source of Truth).
-  4. Errors are strongly typed (`thiserror`).
-  5. Library functions have comprehensive unit tests.
-  6. Redundant integration tests are removed in favor of unit tests.
+  1. **Shared Utilities**: Create `src/utils/` for shared logic:
+     - `src/utils/path.rs`: Centralize `validate_path`, `resolve_path` (from `touch.rs`).
+     - `src/utils/fs.rs`: Centralize `find_project_root` (improved to walk up tree).
+  2. **Dependency Injection**: Refactor `SnippetStorage` to accept a `root: PathBuf` in its constructor. Move env var loading to `main.rs`.
+  3. **Unified Models**: Move `SnippetFile` to `src/models.rs` (or `lib.rs`) and use it in `CopyOutcome` (or replace `CopyOutcome`).
+  4. **Typed Errors**: Add `thiserror` crate. Refactor `AppError` to use typed variants (e.g., `#[error("Snippet {0} not found")] SnippetNotFound(String)`).
+  5. **Optimized Storage**: Optimize `resolve_snippet` (e.g., check exact path first before walking).
+  6. **Testability**: Ensure all public functions in `lib.rs` and `storage.rs` are unit-testable without filesystem/env side effects (using `tempfile` and injected paths).
 
 constraints: []
 risks:
-  - Major refactoring could introduce regressions if existing integration tests are not sufficient coverage.
+  - **CLI Compatibility**: Changes to error messages (due to `thiserror`) might affect scripts parsing stderr.
+  - **Path Validation**: Unifying path validation might reject paths that were previously allowed by one of the divergent implementations.
 
 # Specifics
 affected_areas:
-  - "src/storage.rs"
+  - "Cargo.toml"
   - "src/lib.rs"
   - "src/error.rs"
-  - "src/commands/"
+  - "src/storage.rs"
+  - "src/commands/touch.rs"
+  - "src/commands/copy_snippet.rs"
+  - "src/commands/cat.rs"
+  - "src/utils/" # New module
 
 acceptance_criteria:
-  - "SnippetStorage no longer reads env vars in its constructor."
-  - "SnippetFile and CopyOutcome are unified."
-  - "AppError uses typed variants instead of Strings."
-  - "Path validation logic is deduplicated."
-  - "Snippet resolution is optimized."
-  - "Unit tests exist for all public library functions."
+  - "`SnippetStorage` struct has no `from_env` method (or it is moved to a factory in `main`)."
+  - "`src/commands/copy_snippet.rs` does not import from `src/commands/touch.rs`."
+  - "`AppError` implements `thiserror::Error`."
+  - "`SnippetFile` is reused or unified with `CopyOutcome`."
+  - "Path validation logic exists in exactly one place."
+  - "Unit tests cover >90% of `src/storage.rs` and `src/utils/`."
 
 verification_commands:
   - "cargo test"
   - "cargo clippy --all-targets --all-features -- -D warnings"
 
 # Analysis Flags
-requires_deep_analysis: true
-deep_analysis_reason: "This refactor touches almost every file in the `src` directory and changes core interfaces. A detailed plan for dependency injection and error handling migration is needed to avoid breaking the world."
+requires_deep_analysis: false
+deep_analysis_reason: "This refactor touches almost every file in the `src` directory and changes core interfaces. A detailed plan for dependency injection and error handling migration is needed to avoid breaking the world. Analysis confirmed: 1. `copy_snippet` depends on `touch` for `validate_path`. 2. `SnippetStorage` reads env vars. 3. `SnippetFile` and `CopyOutcome` are redundant. 4. `AppError` is string-based. 5. `resolve_snippet` is O(N)."
