@@ -1,0 +1,25 @@
+schema_version: 1
+
+# Metadata
+id: "x7d9f2"
+issue_id: "" # Pending
+created_at: "2026-02-02"
+author_role: "data_arch"
+confidence: "high"
+
+# Content
+title: "Implicit File Extension Logic Flaw"
+statement: |
+  The `mx touch` command logic unconditionally appends `.md` to any filename that lacks an extension according to `Path::extension`. This incorrectly transforms standard dotfiles (e.g., `.gitignore`, `.env`) into markdown files (e.g., `.gitignore.md`), making it impossible to create functional configuration files via `mx touch`.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/touch.rs"
+    loc:
+      - "if path.extension().is_none() {"
+      - "path.set_extension(\"md\");"
+    note: "The `path.extension().is_none()` check considers filenames starting with a dot (and no other dots) as having no extension, triggering the `.md` append."
+
+tags:
+  - "data-transformation"
+  - "bug"
