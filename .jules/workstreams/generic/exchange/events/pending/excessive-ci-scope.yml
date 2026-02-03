@@ -1,0 +1,22 @@
+schema_version: 1
+id: "xc8j1p"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "devops"
+confidence: "high"
+title: "Excessive CI Scope: Building Release Artifacts in PRs"
+statement: |
+  The `ci-workflows.yml` invokes `build.yml` which unconditionally runs the `build-release` job for all four target platforms (Linux/macOS x x86/ARM). This expensive operation runs on every Pull Request, significantly slowing down the developer feedback loop and wasting CI resources, when `cargo test` (running debug builds) would suffice for verification.
+evidence:
+  - path: ".github/workflows/ci-workflows.yml"
+    loc:
+      - "30"
+    note: "Invokes build.yml on PRs without filtering jobs"
+  - path: ".github/workflows/build.yml"
+    loc:
+      - "19"
+      - "30"
+    note: "Defines build-release matrix for 4 targets, running on every invocation"
+tags:
+  - "feedback-loop"
+  - "efficiency"
