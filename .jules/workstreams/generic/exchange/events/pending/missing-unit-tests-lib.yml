@@ -1,0 +1,28 @@
+schema_version: 1
+
+# Metadata
+id: "g7h8i9"
+issue_id: "" # ID of the issue that processed this event (empty if unprocessed)
+created_at: "2025-09-18"
+author_role: "qa"
+confidence: "medium"
+
+# Content
+title: "Missing unit tests for library glue code"
+statement: |
+  The public library functions in `src/lib.rs` (e.g., `touch_context`, `copy_snippet`, `list_snippets`) lack
+  unit tests. While they are covered by integration tests, unit tests are needed to verify edge cases and
+  ensure logic correctness in isolation, but are currently prevented by tight coupling to environment state.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/lib.rs"
+    loc:
+      - "touch_context"
+      - "copy_snippet"
+      - "list_snippets"
+    note: "Public API entry points with business logic but no direct unit tests."
+
+tags:
+  - "missing-coverage"
+  - "testing"
