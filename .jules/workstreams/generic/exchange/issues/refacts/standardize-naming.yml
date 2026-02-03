@@ -5,6 +5,7 @@ source_events:
   - "ev1snp"
   - "ev3prt"
   - "ev2tch"
+  - "ican01"
 title: "Standardize Command Naming and Domain Terminology"
 label: "refacts"
 priority: "medium"

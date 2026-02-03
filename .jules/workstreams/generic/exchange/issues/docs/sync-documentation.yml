@@ -2,6 +2,7 @@ schema_version: 2
 id: "p6q7r8"
 source_events:
   - "ev001a"
+  - "lst001"
 title: "Sync Documentation with Implementation"
 label: "docs"
 priority: "low"

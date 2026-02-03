@@ -1,0 +1,25 @@
+schema_version: 2
+id: "f8j2k1"
+source_events:
+  - "x7d9f2"
+title: "Implicit File Extension Logic Flaw"
+label: "bugs"
+priority: "high"
+summary: "`mx touch` incorrectly appends `.md` to filenames starting with a dot (e.g., `.gitignore`)."
+problem: |
+  The `mx touch` command logic unconditionally appends `.md` to any filename that lacks an extension according to `Path::extension`. This check incorrectly considers filenames starting with a dot (and no other dots) as having no extension, triggering the `.md` append. This transforms standard dotfiles like `.gitignore` into `.gitignore.md`.
+impact: |
+  Users cannot create functional configuration files (e.g., `.gitignore`, `.env`) using `mx touch`.
+desired_outcome: |
+  `mx touch` should respect dotfiles and not append `.md` if the file is a known dotfile or if the logic is improved to handle dotfiles correctly.
+constraints: []
+risks: []
+affected_areas:
+  - "src/commands/touch.rs"
+acceptance_criteria:
+  - "`mx touch .gitignore` creates `.gitignore`, not `.gitignore.md`."
+  - "`mx touch .env` creates `.env`, not `.env.md`."
+verification_commands:
+  - "cargo test"
+requires_deep_analysis: false
+deep_analysis_reason: ""

@@ -26,14 +26,15 @@ It serves as the central source of truth for the **Decider** to deduplicate obse
 
 | Issue | Summary |
 | :--- | :--- |
-| _No open issues_ | - |
+| [Implicit File Extension Logic Flaw](./bugs/implicit-file-extension.yml) | mx touch incorrectly appends .md to filenames starting with a dot (e.g., .gitignore). |
 
 ## Tests
 > Test coverage and infrastructure changes in [`tests/`](./tests/).
 
 | Issue | Summary |
 | :--- | :--- |
-| [Improve Integration Test Isolation and Concurrency](./tests/improve-test-isolation.yml) | Refactor TestContext to avoid global state modification. |
+| [Improve Integration Test Isolation and Concurrency](./tests/improve-test-isolation.yml) | Refactor TestContext to avoid global state modification, remove redundant tests, and fix implicit dependencies. |
+| [Untested Snippet Resolution Edge Cases and Traversal Risks](./tests/security-coverage-gap.yml) | Critical logic for snippet resolution and path sanitization lacks unit tests, exposing security risks. |
 
 ## Docs
 > Documentation updates in [`docs/`](./docs/).

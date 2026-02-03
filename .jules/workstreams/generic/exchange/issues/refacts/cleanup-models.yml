@@ -4,6 +4,7 @@ source_events:
   - "dle001"
   - "dsm001"
   - "cjkw75"
+  - "rdm001"
 title: "Cleanup Dead Code and Redundant Models"
 label: "refacts"
 priority: "medium"

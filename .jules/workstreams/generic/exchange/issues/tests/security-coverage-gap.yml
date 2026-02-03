@@ -1,0 +1,29 @@
+schema_version: 2
+id: "m9n8b7"
+source_events:
+  - "evcov2"
+title: "Untested Snippet Resolution Edge Cases and Traversal Risks"
+label: "tests"
+priority: "high"
+summary: "Critical logic for snippet resolution and path sanitization lacks unit tests, exposing security risks."
+problem: |
+  `src/storage.rs` implements critical logic for snippet resolution (ambiguity checks) and path sanitization (`ensure_safe_segments`), but has no unit tests. Integration tests (`tests/commands/copy.rs`) do not cover failure modes like path traversal attempts or ambiguous snippet resolution.
+impact: |
+  High risk of regression in security logic (path traversal) and usability (ambiguous snippets).
+desired_outcome: |
+  1. Add unit tests for `ensure_safe_segments` covering traversal attempts.
+  2. Add unit tests for `resolve_snippet` covering ambiguity and not-found cases.
+  3. Optionally expand integration tests to cover these scenarios.
+constraints: []
+risks: []
+affected_areas:
+  - "src/storage.rs"
+  - "tests/commands/copy.rs"
+acceptance_criteria:
+  - "Unit tests exist for `ensure_safe_segments`."
+  - "Unit tests exist for `resolve_snippet`."
+  - "Traversal attempts are proven to fail safely."
+verification_commands:
+  - "cargo test"
+requires_deep_analysis: false
+deep_analysis_reason: ""

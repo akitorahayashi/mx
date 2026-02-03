@@ -2,16 +2,26 @@ schema_version: 2
 id: "s9t0u1"
 source_events:
   - "ti30c9"
+  - "x7k9m2"
+  - "r3d8n9"
+  - "ied001"
 title: "Improve Integration Test Isolation and Concurrency"
 label: "tests"
 priority: "medium"
-summary: "Refactor TestContext to avoid global state modification, enabling parallel test execution."
+summary: "Refactor TestContext to avoid global state modification, remove redundant tests, and fix implicit dependencies."
 problem: |
-  Integration tests currently modify the process-global `HOME` environment variable to mock the configuration directory. This forces tests to run serially (`#[serial]`), slowing down the test suite and creating potential for flaky tests if isolation fails.
+  Testing infrastructure suffers from coupling and redundancy:
+  1. Integration tests modify process-global `HOME` env var, forcing serial execution.
+  2. Public library functions (`SnippetStorage::new_default`) implicitly read environment variables, making them hard to test.
+  3. `touch` command integration tests duplicate unit test coverage, adding overhead without value.
+  4. Unit tests in `touch.rs` modify global CWD.
 impact: |
-  Slow feedback loop for developers. Risk of side effects leaking between tests.
+  Slow feedback loop (serial tests), flaky tests, and hard-to-test library components.
 desired_outcome: |
-  `TestContext` uses a thread-local or dependency-injection approach to mock configuration paths, allowing tests to run in parallel. `#[serial]` attributes are removed.
+  1. `TestContext` uses thread-local/explicit env vars.
+  2. Library functions accept explicit configuration (dependency injection).
+  3. Redundant integration tests are removed in favor of unit tests.
+  4. `#[serial]` attributes are removed.
 constraints:
   - "Must support `assert_cmd` which runs in a separate process (so env vars might still be needed, but maybe passed explicitly per command instead of globally set)."
 risks:
@@ -19,10 +29,13 @@ risks:
 affected_areas:
   - "tests/common/mod.rs"
   - "tests/commands/"
+  - "src/lib.rs"
+  - "src/storage.rs"
 acceptance_criteria:
   - "Tests no longer use `#[serial]`."
   - "`cargo test` passes consistently."
-  - "`HOME` environment variable is not modified globally in the test process."
+  - "`HOME` env var is not modified globally."
+  - "Redundant `touch` integration tests are removed."
 verification_commands:
   - "cargo test"
   - "! grep '#[serial]' tests/commands/*.rs"
