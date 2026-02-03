@@ -3,7 +3,7 @@ schema_version: 1
 observer: "taxonomy"
 workstream: "generic"
 
-updated_at: "2026-02-02T23:45:00Z"
+updated_at: "2026-02-02T23:55:00Z"
 
 goals:
   short_term: []
@@ -14,6 +14,9 @@ biases:
   heuristics: []
 
 recent_runs:
+  - created_at: "2026-02-02T23:55:00Z"
+    summary: "Identified 4 new taxonomy issues including legacy terms, misleading error naming, and inconsistent CLI args."
+    history_path: ".jules/workstreams/generic/workstations/taxonomy/histories/20260202-abc123.yml"
   - created_at: "2026-02-02T23:45:00Z"
     summary: "Identified 3 naming inconsistencies."
     history_path: ".jules/workstreams/generic/workstations/taxonomy/histories/20260202-nr7x9p.yml"

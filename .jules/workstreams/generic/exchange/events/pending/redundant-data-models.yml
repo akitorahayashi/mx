@@ -1,0 +1,29 @@
+schema_version: 1
+
+# Metadata
+id: "rdm001"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "taxonomy"
+confidence: "high"
+
+# Content
+title: "Redundant Data Models: SnippetFile and CopyOutcome"
+statement: |
+  The struct `CopyOutcome` in `src/commands/copy_snippet.rs` is structurally identical to `SnippetFile` in `src/storage.rs`. It duplicates the fields `key`, `relative_path`, and `absolute_path` without adding any new behavior or semantic distinction, creating unnecessary maintenance overhead.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "pub(crate) struct SnippetFile"
+    note: "Original definition of the data structure."
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "pub struct CopyOutcome"
+    note: "Redundant re-definition with identical fields."
+
+tags:
+  - "redundancy"
+  - "data-model"
+  - "maintenance"

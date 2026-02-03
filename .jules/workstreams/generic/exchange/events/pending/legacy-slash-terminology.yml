@@ -1,0 +1,25 @@
+schema_version: 1
+
+# Metadata
+id: "lst001"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "taxonomy"
+confidence: "high"
+
+# Content
+title: "Legacy 'Slash Command' Terminology in CLI Help"
+statement: |
+  The CLI help text description refers to "slash command generation", a legacy feature that has been removed from the codebase. This outdated terminology misleads users about the tool's current capabilities.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/main.rs"
+    loc:
+      - "#[command(about = \"Unified CLI for mx snippets and slash command generation\")]"
+    note: "Explicit reference to 'slash command generation'."
+
+tags:
+  - "legacy"
+  - "documentation"
+  - "user-confusion"

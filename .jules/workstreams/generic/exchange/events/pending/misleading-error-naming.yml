@@ -1,0 +1,33 @@
+schema_version: 1
+
+# Metadata
+id: "men001"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "taxonomy"
+confidence: "medium"
+
+# Content
+title: "Misleading AppError::config_error Usage"
+statement: |
+  The `AppError::config_error` variant is used as a catch-all for various runtime failures, including I/O errors (WalkDir), path manipulation errors, and data validation (UTF-8 checks). Labeling these as "configuration errors" obscures the root cause and conflates static configuration issues with dynamic runtime state.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "AppError::config_error(err.to_string())"
+    note: "Used for WalkDir I/O errors."
+  - path: "src/storage.rs"
+    loc:
+      - "AppError::config_error(\"Unable to derive relative snippet path\")"
+    note: "Used for path logic errors."
+  - path: "src/storage.rs"
+    loc:
+      - "AppError::config_error(\"Snippet names must be valid UTF-8\")"
+    note: "Used for data validation errors."
+
+tags:
+  - "error-handling"
+  - "semantics"
+  - "observability"
