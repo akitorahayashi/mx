@@ -1,0 +1,21 @@
+schema_version: 1
+
+observer: "data_arch"
+workstream: "generic"
+
+updated_at: "2026-02-03T00:00:00Z"
+
+goals:
+  short_term: []
+
+biases:
+  assumptions: []
+  blind_spots: []
+  heuristics: []
+
+recent_runs:
+  - created_at: "2026-02-03T00:00:00Z"
+    summary: "Identified 5 data architecture issues."
+    history_path: ".jules/workstreams/generic/workstations/data_arch/histories/20260203-darch1.yml"
+
+learned_exclusions: []
