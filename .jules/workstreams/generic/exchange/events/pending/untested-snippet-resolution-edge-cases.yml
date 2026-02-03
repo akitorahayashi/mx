@@ -2,7 +2,7 @@ schema_version: 1
 
 # Metadata
 id: "evcov2"
-issue_id: "s9t0u1"
+issue_id: ""
 created_at: "2026-02-02"
 author_role: "cov"
 confidence: "high"
