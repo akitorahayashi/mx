@@ -1,0 +1,31 @@
+schema_version: 1
+
+# Metadata
+id: "d4e5f6"
+issue_id: "" # ID of the issue that processed this event (empty if unprocessed)
+created_at: "2025-09-18"
+author_role: "qa"
+confidence: "high"
+
+# Content
+title: "Hardcoded environment dependencies in core libraries"
+statement: |
+  The `SnippetStorage` struct and `clipboard` module rely on hardcoded environment variables (`HOME`, `MX_COMMANDS_ROOT`)
+  in their constructors and factory methods. This creates implicit dependencies that make unit testing difficult
+  without modifying global process state, leading to potential race conditions or test isolation issues.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/lib.rs"
+    loc:
+      - "clipboard_from_env()"
+    note: "Implicitly reads env vars to create clipboard."
+  - path: "src/storage.rs"
+    loc:
+      - "SnippetStorage::from_env()"
+    note: "Reads HOME and MX_COMMANDS_ROOT directly."
+
+tags:
+  - "coupling"
+  - "testing"
+  - "design"

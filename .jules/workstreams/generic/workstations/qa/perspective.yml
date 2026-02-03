@@ -1,0 +1,21 @@
+schema_version: 1
+
+observer: "qa"
+workstream: "generic"
+
+updated_at: "2025-09-18T10:05:00Z"
+
+goals:
+  short_term: []
+
+biases:
+  assumptions: []
+  blind_spots: []
+  heuristics: []
+
+recent_runs:
+  - created_at: "2025-09-18T10:00:00Z"
+    summary: "Identified redundant touch tests and hardcoded env dependencies."
+    history_path: ".jules/workstreams/generic/workstations/qa/histories/20250918-j0k1l2.yml"
+
+learned_exclusions: []
