@@ -15,14 +15,16 @@ It serves as the central source of truth for the **Decider** to deduplicate obse
 
 | Issue | Summary |
 | :--- | :--- |
-| _No open issues_ | - |
+| [Core Architecture Refactor](./refacts/core-architecture.yml) | Decouple core modules and modernize architecture. |
+| [Unify Naming Conventions](./refacts/unify-naming.yml) | Standardize naming for file identifiers and CLI args. |
+| [Harden and Optimize CI/CD](./refacts/harden-cicd.yml) | Improve CI/CD security, efficiency, and reproducibility. |
 
 ## Bugs
 > Defect reports and fixes in [`bugs/`](./bugs/).
 
 | Issue | Summary |
 | :--- | :--- |
-| _No open issues_ | - |
+| [Fix Clipboard Configuration](./bugs/clipboard-configuration.yml) | Allow MX_CLIPBOARD_CMD to support distinct copy and paste commands. |
 
 ## Tests
 > Test coverage and infrastructure changes in [`tests/`](./tests/).

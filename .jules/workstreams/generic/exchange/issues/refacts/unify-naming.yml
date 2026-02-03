@@ -1,0 +1,56 @@
+schema_version: 2
+
+# Metadata
+id: "hewc34"
+source_events:
+  - "e1j3n6" # ambiguous-term-key.yml
+  - "b8g0k3" # inconsistent-arg-naming.yml
+  - "c9h1l4" # inconsistent-module-naming.yml
+  - "a7f9j2" # inconsistent-cli-verb-copy.yml
+title: "Unify Naming Conventions"
+label: "refacts"
+priority: "medium"
+summary: "Standardize naming for file identifiers, CLI arguments, and modules to reduce cognitive load."
+
+# Content
+problem: |
+  The codebase uses inconsistent terminology:
+  1. "Key" refers to both global snippets and local context files.
+  2. File identifiers are variously named `key`, `snippet`, and `query`.
+  3. Modules use mixed plurality (`copy_snippet` vs `list_snippets`) and verbs/nouns inconsistently.
+  4. The CLI verb `command` (alias `c`) is ambiguous for copying snippets.
+
+impact: |
+  Inconsistent naming increases cognitive load for contributors and users. It makes the code harder to read and the CLI harder to learn.
+
+desired_outcome: |
+  Consistent naming conventions:
+  1. Distinct terms for global snippets vs local context aliases.
+  2. Unified argument names (e.g. always `snippet` or always `key` where appropriate).
+  3. Consistent module naming (e.g. `src/commands/copy.rs`, `src/commands/list.rs`).
+  4. CLI verbs that match their action (e.g. `mx copy` instead of `mx command`).
+
+constraints:
+  - Changing CLI verbs is a breaking change. Consider keeping `command` as an alias if necessary, or fully breaking it if acceptable for the project stage.
+
+risks:
+  - Breaking changes for users relying on `mx command`.
+
+# Specifics
+affected_areas:
+  - "src/commands/"
+  - "src/main.rs"
+  - "src/lib.rs"
+
+acceptance_criteria:
+  - "Module names follow a consistent pattern."
+  - "Argument names are consistent across the codebase."
+  - "The 'Key' ambiguity is resolved."
+
+verification_commands:
+  - "cargo build"
+  - "cargo test"
+
+# Analysis Flags
+requires_deep_analysis: false
+deep_analysis_reason: ""

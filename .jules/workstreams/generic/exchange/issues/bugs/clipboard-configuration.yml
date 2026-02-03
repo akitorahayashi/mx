@@ -1,0 +1,40 @@
+schema_version: 2
+
+# Metadata
+id: "pqs1bk"
+source_events:
+  - "ev1clp" # clipboard-asymmetry.yml
+title: "Fix Clipboard Configuration for Asymmetric Commands"
+label: "bugs"
+priority: "medium"
+summary: "Allow MX_CLIPBOARD_CMD to support distinct copy and paste commands."
+
+# Content
+problem: |
+  The current implementation of `MX_CLIPBOARD_CMD` assumes that the same command is used for both copy (writing to stdin) and paste (reading from stdout). This is incompatible with standard tools like `xclip` / `wl-copy` which use different commands or flags for copy vs paste.
+
+impact: |
+  Users cannot use standard clipboard managers with `mx` via configuration, limiting usability on Linux or custom environments.
+
+desired_outcome: |
+  `MX_CLIPBOARD_CMD` should support specifying separate commands for copy and paste, or the configuration format should be changed to allow a pair of commands.
+
+constraints:
+  - Backward compatibility for `MX_CLIPBOARD_CMD` if possible, or a clear migration path.
+
+risks: []
+
+# Specifics
+affected_areas:
+  - "src/commands/clipboard.rs"
+
+acceptance_criteria:
+  - "User can configure `wl-copy` for copy and `wl-paste` for paste."
+  - "Unit tests verify asymmetric configuration."
+
+verification_commands:
+  - "cargo test commands::clipboard"
+
+# Analysis Flags
+requires_deep_analysis: false
+deep_analysis_reason: ""
