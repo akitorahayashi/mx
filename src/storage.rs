@@ -162,3 +162,110 @@ fn ensure_safe_segments(value: &str) -> Result<(), AppError> {
 fn join_paths(snippets: &[SnippetFile]) -> String {
     snippets.iter().map(|s| s.relative_path.clone()).collect::<Vec<_>>().join(", ")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_ensure_safe_segments_valid() {
+        assert!(ensure_safe_segments("foo").is_ok());
+        assert!(ensure_safe_segments("foo/bar").is_ok());
+        assert!(ensure_safe_segments("foo-bar_123").is_ok());
+    }
+
+    #[test]
+    fn test_ensure_safe_segments_traversal() {
+        assert!(ensure_safe_segments("..").is_err());
+        assert!(ensure_safe_segments("../foo").is_err());
+        assert!(ensure_safe_segments("foo/..").is_err());
+        assert!(ensure_safe_segments("foo/../bar").is_err());
+    }
+
+    #[test]
+    fn test_ensure_safe_segments_empty() {
+        assert!(ensure_safe_segments("foo//bar").is_err());
+        assert!(ensure_safe_segments("/foo").is_err());
+    }
+
+    fn create_test_storage(files: &[&str]) -> (SnippetStorage, tempfile::TempDir) {
+        let dir = tempdir().unwrap();
+        let commands_dir = dir.path().join("commands");
+        fs::create_dir(&commands_dir).unwrap();
+
+        for path in files {
+            let full_path = commands_dir.join(path);
+            if let Some(parent) = full_path.parent() {
+                fs::create_dir_all(parent).unwrap();
+            }
+            fs::write(full_path, "content").unwrap();
+        }
+
+        let storage = SnippetStorage { commands_root: commands_dir };
+        (storage, dir)
+    }
+
+    #[test]
+    fn test_resolve_snippet_exact() {
+        let (storage, _dir) = create_test_storage(&["foo/bar.md"]);
+        let snippet = storage.resolve_snippet("foo/bar").unwrap();
+        assert_eq!(snippet.relative_path, "foo/bar");
+    }
+
+    #[test]
+    fn test_resolve_snippet_key() {
+        let (storage, _dir) = create_test_storage(&["foo/bar.md"]);
+        let snippet = storage.resolve_snippet("bar").unwrap();
+        assert_eq!(snippet.relative_path, "foo/bar");
+    }
+
+    #[test]
+    fn test_resolve_snippet_ambiguous_key() {
+        let (storage, _dir) = create_test_storage(&["a/foo.md", "b/foo.md"]);
+        let err = storage.resolve_snippet("foo").unwrap_err();
+        match err {
+            AppError::ConfigError(msg) => {
+                assert!(msg.contains("Multiple snippets share the name 'foo'"))
+            }
+            _ => panic!("Expected ConfigError, got {:?}", err),
+        }
+    }
+
+    #[test]
+    fn test_resolve_snippet_not_found() {
+        let (storage, _dir) = create_test_storage(&[]);
+        let err = storage.resolve_snippet("foo").unwrap_err();
+        match err {
+            AppError::NotFound(_) => {}
+            _ => panic!("Expected NotFound, got {:?}", err),
+        }
+    }
+
+    #[test]
+    fn test_resolve_snippet_traversal_attack() {
+        let (storage, _dir) = create_test_storage(&[]);
+        let err = storage.resolve_snippet("../secret").unwrap_err();
+        match err {
+            AppError::ConfigError(msg) => {
+                assert!(msg.contains("Snippet paths cannot contain empty or traversal segments"))
+            }
+            _ => panic!("Expected ConfigError for traversal, got {:?}", err),
+        }
+    }
+
+    #[test]
+    fn test_resolve_snippet_normalization() {
+        let (storage, _dir) = create_test_storage(&["foo.md"]);
+
+        let s1 = storage.resolve_snippet("commands/foo").unwrap();
+        assert_eq!(s1.relative_path, "foo");
+
+        let s2 = storage.resolve_snippet("foo.md").unwrap();
+        assert_eq!(s2.relative_path, "foo");
+
+        let s3 = storage.resolve_snippet("/foo").unwrap();
+        assert_eq!(s3.relative_path, "foo");
+    }
+}
