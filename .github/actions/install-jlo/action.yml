@@ -1,5 +1,10 @@
 name: 'Install jlo'
 description: 'Installs the jlo CLI binary pinned to .jules/.jlo-version on the jules branch'
+inputs:
+  enforce-checksums:
+    description: 'Fail if checksum verification is not possible'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -74,6 +79,9 @@ runs:
         ASSET="jlo-${OS}-${ARCH}"
         URL="https://github.com/akitorahayashi/jlo/releases/download/${TAG_VERSION}/${ASSET}"
 
+        TEMP_DIR=$(mktemp -d)
+        cd "$TEMP_DIR"
+
         echo "Installing jlo ${VERSION} from: $URL"
         curl --fail --silent --show-error --location \
           --connect-timeout 10 \
@@ -81,12 +89,52 @@ runs:
           --retry 3 \
           --retry-delay 2 \
           --retry-all-errors \
-          "$URL" -o jlo
+          "$URL" -o "$ASSET"
+
+        CHECKSUM_FILES="checksums.txt SHA256SUMS"
+        VERIFIED=0
+
+        for CS_FILE in $CHECKSUM_FILES; do
+          CS_URL="https://github.com/akitorahayashi/jlo/releases/download/${TAG_VERSION}/${CS_FILE}"
+          echo "Attempting to fetch checksums from $CS_URL"
+          if curl --fail --silent --show-error --location "$CS_URL" -o "$CS_FILE"; then
+            echo "Found $CS_FILE. Verifying..."
+            # Use strict matching: verify asset name appears at end of line
+            if grep -E "  ${ASSET}$" "$CS_FILE" > "${ASSET}.sha256"; then
+              if command -v sha256sum >/dev/null 2>&1; then
+                sha256sum -c "${ASSET}.sha256"
+              elif command -v shasum >/dev/null 2>&1; then
+                shasum -a 256 -c "${ASSET}.sha256"
+              else
+                echo "::error::Missing sha256sum/shasum tool."
+                exit 1
+              fi
+              VERIFIED=1
+              break
+            else
+              echo "::warning::$ASSET not found in $CS_FILE"
+            fi
+          fi
+        done
+
+        if [ "$VERIFIED" -ne 1 ]; then
+          if [ "${{ inputs.enforce-checksums }}" = "true" ]; then
+            echo "::error::Checksum verification failed or not possible, and enforce-checksums is true."
+            exit 1
+          else
+            echo "::warning::Could not verify checksum. No checksum file found or asset not listed. Proceeding without verification."
+          fi
+        fi
+
+        mv "$ASSET" jlo
         chmod +x jlo
 
         INSTALL_DIR="${RUNNER_TEMP:-/tmp}/jlo-bin"
         mkdir -p "$INSTALL_DIR"
         mv jlo "$INSTALL_DIR/jlo"
+
+        cd - >/dev/null
+        rm -rf "$TEMP_DIR"
 
         echo "$INSTALL_DIR" >> "$GITHUB_PATH"
         echo "✅ jlo installed: $($INSTALL_DIR/jlo --version 2>/dev/null || echo 'version unknown')"
