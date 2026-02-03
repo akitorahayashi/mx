@@ -172,13 +172,13 @@ fn cat_empty_file_succeeds() {
 fn cat_directory_shows_error() {
     let temp = tempdir().unwrap();
     let mx_dir = temp.path().join(".mx");
-    fs::create_dir_all(mx_dir.join("somedir")).unwrap();
+    fs::create_dir_all(mx_dir.join("somedir.md")).unwrap();
 
     Command::cargo_bin("mx")
         .unwrap()
         .current_dir(&temp)
         .arg("cat")
-        .arg("somedir")
+        .arg("somedir.md")
         .assert()
         .failure()
         .stderr(predicate::str::contains("not a file"));

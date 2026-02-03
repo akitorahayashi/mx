@@ -2,10 +2,8 @@
 
 use super::super::common::TestContext;
 use predicates::prelude::*;
-use serial_test::serial;
 
 #[test]
-#[serial]
 fn version_flag_works() {
     let ctx = TestContext::new();
 

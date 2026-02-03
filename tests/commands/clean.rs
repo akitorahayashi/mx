@@ -2,7 +2,6 @@
 
 use assert_cmd::Command;
 use predicates::prelude::*;
-use serial_test::serial;
 use std::fs;
 use tempfile::tempdir;
 
@@ -14,7 +13,6 @@ fn setup_clipboard(temp: &tempfile::TempDir, content: &str) -> std::path::PathBu
 }
 
 #[test]
-#[serial]
 fn clean_full_directory() {
     let dir = tempdir().unwrap();
     let clipboard_file = setup_clipboard(&dir, "test content");
@@ -39,13 +37,12 @@ fn clean_full_directory() {
         .arg("clean")
         .assert()
         .success()
-        .stdout(predicate::str::eq("Removed .mx directory\n"));
+        .stdout(predicate::eq("✅ Removed .mx directory\n"));
 
     assert!(!dir.path().join(".mx").exists());
 }
 
 #[test]
-#[serial]
 fn clean_specific_file() {
     let dir = tempdir().unwrap();
     let clipboard_file = setup_clipboard(&dir, "test content");
@@ -81,7 +78,6 @@ fn clean_specific_file() {
 }
 
 #[test]
-#[serial]
 fn clean_nested_and_dynamic() {
     let dir = tempdir().unwrap();
     let clipboard_file = setup_clipboard(&dir, "test content");
@@ -98,12 +94,7 @@ fn clean_nested_and_dynamic() {
     assert!(dir.path().join(".mx/tasks/tasks1.md").exists());
 
     // Clean tk1
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&dir)
-        .args(["clean", "tk1"])
-        .assert()
-        .success();
+    Command::cargo_bin("mx").unwrap().current_dir(&dir).args(["clean", "tk1"]).assert().success();
 
     assert!(!dir.path().join(".mx/tasks/tasks1.md").exists());
     // The parent 'tasks' directory should also be removed if empty
@@ -111,7 +102,6 @@ fn clean_nested_and_dynamic() {
 }
 
 #[test]
-#[serial]
 fn clean_nonexistent_file() {
     let dir = tempdir().unwrap();
 
@@ -128,7 +118,6 @@ fn clean_nonexistent_file() {
 }
 
 #[test]
-#[serial]
 fn clean_alias_cl_works() {
     let dir = tempdir().unwrap();
     let clipboard_file = setup_clipboard(&dir, "test content");

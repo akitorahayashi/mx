@@ -2,10 +2,8 @@
 
 use super::super::common::TestContext;
 use predicates::prelude::*;
-use serial_test::serial;
 
 #[test]
-#[serial]
 fn list_command_prints_snippets() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
@@ -18,7 +16,6 @@ fn list_command_prints_snippets() {
 }
 
 #[test]
-#[serial]
 fn list_alias_ls_works() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();

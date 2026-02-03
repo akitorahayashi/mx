@@ -1,13 +1,10 @@
-use crate::commands::touch::{find_project_root, resolve_path, validate_path};
+use crate::commands::touch::{resolve_path, validate_path};
 use crate::error::AppError;
 use std::fs;
 
 /// Internal implementation for displaying context file contents.
 /// Use the public `cat_context` function from the library root instead.
-pub fn cat(key: &str) -> Result<String, AppError> {
-    // Find the project root directory (where .mx/ directory is or should be)
-    let root = find_project_root()?;
-
+pub fn cat(root: &std::path::Path, key: &str) -> Result<String, AppError> {
     // Resolve the key to a relative path (e.g., "tk" -> "tasks.md")
     let relative_path = resolve_path(key);
 
@@ -46,16 +43,12 @@ pub fn cat(key: &str) -> Result<String, AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serial_test::serial;
-    use std::env;
     use std::fs;
     use tempfile::tempdir;
 
     #[test]
-    #[serial]
     fn cat_reads_existing_file() {
         let temp = tempdir().unwrap();
-        env::set_current_dir(&temp).unwrap();
 
         // Create a context file with known content
         let mx_dir = temp.path().join(".mx");
@@ -65,20 +58,18 @@ mod tests {
         fs::write(&tasks_path, expected_content).unwrap();
 
         // Read it back using cat
-        let result = cat("tk").unwrap();
+        let result = cat(temp.path(), "tk").unwrap();
         assert_eq!(result, expected_content);
     }
 
     #[test]
-    #[serial]
     fn cat_returns_error_for_missing_file() {
         let temp = tempdir().unwrap();
-        env::set_current_dir(&temp).unwrap();
 
         // Ensure .mx directory exists but file doesn't
         fs::create_dir_all(temp.path().join(".mx")).unwrap();
 
-        let result = cat("tk");
+        let result = cat(temp.path(), "tk");
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("⚠️"));
@@ -86,21 +77,17 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn cat_rejects_path_traversal() {
         let temp = tempdir().unwrap();
-        env::set_current_dir(&temp).unwrap();
 
-        let result = cat("../etc/passwd");
+        let result = cat(temp.path(), "../etc/passwd");
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), AppError::PathTraversal(_)));
     }
 
     #[test]
-    #[serial]
     fn cat_handles_empty_file() {
         let temp = tempdir().unwrap();
-        env::set_current_dir(&temp).unwrap();
 
         // Create an empty file
         let mx_dir = temp.path().join(".mx");
@@ -108,15 +95,13 @@ mod tests {
         let empty_path = mx_dir.join("empty.md");
         fs::write(&empty_path, "").unwrap();
 
-        let result = cat("empty").unwrap();
+        let result = cat(temp.path(), "empty").unwrap();
         assert_eq!(result, "");
     }
 
     #[test]
-    #[serial]
     fn cat_resolves_aliases_correctly() {
         let temp = tempdir().unwrap();
-        env::set_current_dir(&temp).unwrap();
 
         // Create files for different aliases
         let mx_dir = temp.path().join(".mx");
@@ -125,26 +110,24 @@ mod tests {
         // Standard alias
         let content = "requirements content";
         fs::write(mx_dir.join("requirements.md"), content).unwrap();
-        assert_eq!(cat("rq").unwrap(), content);
+        assert_eq!(cat(temp.path(), "rq").unwrap(), content);
 
         // Nested alias
         fs::create_dir_all(mx_dir.join("pending")).unwrap();
         let nested_content = "pending tasks";
         fs::write(mx_dir.join("pending/tasks.md"), nested_content).unwrap();
-        assert_eq!(cat("pdt").unwrap(), nested_content);
+        assert_eq!(cat(temp.path(), "pdt").unwrap(), nested_content);
     }
 
     #[test]
-    #[serial]
     fn cat_errors_on_directory() {
         let temp = tempdir().unwrap();
-        env::set_current_dir(&temp).unwrap();
 
         // Create a directory with .md extension to simulate the edge case
         let mx_dir = temp.path().join(".mx");
         fs::create_dir_all(mx_dir.join("somedir.md")).unwrap();
 
-        let result = cat("somedir.md");
+        let result = cat(temp.path(), "somedir.md");
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("⚠️"));
