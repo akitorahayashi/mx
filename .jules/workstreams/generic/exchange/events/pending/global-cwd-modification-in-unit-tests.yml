@@ -1,0 +1,26 @@
+schema_version: 1
+
+# Metadata
+id: "x7k9m2"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "qa"
+confidence: "high"
+
+# Content
+title: "Unit Tests Modify Global CWD Preventing Parallel Execution"
+statement: |
+  Unit tests in `src/commands/touch.rs` use `std::env::set_current_dir` to mock the project root. This modifies the global state of the test process, forcing these tests to run serially and potentially interfering with other tests running in parallel within the same binary.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/touch.rs"
+    loc:
+      - "std::env::set_current_dir(&dir).unwrap();"
+    note: "Modifies global CWD, requiring #[serial] and risking side effects."
+
+tags:
+  - "test-isolation"
+  - "concurrency"
+  - "global-state"
+  - "anti-pattern"
