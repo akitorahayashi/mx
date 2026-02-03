@@ -1,0 +1,52 @@
+schema_version: 2
+
+# Metadata
+id: "nl6zyv"
+source_events:
+  - "crw002" # ci-resource-waste.yml
+  - "jlo003" # install-jlo-no-checksum.yml
+  - "prm004" # release-permissions.yml
+  - "tcd001" # toolchain-drift.yml
+title: "Harden and Optimize CI/CD"
+label: "refacts"
+priority: "high"
+summary: "Improve CI/CD security, efficiency, and reproducibility."
+
+# Content
+problem: |
+  The CI/CD pipeline has several issues:
+  1. `ci-workflows.yml` triggers the full build matrix on every PR, wasting resources.
+  2. `release.yml` grants excessive write permissions to all jobs.
+  3. `install-jlo` action downloads binaries without checksum verification.
+  4. Toolchain versions drift between `rust-toolchain.toml` (1.90.0) and CI workflows (stable).
+
+impact: |
+  These issues expose the project to supply-chain attacks, unnecessary costs/delays, and reproducibility errors where code passes CI but fails in Release.
+
+desired_outcome: |
+  1. CI triggers are optimized (e.g. only run full matrix on main or specific labels).
+  2. Release permissions are scoped to least privilege.
+  3. Binary downloads are verified with checksums.
+  4. CI workflows enforce the toolchain version defined in `rust-toolchain.toml`.
+
+constraints: []
+risks: []
+
+# Specifics
+affected_areas:
+  - ".github/workflows/"
+  - ".github/actions/"
+
+acceptance_criteria:
+  - "CI runs are faster and use fewer resources."
+  - "Release workflow uses scoped permissions."
+  - "JLO installation is secure."
+  - "Toolchain version is consistent."
+
+verification_commands:
+  - "grep '1.90.0' .github/workflows/*.yml .github/actions/setup/action.yml" # Verify toolchain propagation
+  - "grep 'permissions:' .github/workflows/release.yml" # Verify permissions
+
+# Analysis Flags
+requires_deep_analysis: false
+deep_analysis_reason: ""

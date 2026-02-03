@@ -1,0 +1,71 @@
+schema_version: 2
+
+# Metadata
+id: "ohy35k"
+source_events:
+  - "da04cc" # command-module-coupling.yml
+  - "d4e5f6" # hardcoded-env-dependencies.yml
+  - "da03is" # implicit-storage-config.yml
+  - "dupv01" # duplicate-path-validation.yml
+  - "perf01" # inefficient-snippet-resolution.yml
+  - "ev2prj" # project-root-detection.yml
+  - "d0i2m5" # redundant-outcome-types.yml
+  - "da01rs" # redundant-snippet-models.yml
+  - "da05le" # lossy-error-types.yml
+  - "err001" # stringly-typed-errors.yml
+  - "da02dl" # dead-list-entry-fields.yml
+  - "g7h8i9" # missing-unit-tests-lib.yml
+  - "a1b2c3" # test-redundancy-touch.yml
+title: "Core Architecture Refactor"
+label: "refacts"
+priority: "high"
+summary: "Decouple core modules, modernize data models, and improve error handling to enable better testing and maintainability."
+
+# Content
+problem: |
+  The core codebase suffers from significant technical debt including:
+  1. Tight coupling between command modules (e.g., `copy` and `cat` depending on `touch`).
+  2. Implicit dependencies on environment variables and global state in `SnippetStorage`.
+  3. Redundant and lossy data models (`SnippetFile` vs `CopyOutcome`, String-based errors).
+  4. Duplicated logic for path validation and ineffective project root detection.
+  5. Inefficient O(N) snippet resolution.
+  6. Missing unit tests for key library functions due to the above coupling.
+
+impact: |
+  These issues make the codebase fragile, difficult to test, and hard to extend. The lack of unit tests increases the risk of regressions. The inefficient snippet resolution scales poorly.
+
+desired_outcome: |
+  A clean, decoupled architecture where:
+  1. `SnippetStorage` and `Clipboard` are injectable dependencies.
+  2. Core logic (path validation, project detection) is centralized in `lib.rs` or dedicated modules.
+  3. Data models are unified (Single Source of Truth).
+  4. Errors are strongly typed (`thiserror`).
+  5. Library functions have comprehensive unit tests.
+  6. Redundant integration tests are removed in favor of unit tests.
+
+constraints: []
+risks:
+  - Major refactoring could introduce regressions if existing integration tests are not sufficient coverage.
+
+# Specifics
+affected_areas:
+  - "src/storage.rs"
+  - "src/lib.rs"
+  - "src/error.rs"
+  - "src/commands/"
+
+acceptance_criteria:
+  - "SnippetStorage no longer reads env vars in its constructor."
+  - "SnippetFile and CopyOutcome are unified."
+  - "AppError uses typed variants instead of Strings."
+  - "Path validation logic is deduplicated."
+  - "Snippet resolution is optimized."
+  - "Unit tests exist for all public library functions."
+
+verification_commands:
+  - "cargo test"
+  - "cargo clippy --all-targets --all-features -- -D warnings"
+
+# Analysis Flags
+requires_deep_analysis: true
+deep_analysis_reason: "This refactor touches almost every file in the `src` directory and changes core interfaces. A detailed plan for dependency injection and error handling migration is needed to avoid breaking the world."
