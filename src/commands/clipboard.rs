@@ -18,6 +18,7 @@ pub(crate) fn clipboard_from_env() -> Result<Box<dyn Clipboard>, AppError> {
     Ok(Box::new(SystemClipboard::detect()?))
 }
 
+#[derive(Debug)]
 struct ClipboardCommand {
     program: String,
     args: Vec<String>,
@@ -26,6 +27,13 @@ struct ClipboardCommand {
 impl ClipboardCommand {
     fn new(program: impl Into<String>) -> Self {
         Self { program: program.into(), args: Vec::new() }
+    }
+
+    fn from_string(cmd_str: &str) -> Option<Self> {
+        let mut parts = cmd_str.split_whitespace();
+        let program = parts.next()?;
+        let args: Vec<String> = parts.map(|s| s.to_string()).collect();
+        Some(Self { program: program.to_string(), args })
     }
 
     fn with_args<I, S>(mut self, args: I) -> Self
@@ -38,6 +46,7 @@ impl ClipboardCommand {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct SystemClipboard {
     copy_command: ClipboardCommand,
     paste_command: ClipboardCommand,
@@ -45,16 +54,37 @@ pub(crate) struct SystemClipboard {
 
 impl SystemClipboard {
     fn detect() -> Result<Self, AppError> {
-        if let Ok(custom) = env::var("MX_CLIPBOARD_CMD") {
-            let mut parts = custom.split_whitespace();
-            let program = parts
-                .next()
-                .ok_or_else(|| AppError::clipboard_error("MX_CLIPBOARD_CMD is empty"))?;
-            let args: Vec<String> = parts.map(|s| s.to_string()).collect();
-            // For custom commands, assume same command for both copy and paste (copy via stdin, paste via stdout)
-            let copy_cmd = ClipboardCommand { program: program.to_string(), args: args.clone() };
-            let paste_cmd = ClipboardCommand { program: program.to_string(), args };
+        let copy_var = env::var("MX_COPY_CMD");
+        let paste_var = env::var("MX_PASTE_CMD");
+
+        // If both are present, use them.
+        if let (Ok(copy_str), Ok(paste_str)) = (copy_var.as_ref(), paste_var.as_ref()) {
+            let copy_cmd = ClipboardCommand::from_string(copy_str)
+                .ok_or_else(|| AppError::clipboard_error("MX_COPY_CMD is empty"))?;
+            let paste_cmd = ClipboardCommand::from_string(paste_str)
+                .ok_or_else(|| AppError::clipboard_error("MX_PASTE_CMD is empty"))?;
             return Ok(Self { copy_command: copy_cmd, paste_command: paste_cmd });
+        }
+
+        // If only one is present, return an error to prevent ambiguity.
+        if copy_var.is_ok() || paste_var.is_ok() {
+            return Err(AppError::clipboard_error(
+                "Both MX_COPY_CMD and MX_PASTE_CMD must be set if either is provided",
+            ));
+        }
+
+        if let Ok(custom) = env::var("MX_CLIPBOARD_CMD") {
+            let cmd = ClipboardCommand::from_string(&custom)
+                .ok_or_else(|| AppError::clipboard_error("MX_CLIPBOARD_CMD is empty"))?;
+
+            // For custom commands, assume same command for both copy and paste (copy via stdin, paste via stdout)
+            return Ok(Self {
+                copy_command: ClipboardCommand {
+                    program: cmd.program.clone(),
+                    args: cmd.args.clone(),
+                },
+                paste_command: cmd,
+            });
         }
 
         match env::consts::OS {
@@ -246,5 +276,110 @@ mod tests {
         let clip = FileClipboard::new(file).expect("file clipboard should init");
         let content = clip.paste().expect("paste should succeed on nonexistent file");
         assert_eq!(content, "");
+    }
+
+    // Helper to manage environment variables in tests
+    struct EnvGuard {
+        key: String,
+        original: Result<String, env::VarError>,
+    }
+
+    impl EnvGuard {
+        fn new(key: &str, value: &str) -> Self {
+            let original = env::var(key);
+            env::set_var(key, value);
+            Self { key: key.to_string(), original }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            match &self.original {
+                Ok(val) => env::set_var(&self.key, val),
+                Err(_) => env::remove_var(&self.key),
+            }
+        }
+    }
+
+    // Combine env-sensitive tests into one serial test to avoid race conditions.
+    #[test]
+    fn test_clipboard_detection_scenarios() {
+        // Scenario 1: Asymmetric
+        {
+            let _copy_guard = EnvGuard::new("MX_COPY_CMD", "custom-copy --arg1");
+            let _paste_guard = EnvGuard::new("MX_PASTE_CMD", "custom-paste --arg2");
+            // Ensure legacy var doesn't interfere
+            let _legacy_guard = EnvGuard::new("MX_CLIPBOARD_CMD", "legacy-cmd");
+
+            let clip = SystemClipboard::detect().expect("detect should succeed");
+
+            assert_eq!(clip.copy_command.program, "custom-copy");
+            assert_eq!(clip.copy_command.args, vec!["--arg1"]);
+            assert_eq!(clip.paste_command.program, "custom-paste");
+            assert_eq!(clip.paste_command.args, vec!["--arg2"]);
+        }
+
+        // Scenario 2: Partial Config Error
+        {
+            // Clean up from previous block if guards didn't fully (though they should have)
+            // or just ensure clean slate for this test block.
+            // Since EnvGuard restores original value, and original might have been unset,
+            // we should be okay. But let's be explicit for the test setup.
+
+            // To guarantee isolation from previous block's potential side effects (if any),
+            // we rely on EnvGuard drop. But here we want to set only one.
+            let _copy_guard = EnvGuard::new("MX_COPY_CMD", "custom-copy");
+            // Ensure paste cmd is unset (it should be if EnvGuard works, but let's make sure)
+            // We can't easily "ensure unset" with EnvGuard unless we nest deeply or manually check.
+            // Let's rely on the fact that before this test function ran, these vars were likely unset.
+            // But we must assume MX_PASTE_CMD is unset here.
+
+            // To be safe, we can use a nested scope where we explicitly remove it if it exists,
+            // but we need to restore it.
+            // Simplified: Just use EnvGuard. checking existence.
+
+            // If MX_PASTE_CMD is set by external environment, this test might fail.
+            // We'll wrap the "ensure unset" logic in a guard? No, EnvGuard sets a value.
+
+            // Let's manually handle the unset case for the test duration.
+            let original_paste = env::var("MX_PASTE_CMD");
+            if original_paste.is_ok() {
+                env::remove_var("MX_PASTE_CMD");
+            }
+
+            let result = SystemClipboard::detect();
+            match result {
+                Ok(_) => panic!("Should have failed"),
+                Err(e) => assert!(e
+                    .to_string()
+                    .contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set")),
+            }
+
+            if let Ok(val) = original_paste {
+                env::set_var("MX_PASTE_CMD", val);
+            }
+        }
+
+        // Scenario 3: Symmetric Legacy
+        {
+            // Ensure new vars are unset
+            let original_copy = env::var("MX_COPY_CMD");
+            if original_copy.is_ok() { env::remove_var("MX_COPY_CMD"); }
+            let original_paste = env::var("MX_PASTE_CMD");
+            if original_paste.is_ok() { env::remove_var("MX_PASTE_CMD"); }
+
+            let _guard = EnvGuard::new("MX_CLIPBOARD_CMD", "legacy-tool --flag");
+
+            let clip = SystemClipboard::detect().expect("detect should succeed");
+
+            assert_eq!(clip.copy_command.program, "legacy-tool");
+            assert_eq!(clip.copy_command.args, vec!["--flag"]);
+            assert_eq!(clip.paste_command.program, "legacy-tool");
+            assert_eq!(clip.paste_command.args, vec!["--flag"]);
+
+            // Restore
+            if let Ok(val) = original_copy { env::set_var("MX_COPY_CMD", val); }
+            if let Ok(val) = original_paste { env::set_var("MX_PASTE_CMD", val); }
+        }
     }
 }
