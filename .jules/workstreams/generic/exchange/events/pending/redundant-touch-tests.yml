@@ -1,0 +1,31 @@
+schema_version: 1
+
+# Metadata
+id: "r3d8n9"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "qa"
+confidence: "high"
+
+# Content
+title: "Redundant Integration and Unit Tests for Touch Command"
+statement: |
+  The `mx touch` command logic is extensively tested in `src/commands/touch.rs` (unit tests) and again in `tests/commands/touch.rs` (integration tests). Both suites verify the same file creation, path resolution, and error handling behaviors. The integration tests are significantly slower due to process spawning and provide less granular failure feedback.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/touch.rs"
+    loc:
+      - "mod tests"
+    note: "Comprehensive unit tests covering aliasing, path resolution, and file creation."
+  - path: "tests/commands/touch.rs"
+    loc:
+      - "touch_creates_context_files"
+      - "touch_nested_files"
+      - "touch_dynamic_simple"
+    note: "Slow integration tests duplicating unit test coverage."
+
+tags:
+  - "test-redundancy"
+  - "feedback-speed"
+  - "maintenance-burden"
