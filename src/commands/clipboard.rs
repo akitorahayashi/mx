@@ -350,9 +350,9 @@ mod tests {
             let result = SystemClipboard::detect();
             match result {
                 Ok(_) => panic!("Should have failed"),
-                Err(e) => assert!(e
-                    .to_string()
-                    .contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set")),
+                Err(e) => {
+                    assert!(e.to_string().contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"))
+                }
             }
 
             if let Ok(val) = original_paste {
@@ -364,9 +364,13 @@ mod tests {
         {
             // Ensure new vars are unset
             let original_copy = env::var("MX_COPY_CMD");
-            if original_copy.is_ok() { env::remove_var("MX_COPY_CMD"); }
+            if original_copy.is_ok() {
+                env::remove_var("MX_COPY_CMD");
+            }
             let original_paste = env::var("MX_PASTE_CMD");
-            if original_paste.is_ok() { env::remove_var("MX_PASTE_CMD"); }
+            if original_paste.is_ok() {
+                env::remove_var("MX_PASTE_CMD");
+            }
 
             let _guard = EnvGuard::new("MX_CLIPBOARD_CMD", "legacy-tool --flag");
 
@@ -378,8 +382,12 @@ mod tests {
             assert_eq!(clip.paste_command.args, vec!["--flag"]);
 
             // Restore
-            if let Ok(val) = original_copy { env::set_var("MX_COPY_CMD", val); }
-            if let Ok(val) = original_paste { env::set_var("MX_PASTE_CMD", val); }
+            if let Ok(val) = original_copy {
+                env::set_var("MX_COPY_CMD", val);
+            }
+            if let Ok(val) = original_paste {
+                env::set_var("MX_PASTE_CMD", val);
+            }
         }
     }
 }
