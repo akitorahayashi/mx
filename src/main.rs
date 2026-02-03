@@ -5,7 +5,7 @@ use mx::{CopyOutcome, ListEntry};
 #[derive(Parser)]
 #[command(name = "mx")]
 #[command(version)]
-#[command(about = "Unified CLI for mx snippets and slash command generation")]
+#[command(about = "Unified CLI for mx snippets")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,

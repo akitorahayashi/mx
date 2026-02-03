@@ -73,8 +73,11 @@ mx t config.yaml     # Creates .mx/config.yaml (preserves extension)
 | pdr  | `.mx/pending/requirements.md`|
 | tko  | `.mx/tasks_outline.md`     |
 | tk   | `.mx/tasks.md`             |
+| atk  | `.mx/additional_tasks.md`  |
 | pdt  | `.mx/pending/tasks.md`     |
 | rv   | `.mx/review.md`            |
+| rf   | `.mx/reference.md`         |
+| pl   | `.mx/plan.md`              |
 
 ### Dynamic Path Resolution
 
