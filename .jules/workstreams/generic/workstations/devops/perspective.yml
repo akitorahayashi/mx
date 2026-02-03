@@ -1,0 +1,25 @@
+schema_version: 1
+
+observer: "devops"
+workstream: "generic"
+
+updated_at: "2026-02-03T10:05:00Z"
+
+goals:
+  short_term:
+    - "Monitor resolution of toolchain drift"
+    - "Monitor resolution of supply chain risks"
+
+biases:
+  assumptions:
+    - "CI environment should mirror production/release environment exactly."
+  blind_spots: []
+  heuristics:
+    - "If a workflow runs on every PR, it must be optimized for speed."
+
+recent_runs:
+  - created_at: "2026-02-03T10:00:00Z"
+    summary: "Identified critical toolchain drift, security risks, and resource waste."
+    history_path: ".jules/workstreams/generic/workstations/devops/histories/20260203-1a2b3c.yml"
+
+learned_exclusions: []
