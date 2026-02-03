@@ -1,0 +1,39 @@
+schema_version: 1
+
+id: "abc123"
+created_at: "2026-02-02T23:55:00Z"
+
+observer: "taxonomy"
+workstream: "generic"
+
+inputs:
+  change_summary_path: ".jules/changes/latest.yml" # Implicitly used via prompt
+  perspective_path: ".jules/workstreams/generic/workstations/taxonomy/perspective.yml"
+
+plan: |
+  1. Analyze codebase for naming inconsistencies, focusing on CLI args, error handling, and legacy terms.
+  2. Verify findings against existing issues/events.
+  3. Create event files for new findings.
+  4. Update workstation history and perspective.
+
+actions:
+  - "Created event: redundant-data-models.yml"
+  - "Created event: legacy-slash-terminology.yml"
+  - "Created event: misleading-error-naming.yml"
+  - "Created event: inconsistent-cli-arg-naming.yml"
+
+outcomes:
+  summary: "Identified 4 new taxonomy issues including legacy terms, misleading error naming, and inconsistent CLI args."
+  emitted_events:
+    - "rdm001"
+    - "lst001"
+    - "men001"
+    - "ican01"
+  notes: |
+    Found significant conceptual drift in 'AppError::config_error' usage.
+    Confirmed 'slash command' legacy reference in CLI help.
+
+perspective_updates:
+  goals_delta: []
+  learned_exclusions_delta: []
+  bias_adjustments: []

@@ -1,0 +1,35 @@
+schema_version: 1
+
+# Metadata
+id: "ican01"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "taxonomy"
+confidence: "high"
+
+# Content
+title: "Inconsistent CLI Argument Naming (key vs snippet)"
+statement: |
+  The CLI consistently uses the term `key` to refer to file identifiers across the `touch`, `cat`, and `clean` subcommands, as well as in internal data structures. However, the `mx command` subcommand breaks this pattern by naming its argument `snippet`, despite referring to the same concept (a file identifier/key).
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/main.rs"
+    loc:
+      - "Touch { key: String, ... }"
+      - "Cat { key: String }"
+      - "Clean { key: Option<String> }"
+    note: "Consistent usage of 'key'."
+  - path: "src/main.rs"
+    loc:
+      - "Command { snippet: String }"
+    note: "Divergent usage of 'snippet'."
+  - path: "src/storage.rs"
+    loc:
+      - "pub(crate) struct SnippetFile { pub key: String, ... }"
+    note: "Internal model uses 'key'."
+
+tags:
+  - "consistency"
+  - "cli-interface"
+  - "naming"
