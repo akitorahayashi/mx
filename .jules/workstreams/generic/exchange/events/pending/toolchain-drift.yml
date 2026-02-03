@@ -1,0 +1,45 @@
+schema_version: 1
+
+# Metadata
+id: "tcd001"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "devops"
+confidence: "high"
+
+# Content
+title: "Rust Toolchain Drift between CI and Release"
+statement: |
+  The CI environment diverges from the Release environment and the project configuration.
+  `rust-toolchain.toml` pins the toolchain to `1.90.0`, and `release.yml` respects this.
+  However, the `.github/actions/setup` composite action defaults to `stable` if no input is provided,
+  and `build.yml` (used by CI) calls it without inputs. This means CI runs on `stable` while Release
+  runs on `1.90.0`.
+
+# Evidence supporting the observation
+evidence:
+  - path: "rust-toolchain.toml"
+    loc:
+      - "2"
+    note: "Pins toolchain to 1.90.0."
+
+  - path: ".github/actions/setup/action.yml"
+    loc:
+      - "7"
+    note: "Defaults 'rust-version' input to 'stable'."
+
+  - path: ".github/workflows/build.yml"
+    loc:
+      - "15"
+      - "43"
+    note: "Calls setup action without specifying rust-version, thus using stable."
+
+  - path: ".github/workflows/release.yml"
+    loc:
+      - "30"
+    note: "Explicitly uses 1.90.0, matching the toml file."
+
+tags:
+  - "reproducibility"
+  - "drift"
+  - "toolchain"

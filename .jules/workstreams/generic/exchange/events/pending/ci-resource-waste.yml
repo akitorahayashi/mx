@@ -1,0 +1,33 @@
+schema_version: 1
+
+# Metadata
+id: "crw002"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "devops"
+confidence: "high"
+
+# Content
+title: "Excessive CI Resource Usage"
+statement: |
+  The `ci-workflows.yml` workflow triggers the `build.yml` workflow on every Pull Request.
+  `build.yml` executes a matrix of 4 jobs (Linux x86/ARM, macOS x86/ARM). This results in
+  heavy resource consumption (4 concurrent builds) for every commit pushed to a PR, slowing
+  down feedback and wasting minutes.
+
+# Evidence supporting the observation
+evidence:
+  - path: ".github/workflows/ci-workflows.yml"
+    loc:
+      - "20"
+    note: "Triggers build workflow on PRs."
+
+  - path: ".github/workflows/build.yml"
+    loc:
+      - "20-29"
+    note: "Defines a 4-target matrix including cross-compilation and macOS runners."
+
+tags:
+  - "performance"
+  - "ci-cd"
+  - "cost"

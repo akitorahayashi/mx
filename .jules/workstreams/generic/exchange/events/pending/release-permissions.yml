@@ -1,0 +1,28 @@
+schema_version: 1
+
+# Metadata
+id: "prm004"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "devops"
+confidence: "high"
+
+# Content
+title: "Excessive Permissions in Release Workflow"
+statement: |
+  The `release.yml` workflow grants `contents: write` permission at the workflow level.
+  This permission propagates to all jobs, including the `build` job which compiles code
+  and runs potentially untrusted build scripts (via `build.rs` or proc-macros).
+  The write permission should be scoped strictly to the `release` job.
+
+# Evidence supporting the observation
+evidence:
+  - path: ".github/workflows/release.yml"
+    loc:
+      - "11"
+    note: "Top-level permissions granting write access to all jobs."
+
+tags:
+  - "security"
+  - "permissions"
+  - "least-privilege"

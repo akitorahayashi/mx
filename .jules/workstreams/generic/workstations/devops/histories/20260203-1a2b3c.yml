@@ -1,0 +1,37 @@
+schema_version: 1
+
+id: "1a2b3c"
+created_at: "2026-02-03T10:00:00Z"
+
+observer: "devops"
+workstream: "generic"
+
+inputs:
+  change_summary_path: ".jules/changes/latest.yml"
+
+plan: |
+  Analyze CI/CD workflows for reproducibility, security, and efficiency issues.
+
+actions:
+  - "Analyzed .github/workflows/ and .github/actions/"
+  - "Checked rust-toolchain.toml and Cargo.toml"
+  - "Created 4 event files for identified issues"
+
+outcomes:
+  summary: "Identified critical toolchain drift, security risks, and resource waste."
+  emitted_events:
+    - ".jules/workstreams/generic/exchange/events/pending/toolchain-drift.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/ci-resource-waste.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/install-jlo-no-checksum.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/release-permissions.yml"
+  notes: |
+    The pipeline has significant drift between CI (stable) and Release (1.90.0).
+    Supply chain security is weak in the custom install action.
+    Release workflow has excessive permissions.
+
+perspective_updates:
+  goals_delta:
+    - "Monitor resolution of toolchain drift"
+    - "Monitor resolution of supply chain risks"
+  learned_exclusions_delta: []
+  bias_adjustments: []
