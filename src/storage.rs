@@ -226,7 +226,9 @@ mod tests {
         let (storage, _dir) = create_test_storage(&["a/foo.md", "b/foo.md"]);
         let err = storage.resolve_snippet("foo").unwrap_err();
         match err {
-            AppError::ConfigError(msg) => assert!(msg.contains("Multiple snippets share the name 'foo'")),
+            AppError::ConfigError(msg) => {
+                assert!(msg.contains("Multiple snippets share the name 'foo'"))
+            }
             _ => panic!("Expected ConfigError, got {:?}", err),
         }
     }
@@ -236,7 +238,7 @@ mod tests {
         let (storage, _dir) = create_test_storage(&[]);
         let err = storage.resolve_snippet("foo").unwrap_err();
         match err {
-            AppError::NotFound(_) => {},
+            AppError::NotFound(_) => {}
             _ => panic!("Expected NotFound, got {:?}", err),
         }
     }
@@ -246,7 +248,9 @@ mod tests {
         let (storage, _dir) = create_test_storage(&[]);
         let err = storage.resolve_snippet("../secret").unwrap_err();
         match err {
-            AppError::ConfigError(msg) => assert!(msg.contains("Snippet paths cannot contain empty or traversal segments")),
+            AppError::ConfigError(msg) => {
+                assert!(msg.contains("Snippet paths cannot contain empty or traversal segments"))
+            }
             _ => panic!("Expected ConfigError for traversal, got {:?}", err),
         }
     }
