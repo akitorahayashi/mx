@@ -1,0 +1,21 @@
+schema_version: 1
+id: "op4k3m"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "devops"
+confidence: "high"
+title: "Over-permissioned Build Job in Release Workflow"
+statement: |
+  The `.github/workflows/release.yml` grants `contents: write` permission to the entire workflow. This permission is inherited by the `build` job, which executes `cargo build` and potentially untrusted build scripts/dependencies. If a dependency is compromised, it could abuse this permission to modify the repository or release assets. The `build` job should operate with `contents: read` (or less), and only the `release` job needs `contents: write`.
+evidence:
+  - path: ".github/workflows/release.yml"
+    loc:
+      - "10"
+    note: "Top-level permissions grant contents: write to all jobs"
+  - path: ".github/workflows/release.yml"
+    loc:
+      - "13"
+    note: "Build job inherits write permissions while running cargo build"
+tags:
+  - "security"
+  - "least-privilege"
