@@ -1,6 +1,6 @@
 schema_version: 1
 id: "ied001"
-issue_id: null
+issue_id: ""
 created_at: "2026-02-03"
 author_role: "rustacean"
 confidence: "high"
