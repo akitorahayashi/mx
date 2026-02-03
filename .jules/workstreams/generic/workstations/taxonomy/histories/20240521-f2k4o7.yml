@@ -1,0 +1,49 @@
+schema_version: 1
+
+id: "f2k4o7"
+created_at: "2024-05-21T12:00:00Z"
+
+observer: "taxonomy"
+workstream: "generic"
+
+inputs:
+  change_summary_path: ".jules/changes/latest.yml"
+
+plan: |
+  1. Emit Event: Inconsistent CLI Verb for Copying Snippets
+  2. Emit Event: Inconsistent Argument Naming for File Identifiers
+  3. Emit Event: Inconsistent Module Naming
+  4. Emit Event: Redundant Outcome Types
+  5. Emit Event: Ambiguous Term "Key"
+  6. Verify Events
+  7. Complete pre commit steps
+  8. Workstation Maintenance
+
+actions:
+  - type: "create_file"
+    path: ".jules/workstreams/generic/exchange/events/pending/inconsistent-cli-verb-copy.yml"
+  - type: "create_file"
+    path: ".jules/workstreams/generic/exchange/events/pending/inconsistent-arg-naming.yml"
+  - type: "create_file"
+    path: ".jules/workstreams/generic/exchange/events/pending/inconsistent-module-naming.yml"
+  - type: "create_file"
+    path: ".jules/workstreams/generic/exchange/events/pending/redundant-outcome-types.yml"
+  - type: "create_file"
+    path: ".jules/workstreams/generic/exchange/events/pending/ambiguous-term-key.yml"
+
+outcomes:
+  summary: "Identified 5 taxonomy inconsistencies in naming, CLI verbs, and module structure."
+  emitted_events:
+    - ".jules/workstreams/generic/exchange/events/pending/inconsistent-cli-verb-copy.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/inconsistent-arg-naming.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/inconsistent-module-naming.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/redundant-outcome-types.yml"
+    - ".jules/workstreams/generic/exchange/events/pending/ambiguous-term-key.yml"
+  notes: |
+    Found significant inconsistencies in how snippets are handled vs how they are exposed in CLI.
+    The term "Key" is overloaded.
+
+perspective_updates:
+  goals_delta: []
+  learned_exclusions_delta: []
+  bias_adjustments: []
