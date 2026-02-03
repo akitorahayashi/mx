@@ -1,0 +1,23 @@
+schema_version: 1
+id: "err001"
+issue_id: ""
+created_at: "2024-05-22"
+author_role: "rustacean"
+confidence: "high"
+title: "Error model relies on String variants, losing domain meaning"
+statement: |
+  The `AppError` type converts underlying errors (like I/O or WalkDir errors) and specific failure modes into generic String-based variants (ConfigError, NotFound, etc.). This erases semantic meaning, prevents programmatic handling of specific errors, and violates the principle that errors should be part of the contract.
+evidence:
+  - path: "src/error.rs"
+    loc:
+      - "6-13"
+      - "53-84"
+    note: "AppError definition uses String payloads for ConfigError, NotFound, etc., and constructors take Into<String>."
+  - path: "src/storage.rs"
+    loc:
+      - "116"
+    note: "WalkDir errors are converted to string via `to_string()`, losing the original error type."
+tags:
+  - "error-handling"
+  - "anti-pattern"
+  - "rustacean"
