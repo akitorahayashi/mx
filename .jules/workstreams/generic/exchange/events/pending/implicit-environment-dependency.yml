@@ -1,0 +1,30 @@
+schema_version: 1
+id: "ied001"
+issue_id: null
+created_at: "2026-02-03"
+author_role: "rustacean"
+confidence: "high"
+title: "Implicit Environment Dependency in Public API"
+statement: |
+  The public library functions `copy_snippet` and `list_snippets` in `src/lib.rs` rely on implicit side-effects (reading environment variables via `SnippetStorage::new_default()`) to configure storage paths. This violates the principle of explicit dependencies ("Isolation beats locking"), making the library component hard to test, reuse, or configure programmatically without modifying global process state.
+evidence:
+  - path: "src/lib.rs"
+    loc:
+      - "pub fn copy_snippet"
+      - "SnippetStorage::new_default()?"
+    note: "Public API function implicitly initializes storage from environment."
+  - path: "src/lib.rs"
+    loc:
+      - "pub fn list_snippets"
+      - "SnippetStorage::new_default()?"
+    note: "Public API function implicitly initializes storage from environment."
+  - path: "src/storage.rs"
+    loc:
+      - "pub fn new_default() -> Result<Self, AppError>"
+      - "env::var(\"HOME\")"
+    note: "Storage initialization reads process-global environment variables."
+tags:
+  - "api-design"
+  - "side-effects"
+  - "testability"
+  - "composability"
