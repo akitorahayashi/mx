@@ -1,0 +1,33 @@
+schema_version: 2
+id: "a1b2c3"
+source_events:
+  - "cdcp01"
+  - "latdep"
+  - "shared"
+  - "evcov1"
+title: "Decouple Context Logic from Touch Command"
+label: "refacts"
+priority: "high"
+summary: "Move shared context logic from touch command to a dedicated domain module to fix coupling and lateral dependencies."
+problem: |
+  Core domain logic for project context management (finding project root, validating paths, resolving aliases) is currently implemented within `src/commands/touch.rs`. This logic is directly imported by `src/commands/copy_snippet.rs` and others, creating a brittle lateral dependency between commands and violating separation of concerns. The `touch` command should not be the authority on project structure.
+impact: |
+  Changes to the `touch` command implementation can inadvertently break the `copy` command. The codebase is harder to understand because generic utilities are hidden inside a specific command. This high coupling increases maintenance cost and risk of regression.
+desired_outcome: |
+  Shared logic (`find_project_root`, `validate_path`, `ALIASES`, etc.) is moved to a new shared module (e.g., `src/domain/context.rs` or `src/utils/context.rs`). Commands `touch`, `copy`, `cat`, and `clean` import this logic from the shared module, not from each other.
+constraints: []
+risks: []
+affected_areas:
+  - "src/commands/touch.rs"
+  - "src/commands/copy_snippet.rs"
+  - "src/commands/cat.rs"
+  - "src/commands/clean.rs"
+acceptance_criteria:
+  - "`find_project_root` and `validate_path` are no longer defined in `src/commands/touch.rs`."
+  - "No command module imports from another command module (specifically `touch`)."
+  - "All commands continue to function as expected (verified by existing tests)."
+verification_commands:
+  - "cargo test"
+  - "! grep 'use crate::commands::touch' src/commands/copy_snippet.rs"
+requires_deep_analysis: false
+deep_analysis_reason: ""

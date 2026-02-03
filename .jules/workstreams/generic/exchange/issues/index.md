@@ -15,7 +15,11 @@ It serves as the central source of truth for the **Decider** to deduplicate obse
 
 | Issue | Summary |
 | :--- | :--- |
-| _No open issues_ | - |
+| [Decouple Context Logic from Touch Command](./refacts/decouple-context-logic.yml) | Move shared context logic from touch command to a dedicated domain module. |
+| [Cleanup Dead Code and Redundant Models](./refacts/cleanup-models.yml) | Remove dead fields in ListEntry and unify duplicate snippet models. |
+| [CI/CD Standardization and Hardening](./refacts/cicd-standardization.yml) | Align Rust versions, remove redundancy, and pin GitHub Actions. |
+| [Improve Error Handling and Visibility](./refacts/improve-error-handling.yml) | Refactor AppError to preserve type information and fix hidden IO failures. |
+| [Standardize Command Naming and Domain Terminology](./refacts/standardize-naming.yml) | Rename files and concepts to be consistent (e.g., 'Snippet' everywhere). |
 
 ## Bugs
 > Defect reports and fixes in [`bugs/`](./bugs/).
@@ -29,14 +33,14 @@ It serves as the central source of truth for the **Decider** to deduplicate obse
 
 | Issue | Summary |
 | :--- | :--- |
-| _No open issues_ | - |
+| [Improve Integration Test Isolation and Concurrency](./tests/improve-test-isolation.yml) | Refactor TestContext to avoid global state modification. |
 
 ## Docs
 > Documentation updates in [`docs/`](./docs/).
 
 | Issue | Summary |
 | :--- | :--- |
-| _No open issues_ | - |
+| [Sync Documentation with Implementation](./docs/sync-documentation.yml) | Update README and help text to include missing aliases and remove legacy feature references. |
 
 <!--
 Instructions for Decider:

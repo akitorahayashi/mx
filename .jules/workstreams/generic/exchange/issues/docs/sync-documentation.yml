@@ -1,0 +1,31 @@
+schema_version: 2
+id: "p6q7r8"
+source_events:
+  - "ev001a"
+title: "Sync Documentation with Implementation"
+label: "docs"
+priority: "low"
+summary: "Update README and help text to include missing aliases and remove legacy feature references."
+problem: |
+  Documentation is out of sync with reality:
+  1. `README.md` is missing aliases `atk`, `rf`, `pl` which are implemented in `touch.rs`.
+  2. CLI help text mentions "slash command generation", a legacy feature that has been removed.
+impact: |
+  Users miss out on useful shortcuts (aliases). Users are confused by references to non-existent features.
+desired_outcome: |
+  1. `README.md` lists all supported aliases.
+  2. CLI help text accurately reflects current functionality.
+constraints: []
+risks: []
+affected_areas:
+  - "README.md"
+  - "src/main.rs"
+  - "src/commands/touch.rs"
+acceptance_criteria:
+  - "`README.md` contains `atk`, `rf`, `pl` in the aliases section."
+  - "CLI help output does not mention slash commands."
+verification_commands:
+  - "grep 'atk' README.md"
+  - "cargo run -- --help"
+requires_deep_analysis: false
+deep_analysis_reason: ""

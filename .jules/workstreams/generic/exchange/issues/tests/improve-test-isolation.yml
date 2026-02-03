@@ -1,0 +1,30 @@
+schema_version: 2
+id: "s9t0u1"
+source_events:
+  - "ti30c9"
+title: "Improve Integration Test Isolation and Concurrency"
+label: "tests"
+priority: "medium"
+summary: "Refactor TestContext to avoid global state modification, enabling parallel test execution."
+problem: |
+  Integration tests currently modify the process-global `HOME` environment variable to mock the configuration directory. This forces tests to run serially (`#[serial]`), slowing down the test suite and creating potential for flaky tests if isolation fails.
+impact: |
+  Slow feedback loop for developers. Risk of side effects leaking between tests.
+desired_outcome: |
+  `TestContext` uses a thread-local or dependency-injection approach to mock configuration paths, allowing tests to run in parallel. `#[serial]` attributes are removed.
+constraints:
+  - "Must support `assert_cmd` which runs in a separate process (so env vars might still be needed, but maybe passed explicitly per command instead of globally set)."
+risks:
+  - "Refactoring test harness might break many tests temporarily."
+affected_areas:
+  - "tests/common/mod.rs"
+  - "tests/commands/"
+acceptance_criteria:
+  - "Tests no longer use `#[serial]`."
+  - "`cargo test` passes consistently."
+  - "`HOME` environment variable is not modified globally in the test process."
+verification_commands:
+  - "cargo test"
+  - "! grep '#[serial]' tests/commands/*.rs"
+requires_deep_analysis: false
+deep_analysis_reason: ""

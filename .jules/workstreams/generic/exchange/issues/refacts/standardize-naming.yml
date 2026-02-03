@@ -1,0 +1,43 @@
+schema_version: 2
+id: "m3n4o5"
+source_events:
+  - "naming"
+  - "ev1snp"
+  - "ev3prt"
+  - "ev2tch"
+title: "Standardize Command Naming and Domain Terminology"
+label: "refacts"
+priority: "medium"
+summary: "Rename files and concepts to be consistent (e.g., 'Snippet' everywhere, rename implementation files to match commands)."
+problem: |
+  The project suffers from pervasive naming inconsistencies:
+  1. File names do not match commands (`mx list` -> `list_snippets.rs`, `mx command` -> `copy_snippet.rs`).
+  2. Terminology mix: "Snippet" vs "Command" for the same concept.
+  3. "Project Root" is used to describe what is actually just the current working directory.
+  4. `mx touch` implies file creation but defaults to pasting clipboard content, which is unexpected behavior.
+impact: |
+  Inconsistent naming increases cognitive load for contributors. Misleading terms (Project Root, Touch) confuse users about the tool's behavior and capability.
+desired_outcome: |
+  1. Command implementation files are renamed to match the CLI command (e.g., `list.rs`, `copy.rs`).
+  2. "Snippet" is used consistently as the internal domain term.
+  3. `find_project_root` is renamed to reflect it finds CWD (or logic is updated to actually find a root).
+  4. `mx touch` behavior is clarified or flags are adjusted (e.g., require explicit flag for paste or rename command). *Note: Renaming the command might be a breaking change, so changing default behavior or improving docs/flags is preferred.*
+constraints: []
+risks:
+  - "Renaming files will require updating all module declarations."
+  - "Changing CLI behavior is a breaking change."
+affected_areas:
+  - "src/commands/"
+  - "src/main.rs"
+  - "src/storage.rs"
+acceptance_criteria:
+  - "File `src/commands/list_snippets.rs` is renamed to `src/commands/list.rs`."
+  - "File `src/commands/copy_snippet.rs` is renamed to `src/commands/copy.rs`."
+  - "Terminology is consistent in code and comments."
+  - "`find_project_root` is renamed or updated."
+verification_commands:
+  - "ls src/commands/list.rs"
+  - "ls src/commands/copy.rs"
+  - "cargo test"
+requires_deep_analysis: false
+deep_analysis_reason: ""
