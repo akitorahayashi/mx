@@ -47,8 +47,8 @@ desired_outcome: |
 
 constraints: []
 risks:
-  - **CLI Compatibility**: Changes to error messages (due to `thiserror`) might affect scripts parsing stderr.
-  - **Path Validation**: Unifying path validation might reject paths that were previously allowed by one of the divergent implementations.
+  - "**CLI Compatibility**: Changes to error messages (due to `thiserror`) might affect scripts parsing stderr."
+  - "**Path Validation**: Unifying path validation might reject paths that were previously allowed by one of the divergent implementations."
 
 # Specifics
 affected_areas:
