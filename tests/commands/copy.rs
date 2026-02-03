@@ -2,11 +2,9 @@
 
 use super::super::common::TestContext;
 use predicates::prelude::*;
-use serial_test::serial;
 use std::fs;
 
 #[test]
-#[serial]
 fn command_subcommand_works() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
@@ -23,7 +21,6 @@ fn command_subcommand_works() {
 }
 
 #[test]
-#[serial]
 fn command_alias_c_works() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();
@@ -40,7 +37,6 @@ fn command_alias_c_works() {
 }
 
 #[test]
-#[serial]
 fn command_subcommand_missing_snippet_fails() {
     let ctx = TestContext::new();
     ctx.install_sample_catalog();

@@ -11,13 +11,14 @@ use commands::clipboard::clipboard_from_env;
 use commands::copy_snippet::CopySnippet;
 use commands::list_snippets;
 use commands::touch;
+use commands::touch::find_project_root;
 use error::AppError;
-use storage::SnippetStorage;
 
 pub use commands::clean::CleanOutcome;
 pub use commands::copy_snippet::CopyOutcome;
 pub use commands::list_snippets::ListEntry;
 pub use commands::touch::TouchOutcome;
+pub use storage::SnippetStorage;
 
 /// Displays the contents of a context file from the `.mx/` directory.
 ///
@@ -48,24 +49,27 @@ pub use commands::touch::TouchOutcome;
 /// println!("{}", content);
 /// ```
 pub fn cat_context(key: &str) -> Result<String, AppError> {
-    cat::cat(key)
+    let root = find_project_root()?;
+    cat::cat(&root, key)
 }
 
 pub fn clean_context(key: Option<String>) -> Result<CleanOutcome, AppError> {
-    clean::clean(key)
+    let root = find_project_root()?;
+    clean::clean(&root, key)
 }
 
-pub fn copy_snippet(query: &str) -> Result<CopyOutcome, AppError> {
-    let storage = SnippetStorage::new_default()?;
+pub fn copy_snippet(query: &str, storage: &SnippetStorage) -> Result<CopyOutcome, AppError> {
     let clipboard = clipboard_from_env()?;
-    CopySnippet { query }.execute(&storage, clipboard.as_ref())
+    let root = find_project_root().ok();
+    CopySnippet { query }.execute(storage, clipboard.as_ref(), root.as_deref())
 }
 
-pub fn list_snippets() -> Result<Vec<ListEntry>, AppError> {
-    let storage = SnippetStorage::new_default()?;
-    list_snippets::list(&storage)
+pub fn list_snippets(storage: &SnippetStorage) -> Result<Vec<ListEntry>, AppError> {
+    list_snippets::list(storage)
 }
 
 pub fn touch_context(key: &str, force: bool) -> Result<TouchOutcome, AppError> {
-    touch::touch(key, force)
+    let root = find_project_root()?;
+    let clipboard = clipboard_from_env()?;
+    touch::touch(&root, key, force, clipboard.as_ref())
 }

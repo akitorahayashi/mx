@@ -4,12 +4,12 @@ use std::path::{Component, Path, PathBuf};
 use walkdir::WalkDir;
 
 #[derive(Debug, Clone)]
-pub(crate) struct SnippetStorage {
+pub struct SnippetStorage {
     commands_root: PathBuf,
 }
 
 impl SnippetStorage {
-    pub fn new_default() -> Result<Self, AppError> {
+    pub fn from_env() -> Result<Self, AppError> {
         if let Ok(custom) = env::var("MX_COMMANDS_ROOT") {
             return Self::from_root(PathBuf::from(custom));
         }
@@ -104,7 +104,7 @@ impl SnippetStorage {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct SnippetFile {
+pub struct SnippetFile {
     pub key: String,
     pub relative_path: String,
     pub absolute_path: PathBuf,

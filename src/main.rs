@@ -61,7 +61,8 @@ fn main() {
 }
 
 fn handle_command(name: &str) -> Result<(), AppError> {
-    let CopyOutcome { key, relative_path, absolute_path } = mx::copy_snippet(name)?;
+    let storage = mx::SnippetStorage::from_env()?;
+    let CopyOutcome { key, relative_path, absolute_path } = mx::copy_snippet(name, &storage)?;
     println!("✅ Copied '{key}' from {relative_path} -> {}", absolute_path.display());
     Ok(())
 }
@@ -93,7 +94,8 @@ fn handle_clean(key: Option<String>) -> Result<(), AppError> {
 }
 
 fn handle_list() -> Result<(), AppError> {
-    let entries = mx::list_snippets()?;
+    let storage = mx::SnippetStorage::from_env()?;
+    let entries = mx::list_snippets(&storage)?;
     if entries.is_empty() {
         println!("(no snippets found)");
         return Ok(());
