@@ -1,0 +1,31 @@
+schema_version: 1
+
+# Metadata
+id: "evcov2"
+issue_id: ""
+created_at: "2026-02-02"
+author_role: "cov"
+confidence: "high"
+
+# Content
+title: "Untested snippet resolution edge cases and traversal risks"
+statement: |
+  `src/storage.rs` implements critical logic for snippet resolution (ambiguity checks) and path sanitization (`ensure_safe_segments`), but has no unit tests. Integration tests (`tests/commands/copy.rs`) do not cover these failure modes, leaving potential security vulnerabilities (path traversal) and usability issues (ambiguous snippets) unguarded against regression.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "fn ensure_safe_segments"
+      - "fn resolve_snippet"
+    note: "Critical security and logic functions lacking unit tests."
+
+  - path: "tests/commands/copy.rs"
+    loc:
+      - "whole file"
+    note: "Integration tests verify happy path and missing file, but skip ambiguous resolution and path traversal scenarios."
+
+tags:
+  - "coverage"
+  - "risk-assessment"
+  - "security"
