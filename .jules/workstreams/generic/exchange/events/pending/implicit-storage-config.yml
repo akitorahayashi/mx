@@ -1,0 +1,28 @@
+schema_version: 1
+
+# Metadata
+id: "da03is"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "data_arch"
+confidence: "high"
+
+# Content
+title: "Implicit Global State Dependency in Storage"
+statement: |
+  SnippetStorage couples configuration logic (reading HOME/MX_COMMANDS_ROOT env vars) directly into the domain model via the from_env constructor. This makes the storage layer difficult to test without modifying global process state and violates the boundary sovereignty principle.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "SnippetStorage::from_env"
+    note: "Reads environment variables directly to construct the object."
+  - path: "src/lib.rs"
+    loc:
+      - "public library functions"
+    note: "Implicitly rely on this behavior via SnippetStorage::new_default() or similar patterns, obscuring dependencies."
+
+tags:
+  - "coupling"
+  - "testing-difficulty"

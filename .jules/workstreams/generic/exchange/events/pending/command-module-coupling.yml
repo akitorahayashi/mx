@@ -1,0 +1,28 @@
+schema_version: 1
+
+# Metadata
+id: "da04cc"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "data_arch"
+confidence: "high"
+
+# Content
+title: "High Coupling Between Command Modules"
+statement: |
+  The copy_snippet and cat command modules directly import logic (resolve_path, validate_path) from the touch module. This violates command isolation, making the touch module a de-facto shared library for path logic and creating a hidden dependency graph that complicates refactoring.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "use crate::commands::touch::validate_path"
+    note: "Direct dependency on touch module logic."
+  - path: "src/commands/cat.rs"
+    loc:
+      - "use crate::commands::touch::{resolve_path, validate_path}"
+    note: "Direct dependency on touch module logic."
+
+tags:
+  - "coupling"
+  - "modularization"

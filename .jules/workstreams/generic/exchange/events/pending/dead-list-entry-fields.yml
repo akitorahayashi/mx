@@ -1,0 +1,28 @@
+schema_version: 1
+
+# Metadata
+id: "da02dl"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "data_arch"
+confidence: "high"
+
+# Content
+title: "Deprecated Metadata Fields in ListEntry"
+statement: |
+  The ListEntry struct retains title and description fields that are permanently set to None, creating a misleading data contract. This dead code implies functionality that has been removed and complicates the data model unnecessarily.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/commands/list_snippets.rs"
+    loc:
+      - "ListEntry struct definition"
+    note: "Contains Option<String> fields for title and description."
+  - path: "src/commands/list_snippets.rs"
+    loc:
+      - "list function"
+    note: "Hardcodes title and description to None during mapping."
+
+tags:
+  - "dead-code"
+  - "misleading-model"

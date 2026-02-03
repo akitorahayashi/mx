@@ -1,0 +1,29 @@
+schema_version: 1
+
+# Metadata
+id: "da01rs"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "data_arch"
+confidence: "high"
+
+# Content
+title: "Redundant SnippetFile and CopyOutcome definitions"
+statement: |
+  SnippetFile and CopyOutcome structs share an identical schema representing a file reference, violating the Single Source of Truth principle. This duplication requires keeping two identical structures in sync without a clear boundary or conversion necessity.
+
+# Evidence supporting the observation
+evidence:
+  - path: "src/storage.rs"
+    loc:
+      - "SnippetFile struct definition"
+    note: "Defines key, relative_path, absolute_path."
+
+  - path: "src/commands/copy_snippet.rs"
+    loc:
+      - "CopyOutcome struct definition"
+    note: "Defines identical key, relative_path, absolute_path fields."
+
+tags:
+  - "data-duplication"
+  - "ssot-violation"
