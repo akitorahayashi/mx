@@ -1,0 +1,29 @@
+schema_version: 2
+id: "j0k1l2"
+source_events:
+  - "uztfw1"
+  - "wq4x4a"
+title: "Improve Error Handling and Visibility"
+label: "refacts"
+priority: "medium"
+summary: "Refactor AppError to preserve type information and fix hidden IO failures in placeholders."
+problem: |
+  The current error handling strategy is lossy: `AppError` eagerly converts underlying errors to strings, discarding context. Additionally, `render_placeholder` catches IO errors and returns them as formatted text strings instead of propagating them, masking failures from the caller.
+impact: |
+  Lossy errors make programmatic handling impossible and debugging difficult. Hidden IO failures in placeholders can lead to incomplete output being generated silently, with the user unaware that a dependency failed to load.
+desired_outcome: |
+  `AppError` wraps underlying error types (e.g., `io::Error`, `WalkDirError`) instead of stringifying them. `render_placeholder` propagates errors so the caller can decide how to handle them (e.g., fail the operation or warn the user).
+constraints: []
+risks: []
+affected_areas:
+  - "src/storage.rs"
+  - "src/commands/copy_snippet.rs"
+  - "src/error.rs"
+acceptance_criteria:
+  - "`AppError` enum variants hold source error types where applicable."
+  - "`render_placeholder` returns `Result<String, AppError>`."
+  - "Failures to read placeholder files result in a visible error or warning, not silent text substitution."
+verification_commands:
+  - "cargo test"
+requires_deep_analysis: false
+deep_analysis_reason: ""

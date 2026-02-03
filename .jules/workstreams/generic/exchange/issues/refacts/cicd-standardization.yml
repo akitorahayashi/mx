@@ -1,0 +1,36 @@
+schema_version: 2
+id: "g7h8i9"
+source_events:
+  - "ev2abc"
+  - "ev3def"
+  - "ev1xyz"
+title: "CI/CD Standardization and Hardening"
+label: "refacts"
+priority: "high"
+summary: "Align Rust versions across workflows, remove redundant build logic, and pin GitHub Actions for security."
+problem: |
+  The CI/CD pipeline exhibits several issues:
+  1. Environment Drift: CI defaults to `stable` while Release pins `1.90.0`.
+  2. Redundancy: Release workflow duplicates the build matrix from Build workflow.
+  3. Security: GitHub Actions are referenced by mutable tags (e.g., `@v4`) instead of immutable SHAs.
+impact: |
+  Environment drift can lead to "works on my machine" (or CI) but fails in release. Redundancy increases maintenance effort. Unpinned actions expose the project to supply-chain attacks.
+desired_outcome: |
+  1. All workflows use a consistent Rust version (either pinned or consistently stable).
+  2. Release workflow reuses artifacts from the Build workflow instead of rebuilding.
+  3. All GitHub Actions uses are pinned to specific commit SHAs.
+constraints: []
+risks: []
+affected_areas:
+  - ".github/workflows/build.yml"
+  - ".github/workflows/release.yml"
+  - ".github/actions/setup/action.yml"
+  - "rust-toolchain.toml"
+acceptance_criteria:
+  - "CI and Release workflows use the same Rust toolchain version."
+  - "Release workflow downloads artifacts from Build workflow."
+  - "All `uses:` directives in workflows refer to commit SHAs."
+verification_commands:
+  - "grep 'uses:' .github/workflows/*.yml" # Manual check for SHAs
+requires_deep_analysis: false
+deep_analysis_reason: ""

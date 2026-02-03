@@ -1,0 +1,30 @@
+schema_version: 2
+id: "d4e5f6"
+source_events:
+  - "dle001"
+  - "dsm001"
+  - "cjkw75"
+title: "Cleanup Dead Code and Redundant Models"
+label: "refacts"
+priority: "medium"
+summary: "Remove dead fields in ListEntry and unify duplicate snippet models to reduce technical debt."
+problem: |
+  The codebase contains dead fields (`title`, `description`) in `ListEntry` that are relics of deprecated metadata support. Additionally, `SnippetFile` (storage) and `CopyOutcome` (command) are structurally identical, causing unnecessary duplication and mapping code. There is also unnecessary cloning in `join_paths`.
+impact: |
+  Dead code creates confusion for developers about what data is actually used. Redundant models increase maintenance burden as changes must be synchronized across multiple structs. Unnecessary cloning impacts performance.
+desired_outcome: |
+  `ListEntry` is cleaned of dead fields. `CopyOutcome` is removed or refactored to reuse `SnippetFile` (or a shared DTO). `join_paths` avoids unnecessary cloning.
+constraints: []
+risks: []
+affected_areas:
+  - "src/commands/list_snippets.rs"
+  - "src/storage.rs"
+  - "src/commands/copy_snippet.rs"
+acceptance_criteria:
+  - "`ListEntry` no longer has `title` and `description` fields."
+  - "`CopyOutcome` is removed or aliases `SnippetFile`, and redundant mapping logic is removed."
+  - "`join_paths` does not clone strings unnecessarily."
+verification_commands:
+  - "cargo test"
+requires_deep_analysis: false
+deep_analysis_reason: ""
