@@ -1,5 +1,5 @@
 use crate::commands::clipboard::Clipboard;
-use crate::commands::touch::{find_project_root, validate_path};
+use crate::commands::touch::validate_path;
 use crate::error::AppError;
 use crate::storage::SnippetStorage;
 use std::borrow::Cow;
@@ -22,11 +22,11 @@ impl CopySnippet<'_> {
         &self,
         storage: &SnippetStorage,
         clipboard: &dyn Clipboard,
+        project_root: Option<&Path>,
     ) -> Result<CopyOutcome, AppError> {
         let snippet = storage.resolve_snippet(self.query)?;
         let content = fs::read_to_string(&snippet.absolute_path)?;
-        let project_root = find_project_root().ok();
-        let expanded = expand_placeholders(&content, project_root.as_deref());
+        let expanded = expand_placeholders(&content, project_root);
         clipboard.copy(expanded.as_ref())?;
 
         Ok(CopyOutcome {
@@ -91,30 +91,8 @@ fn render_placeholder(raw_token: &str, project_root: &Path) -> String {
 mod tests {
     use super::*;
     use crate::commands::test_support::{recording_clipboard, TestSnippetStorage};
-    use serial_test::serial;
-    use std::env;
     use std::fs;
     use tempfile::tempdir;
-
-    struct DirGuard {
-        original: Option<std::path::PathBuf>,
-    }
-
-    impl DirGuard {
-        fn set(dir: &Path) -> Self {
-            let original = env::current_dir().ok();
-            env::set_current_dir(dir).expect("set cwd");
-            Self { original }
-        }
-    }
-
-    impl Drop for DirGuard {
-        fn drop(&mut self) {
-            if let Some(ref original) = self.original {
-                let _ = env::set_current_dir(original);
-            }
-        }
-    }
 
     #[test]
     fn copy_snippet_pushes_contents_to_clipboard() {
@@ -123,7 +101,7 @@ mod tests {
         let clipboard = recording_clipboard();
 
         let output = CopySnippet { query: "wc" }
-            .execute(&storage.storage, clipboard.as_ref())
+            .execute(&storage.storage, clipboard.as_ref(), None)
             .expect("copy should succeed");
 
         assert_eq!(output.key, "wc");
@@ -133,7 +111,6 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn copy_snippet_expands_placeholders_into_clipboard() {
         let storage = TestSnippetStorage::new();
         storage.write_snippet("commands/w/wc.md", "Section:\n{{.mx/info.md}}\nDone");
@@ -143,18 +120,13 @@ mod tests {
         fs::create_dir_all(project_root.path().join(".mx")).expect("create .mx");
         fs::write(project_root.path().join(".mx/info.md"), "dynamic info").expect("write info");
 
-        let _guard = DirGuard::set(project_root.path());
-
         let result = CopySnippet { query: "wc" }
-            .execute(&storage.storage, clipboard.as_ref())
+            .execute(&storage.storage, clipboard.as_ref(), Some(project_root.path()))
             .expect("copy should succeed");
 
         assert_eq!(result.key, "wc");
         assert!(clipboard.contents().contains("dynamic info"));
         assert_eq!(clipboard.contents(), "Section:\ndynamic info\nDone");
-
-        // Explicitly drop guard before project_root
-        drop(_guard);
     }
 
     #[test]
@@ -163,7 +135,7 @@ mod tests {
         let clipboard = recording_clipboard();
 
         let err = CopySnippet { query: "missing" }
-            .execute(&storage.storage, clipboard.as_ref())
+            .execute(&storage.storage, clipboard.as_ref(), None)
             .expect_err("copy should fail for missing snippet");
 
         assert_eq!(err.kind(), std::io::ErrorKind::NotFound);

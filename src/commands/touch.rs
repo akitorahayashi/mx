@@ -1,4 +1,4 @@
-use crate::commands::clipboard::clipboard_from_env;
+use crate::commands::clipboard::Clipboard;
 use crate::error::AppError;
 use std::collections::HashMap;
 use std::fs;
@@ -69,7 +69,12 @@ pub fn resolve_path(key: &str) -> PathBuf {
 
     // 4. Extension completion (if no extension specified)
     if path.extension().is_none() {
-        path.set_extension("md");
+        // Only append .md if the file name does not start with a dot
+        // (to allow dotfiles like .gitignore, .env)
+        let file_name_str = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+        if !file_name_str.starts_with('.') {
+            path.set_extension("md");
+        }
     }
 
     path
@@ -112,8 +117,12 @@ pub fn validate_path(key: &str, resolved: &Path) -> Result<(), AppError> {
 
     Ok(())
 }
-pub fn touch(key: &str, force: bool) -> Result<TouchOutcome, AppError> {
-    let root = find_project_root()?;
+pub fn touch(
+    root: &Path,
+    key: &str,
+    force: bool,
+    clipboard: &dyn Clipboard,
+) -> Result<TouchOutcome, AppError> {
     let mx_dir = root.join(".mx");
 
     // 1. Create .mx directory
@@ -161,7 +170,6 @@ pub fn touch(key: &str, force: bool) -> Result<TouchOutcome, AppError> {
     // 1. File was just created (!existed)
     // 2. OR file was overwritten (overwritten)
     if !existed || overwritten {
-        let clipboard = clipboard_from_env()?;
         let content = clipboard.paste()?;
         std::fs::write(&target_path, content)?;
     }
@@ -180,19 +188,14 @@ pub fn find_project_root() -> Result<PathBuf, AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serial_test::serial;
+    use crate::commands::clipboard::FileClipboard;
     use tempfile::tempdir;
 
     /// Helper to setup clipboard file for tests
-    fn setup_clipboard(dir: &std::path::Path, content: &str) -> std::path::PathBuf {
+    fn setup_clipboard(dir: &std::path::Path, content: &str) -> FileClipboard {
         let clipboard_file = dir.join("clipboard.txt");
         fs::write(&clipboard_file, content).unwrap();
-        std::env::set_var("MX_CLIPBOARD_FILE", &clipboard_file);
-        clipboard_file
-    }
-
-    fn cleanup_clipboard_env() {
-        std::env::remove_var("MX_CLIPBOARD_FILE");
+        FileClipboard::new(clipboard_file).unwrap()
     }
 
     // === resolve_path tests ===
@@ -298,6 +301,18 @@ mod tests {
         assert_eq!(path, PathBuf::from("notes.md"));
     }
 
+    #[test]
+    fn test_resolve_path_dotfile_gitignore() {
+        let path = resolve_path(".gitignore");
+        assert_eq!(path, PathBuf::from(".gitignore"));
+    }
+
+    #[test]
+    fn test_resolve_path_dotfile_env() {
+        let path = resolve_path(".env");
+        assert_eq!(path, PathBuf::from(".env"));
+    }
+
     // === validate_path tests ===
 
     #[test]
@@ -334,13 +349,11 @@ mod tests {
     // === touch integration tests ===
 
     #[test]
-    #[serial]
     fn test_touch_creates_mx_and_gitignore() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
-        setup_clipboard(dir.path(), "test content");
+        let clipboard = setup_clipboard(dir.path(), "test content");
 
-        let outcome = touch("tk", false).unwrap();
+        let outcome = touch(dir.path(), "tk", false, &clipboard).unwrap();
 
         assert!(dir.path().join(".mx").exists());
         assert!(dir.path().join(".mx/.gitignore").exists());
@@ -349,48 +362,36 @@ mod tests {
         assert_eq!(outcome.key, "tk");
         assert!(outcome.path.ends_with(".mx/tasks.md"));
         assert!(!outcome.existed);
-
-        cleanup_clipboard_env();
     }
 
     #[test]
-    #[serial]
     fn test_touch_nested_file() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
-        setup_clipboard(dir.path(), "nested content");
+        let clipboard = setup_clipboard(dir.path(), "nested content");
 
-        let outcome = touch("pdt", false).unwrap();
+        let outcome = touch(dir.path(), "pdt", false, &clipboard).unwrap();
 
         assert!(dir.path().join(".mx/pending/tasks.md").exists());
         assert!(!outcome.existed);
-
-        cleanup_clipboard_env();
     }
 
     #[test]
-    #[serial]
     fn test_touch_idempotency() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
-        setup_clipboard(dir.path(), "test content");
+        let clipboard = setup_clipboard(dir.path(), "test content");
 
-        touch("tk", false).unwrap();
-        let outcome = touch("tk", false).unwrap();
+        touch(dir.path(), "tk", false, &clipboard).unwrap();
+        let outcome = touch(dir.path(), "tk", false, &clipboard).unwrap();
 
         assert!(outcome.existed);
         assert!(!outcome.overwritten);
-
-        cleanup_clipboard_env();
     }
 
     #[test]
-    #[serial]
     fn test_touch_force_overwrite() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
         let clipboard_content = "new clipboard content";
-        setup_clipboard(dir.path(), clipboard_content);
+        let clipboard = setup_clipboard(dir.path(), clipboard_content);
 
         // Create file with content
         let path = dir.path().join(".mx/tasks.md");
@@ -398,71 +399,56 @@ mod tests {
         fs::write(&path, "initial content").unwrap();
 
         // Overwrite
-        let outcome = touch("tk", true).unwrap();
+        let outcome = touch(dir.path(), "tk", true, &clipboard).unwrap();
 
         assert!(outcome.existed);
         assert!(outcome.overwritten);
         let content = fs::read_to_string(&path).unwrap();
         assert_eq!(content, clipboard_content);
-
-        cleanup_clipboard_env();
     }
 
     #[test]
-    #[serial]
     fn test_touch_dynamic_creates_file() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
-        setup_clipboard(dir.path(), "dynamic content");
+        let clipboard = setup_clipboard(dir.path(), "dynamic content");
 
-        let outcome = touch("random_name", false).unwrap();
+        let outcome = touch(dir.path(), "random_name", false, &clipboard).unwrap();
 
         assert!(dir.path().join(".mx/random_name.md").exists());
         assert!(!outcome.existed);
         assert!(outcome.path.ends_with("random_name.md"));
-
-        cleanup_clipboard_env();
     }
 
     #[test]
-    #[serial]
     fn test_touch_dynamic_nested_creates_directories() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
-        setup_clipboard(dir.path(), "nested content");
+        let clipboard = setup_clipboard(dir.path(), "nested content");
 
-        let outcome = touch("a/b/c", false).unwrap();
+        let outcome = touch(dir.path(), "a/b/c", false, &clipboard).unwrap();
 
         assert!(dir.path().join(".mx/a/b/c.md").exists());
         assert!(dir.path().join(".mx/a/b").is_dir());
         assert!(!outcome.existed);
-
-        cleanup_clipboard_env();
     }
 
     #[test]
-    #[serial]
     fn test_touch_with_extension_preserves() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
-        setup_clipboard(dir.path(), "{}");
+        let clipboard = setup_clipboard(dir.path(), "{}");
 
-        let outcome = touch("data.json", false).unwrap();
+        let outcome = touch(dir.path(), "data.json", false, &clipboard).unwrap();
 
         assert!(dir.path().join(".mx/data.json").exists());
         assert!(!dir.path().join(".mx/data.json.md").exists());
         assert!(!outcome.existed);
-
-        cleanup_clipboard_env();
     }
 
     #[test]
-    #[serial]
     fn test_touch_path_traversal_rejected() {
         let dir = tempdir().unwrap();
-        std::env::set_current_dir(&dir).unwrap();
+        let clipboard = setup_clipboard(dir.path(), "content");
 
-        let result = touch("../hack", false);
+        let result = touch(dir.path(), "../hack", false, &clipboard);
 
         assert!(result.is_err());
         if let Err(AppError::PathTraversal(_)) = result {
