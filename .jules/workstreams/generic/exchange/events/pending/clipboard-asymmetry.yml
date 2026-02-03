@@ -1,0 +1,30 @@
+schema_version: 1
+
+# Metadata
+id: "ev1clp"
+issue_id: ""
+created_at: "2026-02-03"
+author_role: "consistency"
+confidence: "high"
+
+# Content
+title: "MX_CLIPBOARD_CMD implementation incompatible with asymmetric clipboard tools"
+statement: |
+  The documentation suggests MX_CLIPBOARD_CMD can be used to provide a custom clipboard command, but the implementation assumes the same command string is used for both copy (stdin) and paste (stdout). This makes it incompatible with standard asymmetric tools like xclip/wl-copy, rendering the feature unusable for its primary use case.
+
+# Evidence supporting the observation
+evidence:
+  - path: "README.md"
+    loc:
+      - "MX_CLIPBOARD_CMD"
+    note: "Documentation implies support for custom clipboard commands without noting symmetry constraint."
+  - path: "src/commands/clipboard.rs"
+    loc:
+      - "struct ClipboardCommand"
+      - "impl SystemClipboard"
+    note: "Implementation reuses the same command and arguments for both copy and paste operations."
+
+tags:
+  - "usability"
+  - "documentation"
+  - "config"
