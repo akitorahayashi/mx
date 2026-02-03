@@ -1,0 +1,30 @@
+schema_version: 1
+run_id: "20260202-analysis-storage"
+timestamp: "2026-02-02T23:45:00Z"
+trigger: "change"
+
+inputs:
+  changes: "nr7x9p"
+  perspective_hash: "20260202-h7a8b9"
+
+plan:
+  - "Analyze coverage of recent changes and critical paths."
+  - "Verify existing coverage claims."
+  - "Identify gaps in storage logic."
+
+actions:
+  - type: "analysis"
+    target: "src/storage.rs"
+    description: "Analyzed snippet resolution logic for coverage gaps. Found missing unit tests for `ensure_safe_segments` and `resolve_snippet`."
+  - type: "analysis"
+    target: "tests/commands/copy.rs"
+    description: "Verified lack of integration tests for ambiguous matches and path traversal."
+
+outcomes:
+  observations:
+    - "untested-snippet-resolution-edge-cases.yml"
+
+perspective_updates:
+  learned_exclusions: []
+  biases: []
+  goals: []
