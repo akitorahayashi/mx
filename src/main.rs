@@ -60,10 +60,11 @@ fn main() {
     }
 }
 
-fn handle_copy(name: &str) -> Result<(), AppError> {
+fn handle_copy(snippet: &str) -> Result<(), AppError> {
     let storage = mx::SnippetStorage::from_env()?;
-    let CopyOutcome { snippet, relative_path, absolute_path } = mx::copy_snippet(name, &storage)?;
-    println!("✅ Copied '{snippet}' from {relative_path} -> {}", absolute_path.display());
+    let CopyOutcome { snippet: snippet_key, relative_path, absolute_path } =
+        mx::copy_snippet(snippet, &storage)?;
+    println!("✅ Copied '{snippet_key}' from {relative_path} -> {}", absolute_path.display());
     Ok(())
 }
 
