@@ -1,53 +1,30 @@
-use std::error::Error;
-use std::fmt::{self, Display};
 use std::io;
 
 /// Library-wide error type capturing domain-neutral and underlying I/O failures.
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum AppError {
-    Io(io::Error),
+    #[error(transparent)]
+    Io(#[from] io::Error),
+
     /// Configuration or environment issue that prevents command execution.
+    #[error("{0}")]
     ConfigError(String),
+
     /// Raised when a requested resource cannot be located.
+    #[error("{0}")]
     NotFound(String),
+
     /// Clipboard interaction failure surfaced to the user.
+    #[error("{0}")]
     ClipboardError(String),
+
     /// Invalid key provided for touch command
+    #[error("Invalid key: {0}")]
     InvalidKey(String),
+
     /// Path traversal attempt detected (security violation)
+    #[error("{0}")]
     PathTraversal(String),
-}
-
-impl Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AppError::Io(err) => write!(f, "{}", err),
-            AppError::ConfigError(message) => write!(f, "{message}"),
-            AppError::NotFound(message) => write!(f, "{message}"),
-            AppError::ClipboardError(message) => write!(f, "{message}"),
-            AppError::InvalidKey(key) => write!(f, "Invalid key: {key}"),
-            AppError::PathTraversal(message) => write!(f, "{message}"),
-        }
-    }
-}
-
-impl Error for AppError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            AppError::Io(err) => Some(err),
-            AppError::ConfigError(_)
-            | AppError::NotFound(_)
-            | AppError::ClipboardError(_)
-            | AppError::InvalidKey(_)
-            | AppError::PathTraversal(_) => None,
-        }
-    }
-}
-
-impl From<io::Error> for AppError {
-    fn from(value: io::Error) -> Self {
-        AppError::Io(value)
-    }
 }
 
 impl AppError {
