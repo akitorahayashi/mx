@@ -35,7 +35,7 @@ enum Commands {
     },
     /// Copy a snippet to the clipboard
     #[command(visible_alias = "c")]
-    Command { snippet: String },
+    Copy { snippet: String },
 }
 
 fn main() {
@@ -46,7 +46,7 @@ fn main() {
         Some(Commands::Touch { key, force }) => handle_touch(&key, force),
         Some(Commands::Cat { key }) => handle_cat(&key),
         Some(Commands::Clean { key }) => handle_clean(key),
-        Some(Commands::Command { snippet }) => handle_command(&snippet),
+        Some(Commands::Copy { snippet }) => handle_copy(&snippet),
         None => {
             Cli::command().print_help().ok();
             println!();
@@ -60,10 +60,11 @@ fn main() {
     }
 }
 
-fn handle_command(name: &str) -> Result<(), AppError> {
+fn handle_copy(snippet: &str) -> Result<(), AppError> {
     let storage = mx::SnippetStorage::from_env()?;
-    let CopyOutcome { key, relative_path, absolute_path } = mx::copy_snippet(name, &storage)?;
-    println!("✅ Copied '{key}' from {relative_path} -> {}", absolute_path.display());
+    let CopyOutcome { snippet: snippet_key, relative_path, absolute_path } =
+        mx::copy_snippet(snippet, &storage)?;
+    println!("✅ Copied '{snippet_key}' from {relative_path} -> {}", absolute_path.display());
     Ok(())
 }
 
@@ -102,8 +103,8 @@ fn handle_list() -> Result<(), AppError> {
     }
 
     println!("📚 Available snippets:\n");
-    for ListEntry { key, relative_path, title, description } in entries {
-        println!("- {key} ({relative_path})");
+    for ListEntry { snippet, relative_path, title, description } in entries {
+        println!("- {snippet} ({relative_path})");
         if let Some(title) = title {
             println!("  • {title}");
         }

@@ -6,31 +6,31 @@ use std::borrow::Cow;
 use std::fs;
 use std::path::Path;
 
-pub(crate) struct CopySnippet<'a> {
-    pub query: &'a str,
+pub(crate) struct Copy<'a> {
+    pub snippet: &'a str,
 }
 
 #[derive(Debug, Clone)]
 pub struct CopyOutcome {
-    pub key: String,
+    pub snippet: String,
     pub relative_path: String,
     pub absolute_path: std::path::PathBuf,
 }
 
-impl CopySnippet<'_> {
+impl Copy<'_> {
     pub fn execute(
         &self,
         storage: &SnippetStorage,
         clipboard: &dyn Clipboard,
         project_root: Option<&Path>,
     ) -> Result<CopyOutcome, AppError> {
-        let snippet = storage.resolve_snippet(self.query)?;
+        let snippet = storage.resolve_snippet(self.snippet)?;
         let content = fs::read_to_string(&snippet.absolute_path)?;
         let expanded = expand_placeholders(&content, project_root);
         clipboard.copy(expanded.as_ref())?;
 
         Ok(CopyOutcome {
-            key: snippet.key,
+            snippet: snippet.key,
             relative_path: snippet.relative_path,
             absolute_path: snippet.absolute_path,
         })
@@ -100,11 +100,11 @@ mod tests {
         let snippet_path = storage.write_snippet("commands/w/wc.md", "example content");
         let clipboard = recording_clipboard();
 
-        let output = CopySnippet { query: "wc" }
+        let output = Copy { snippet: "wc" }
             .execute(&storage.storage, clipboard.as_ref(), None)
             .expect("copy should succeed");
 
-        assert_eq!(output.key, "wc");
+        assert_eq!(output.snippet, "wc");
         assert_eq!(output.relative_path, "w/wc");
         assert_eq!(output.absolute_path, snippet_path);
         assert_eq!(clipboard.contents(), "example content");
@@ -120,11 +120,11 @@ mod tests {
         fs::create_dir_all(project_root.path().join(".mx")).expect("create .mx");
         fs::write(project_root.path().join(".mx/info.md"), "dynamic info").expect("write info");
 
-        let result = CopySnippet { query: "wc" }
+        let result = Copy { snippet: "wc" }
             .execute(&storage.storage, clipboard.as_ref(), Some(project_root.path()))
             .expect("copy should succeed");
 
-        assert_eq!(result.key, "wc");
+        assert_eq!(result.snippet, "wc");
         assert!(clipboard.contents().contains("dynamic info"));
         assert_eq!(clipboard.contents(), "Section:\ndynamic info\nDone");
     }
@@ -134,7 +134,7 @@ mod tests {
         let storage = TestSnippetStorage::new();
         let clipboard = recording_clipboard();
 
-        let err = CopySnippet { query: "missing" }
+        let err = Copy { snippet: "missing" }
             .execute(&storage.storage, clipboard.as_ref(), None)
             .expect_err("copy should fail for missing snippet");
 
