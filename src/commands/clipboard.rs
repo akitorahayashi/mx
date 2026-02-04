@@ -285,9 +285,19 @@ mod tests {
     }
 
     impl EnvGuard {
-        fn new(key: &str, value: &str) -> Self {
+        // Set an environment variable, saving the original value
+        fn set(key: &str, value: &str) -> Self {
             let original = env::var(key);
             env::set_var(key, value);
+            Self { key: key.to_string(), original }
+        }
+
+        // Unset an environment variable, saving the original value
+        fn unset(key: &str) -> Self {
+            let original = env::var(key);
+            if original.is_ok() {
+                env::remove_var(key);
+            }
             Self { key: key.to_string(), original }
         }
     }
@@ -303,13 +313,14 @@ mod tests {
 
     // Combine env-sensitive tests into one serial test to avoid race conditions.
     #[test]
+    #[serial_test::serial]
     fn test_clipboard_detection_scenarios() {
         // Scenario 1: Asymmetric
         {
-            let _copy_guard = EnvGuard::new("MX_COPY_CMD", "custom-copy --arg1");
-            let _paste_guard = EnvGuard::new("MX_PASTE_CMD", "custom-paste --arg2");
+            let _copy_guard = EnvGuard::set("MX_COPY_CMD", "custom-copy --arg1");
+            let _paste_guard = EnvGuard::set("MX_PASTE_CMD", "custom-paste --arg2");
             // Ensure legacy var doesn't interfere
-            let _legacy_guard = EnvGuard::new("MX_CLIPBOARD_CMD", "legacy-cmd");
+            let _legacy_guard = EnvGuard::set("MX_CLIPBOARD_CMD", "legacy-cmd");
 
             let clip = SystemClipboard::detect().expect("detect should succeed");
 
@@ -321,73 +332,31 @@ mod tests {
 
         // Scenario 2: Partial Config Error
         {
-            // Clean up from previous block if guards didn't fully (though they should have)
-            // or just ensure clean slate for this test block.
-            // Since EnvGuard restores original value, and original might have been unset,
-            // we should be okay. But let's be explicit for the test setup.
-
-            // To guarantee isolation from previous block's potential side effects (if any),
-            // we rely on EnvGuard drop. But here we want to set only one.
-            let _copy_guard = EnvGuard::new("MX_COPY_CMD", "custom-copy");
-            // Ensure paste cmd is unset (it should be if EnvGuard works, but let's make sure)
-            // We can't easily "ensure unset" with EnvGuard unless we nest deeply or manually check.
-            // Let's rely on the fact that before this test function ran, these vars were likely unset.
-            // But we must assume MX_PASTE_CMD is unset here.
-
-            // To be safe, we can use a nested scope where we explicitly remove it if it exists,
-            // but we need to restore it.
-            // Simplified: Just use EnvGuard. checking existence.
-
-            // If MX_PASTE_CMD is set by external environment, this test might fail.
-            // We'll wrap the "ensure unset" logic in a guard? No, EnvGuard sets a value.
-
-            // Let's manually handle the unset case for the test duration.
-            let original_paste = env::var("MX_PASTE_CMD");
-            if original_paste.is_ok() {
-                env::remove_var("MX_PASTE_CMD");
-            }
+            let _copy_guard = EnvGuard::set("MX_COPY_CMD", "custom-copy");
+            let _paste_guard = EnvGuard::unset("MX_PASTE_CMD");
+            let _legacy_guard = EnvGuard::unset("MX_CLIPBOARD_CMD");
 
             let result = SystemClipboard::detect();
             match result {
-                Ok(_) => panic!("Should have failed"),
+                Ok(_) => panic!("Should have failed with partial config"),
                 Err(e) => {
                     assert!(e.to_string().contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"))
                 }
-            }
-
-            if let Ok(val) = original_paste {
-                env::set_var("MX_PASTE_CMD", val);
             }
         }
 
         // Scenario 3: Symmetric Legacy
         {
-            // Ensure new vars are unset
-            let original_copy = env::var("MX_COPY_CMD");
-            if original_copy.is_ok() {
-                env::remove_var("MX_COPY_CMD");
-            }
-            let original_paste = env::var("MX_PASTE_CMD");
-            if original_paste.is_ok() {
-                env::remove_var("MX_PASTE_CMD");
-            }
+            let _copy_guard = EnvGuard::unset("MX_COPY_CMD");
+            let _paste_guard = EnvGuard::unset("MX_PASTE_CMD");
+            let _legacy_guard = EnvGuard::set("MX_CLIPBOARD_CMD", "legacy-tool --flag");
 
-            let _guard = EnvGuard::new("MX_CLIPBOARD_CMD", "legacy-tool --flag");
-
-            let clip = SystemClipboard::detect().expect("detect should succeed");
+            let clip = SystemClipboard::detect().expect("detect should succeed for legacy");
 
             assert_eq!(clip.copy_command.program, "legacy-tool");
             assert_eq!(clip.copy_command.args, vec!["--flag"]);
             assert_eq!(clip.paste_command.program, "legacy-tool");
             assert_eq!(clip.paste_command.args, vec!["--flag"]);
-
-            // Restore
-            if let Ok(val) = original_copy {
-                env::set_var("MX_COPY_CMD", val);
-            }
-            if let Ok(val) = original_paste {
-                env::set_var("MX_PASTE_CMD", val);
-            }
         }
     }
 }
