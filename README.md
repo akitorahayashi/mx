@@ -78,6 +78,9 @@ mx t config.yaml     # Creates .mx/config.yaml (preserves extension)
 | rv   | `.mx/review.md`            |
 | rf   | `.mx/reference.md`         |
 | pl   | `.mx/plan.md`              |
+| sg   | `.mx/suggestion.md`        |
+| sm   | `.mx/summary.md`           |
+| cg   | `.mx/changes.md`           |
 
 ### Dynamic Path Resolution
 
