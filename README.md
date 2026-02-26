@@ -127,7 +127,7 @@ Combine this with the `mx t if`, `mx t rp`, or `mx t aif` aliases to keep contex
 
 | Variable            | Purpose                                                                                 |
 |---------------------|-----------------------------------------------------------------------------------------|
-| `MX_COMMANDS_ROOT`  | Override the default `~/.config/mx` root (useful for testing or custom installations). |
+| `MX_COMMANDS_ROOT`  | Override the snippet commands directory (defaults to `~/.config/mx/commands`; legacy `<root>/commands` layouts are also accepted). |
 | `MX_CLIPBOARD_FILE` | Use a file for clipboard operations (both read and write) instead of system clipboard.  |
 | `MX_CLIPBOARD_CMD`  | Provide a custom clipboard command if the auto-detected one is unavailable.             |
 

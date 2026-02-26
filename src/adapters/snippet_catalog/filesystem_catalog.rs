@@ -14,7 +14,11 @@ pub struct FilesystemSnippetCatalog {
 impl FilesystemSnippetCatalog {
     pub fn from_env() -> Result<Self, AppError> {
         if let Ok(custom) = env::var("MX_COMMANDS_ROOT") {
-            return Self::from_root(PathBuf::from(custom));
+            let custom_path = PathBuf::from(custom);
+            let legacy_commands_root = custom_path.join("commands");
+            let commands_root =
+                if legacy_commands_root.is_dir() { legacy_commands_root } else { custom_path };
+            return Ok(Self { commands_root });
         }
 
         let home = env::var("HOME")
@@ -118,6 +122,29 @@ mod tests {
     use std::fs;
     use tempfile::tempdir;
 
+    struct EnvGuard {
+        key: &'static str,
+        original: Option<String>,
+    }
+
+    impl EnvGuard {
+        fn set(key: &'static str, value: &Path) -> Self {
+            let original = std::env::var(key).ok();
+            std::env::set_var(key, value);
+            Self { key, original }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            if let Some(value) = &self.original {
+                std::env::set_var(self.key, value);
+            } else {
+                std::env::remove_var(self.key);
+            }
+        }
+    }
+
     fn create_catalog(files: &[&str]) -> (FilesystemSnippetCatalog, tempfile::TempDir) {
         let dir = tempdir().unwrap();
         let commands = dir.path().join("commands");
@@ -139,5 +166,34 @@ mod tests {
         let (catalog, _dir) = create_catalog(&["w/wc.md"]);
         assert_eq!(catalog.resolve_snippet("w/wc").unwrap().relative_path, "w/wc");
         assert_eq!(catalog.resolve_snippet("wc").unwrap().relative_path, "w/wc");
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn from_env_accepts_direct_commands_root() {
+        let dir = tempdir().unwrap();
+        let commands_dir = dir.path().join("commands_dir");
+        fs::create_dir_all(commands_dir.join("w")).unwrap();
+        fs::write(commands_dir.join("w/wc.md"), "content").unwrap();
+
+        let _env_guard = EnvGuard::set("MX_COMMANDS_ROOT", &commands_dir);
+        let result = FilesystemSnippetCatalog::from_env().unwrap().resolve_snippet("wc").unwrap();
+
+        assert_eq!(result.relative_path, "w/wc");
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn from_env_accepts_legacy_root_with_commands_subdir() {
+        let dir = tempdir().unwrap();
+        let legacy_root = dir.path().join("legacy_root");
+        let commands_dir = legacy_root.join("commands");
+        fs::create_dir_all(commands_dir.join("w")).unwrap();
+        fs::write(commands_dir.join("w/wc.md"), "content").unwrap();
+
+        let _env_guard = EnvGuard::set("MX_COMMANDS_ROOT", &legacy_root);
+        let result = FilesystemSnippetCatalog::from_env().unwrap().resolve_snippet("wc").unwrap();
+
+        assert_eq!(result.relative_path, "w/wc");
     }
 }

@@ -24,11 +24,23 @@ pub fn candidate_key(normalized_query: &str) -> String {
 }
 
 pub fn ensure_safe_segments(value: &str) -> Result<(), AppError> {
-    if value.split('/').any(|segment| segment.is_empty() || segment == "..") {
+    if value.split('/').any(|segment| segment.is_empty()) {
         return Err(AppError::config_error(
-            "Snippet paths cannot contain empty or traversal segments",
+            "Snippet paths cannot contain empty, absolute, or traversal segments",
         ));
     }
+
+    for component in Path::new(value).components() {
+        match component {
+            Component::Normal(_) | Component::CurDir => {}
+            _ => {
+                return Err(AppError::config_error(
+                    "Snippet paths cannot contain empty, absolute, or traversal segments",
+                ));
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -63,6 +75,7 @@ mod tests {
         assert!(normalize_query("  ").is_err());
         assert!(normalize_query("../secret").is_err());
         assert!(normalize_query("foo//bar").is_err());
+        assert!(ensure_safe_segments("foo/../bar").is_err());
     }
 
     #[test]

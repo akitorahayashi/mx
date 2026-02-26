@@ -1,4 +1,4 @@
-use crate::domain::context_file::{resolve_context_path, validate_path};
+use crate::domain::context_file::resolve_validated_context_path;
 use crate::domain::error::AppError;
 use crate::ports::ContextFileStore;
 
@@ -20,8 +20,7 @@ pub fn execute(
             }
         }
         Some(key) => {
-            let relative_path = resolve_context_path(&key);
-            validate_path(&key, &relative_path)?;
+            let relative_path = resolve_validated_context_path(&key)?;
             let target_path = store.remove_context_file(&relative_path)?;
             Ok(CleanOutcome { message: format!("Removed {}", target_path.display()) })
         }

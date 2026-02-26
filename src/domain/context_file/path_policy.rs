@@ -2,10 +2,15 @@ use crate::domain::error::AppError;
 use std::path::Path;
 
 pub fn validate_path(key: &str, resolved: &Path) -> Result<(), AppError> {
-    if key.contains("..") {
-        return Err(AppError::path_traversal(
-            "Invalid path. Cannot create files outside of .mx directory.",
-        ));
+    for component in Path::new(key).components() {
+        match component {
+            std::path::Component::Normal(_) | std::path::Component::CurDir => {}
+            _ => {
+                return Err(AppError::path_traversal(
+                    "Invalid path. Cannot create files outside of .mx directory.",
+                ));
+            }
+        }
     }
 
     for component in resolved.components() {
@@ -36,5 +41,6 @@ mod tests {
     #[test]
     fn validate_path_accepts_nested_relative_path() {
         assert!(validate_path("docs/spec", &PathBuf::from("docs/spec.md")).is_ok());
+        assert!(validate_path("notes..v2", &PathBuf::from("notes..v2.md")).is_ok());
     }
 }

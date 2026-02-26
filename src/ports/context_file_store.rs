@@ -24,5 +24,7 @@ pub trait ContextFileStore {
     fn read_context_contents(&self, relative_path: &Path) -> Result<String, AppError>;
     fn remove_context_root(&self) -> Result<bool, AppError>;
     fn remove_context_file(&self, relative_path: &Path) -> Result<PathBuf, AppError>;
+    /// Workspace reads preserve `std::io::ErrorKind` so placeholder rendering can report
+    /// concrete missing/permission reasons without lossy conversion.
     fn read_workspace_file(&self, relative_path: &Path) -> Result<String, std::io::Error>;
 }

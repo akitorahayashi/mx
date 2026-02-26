@@ -4,7 +4,7 @@ use std::env;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ClipboardCommand {
     program: String,
     args: Vec<String>,
@@ -59,13 +59,7 @@ impl SystemClipboard {
         if let Ok(custom) = env::var("MX_CLIPBOARD_CMD") {
             let command = ClipboardCommand::from_string(&custom)
                 .ok_or_else(|| AppError::clipboard_error("MX_CLIPBOARD_CMD is empty"))?;
-            return Ok(Self {
-                copy_command: ClipboardCommand {
-                    program: command.program.clone(),
-                    args: command.args.clone(),
-                },
-                paste_command: command,
-            });
+            return Ok(Self { copy_command: command.clone(), paste_command: command });
         }
 
         match env::consts::OS {

@@ -1,4 +1,4 @@
-use crate::domain::context_file::{resolve_context_path, validate_path};
+use crate::domain::context_file::resolve_validated_context_path;
 use crate::domain::error::AppError;
 use crate::ports::{Clipboard, ContextFileStore};
 use std::path::PathBuf;
@@ -17,8 +17,7 @@ pub fn execute(
     store: &dyn ContextFileStore,
     clipboard: &dyn Clipboard,
 ) -> Result<TouchOutcome, AppError> {
-    let relative_path = resolve_context_path(key);
-    validate_path(key, &relative_path)?;
+    let relative_path = resolve_validated_context_path(key)?;
 
     let status = store.prepare_context_file(&relative_path, force)?;
     if status.should_write() {

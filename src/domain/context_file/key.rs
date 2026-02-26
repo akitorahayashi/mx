@@ -1,4 +1,6 @@
 use crate::domain::context_file::alias_registry::resolve_alias;
+use crate::domain::context_file::path_policy::validate_path;
+use crate::domain::error::AppError;
 use std::path::PathBuf;
 
 pub fn resolve_context_path(key: &str) -> PathBuf {
@@ -31,6 +33,12 @@ pub fn resolve_context_path(key: &str) -> PathBuf {
     path
 }
 
+pub fn resolve_validated_context_path(key: &str) -> Result<PathBuf, AppError> {
+    let resolved = resolve_context_path(key);
+    validate_path(key, &resolved)?;
+    Ok(resolved)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -41,5 +49,11 @@ mod tests {
         assert_eq!(resolve_context_path("tk12"), PathBuf::from("tasks/tasks12.md"));
         assert_eq!(resolve_context_path("pd-tk"), PathBuf::from("pending/tasks.md"));
         assert_eq!(resolve_context_path("docs/spec"), PathBuf::from("docs/spec.md"));
+    }
+
+    #[test]
+    fn validated_resolver_rejects_traversal_and_accepts_safe_dots() {
+        assert!(resolve_validated_context_path("../escape").is_err());
+        assert!(resolve_validated_context_path("notes..v2").is_ok());
     }
 }
