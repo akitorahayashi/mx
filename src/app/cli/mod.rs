@@ -18,19 +18,19 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(visible_alias = "ls")]
+    #[command(about = "List available snippets", visible_alias = "ls")]
     List,
-    #[command(visible_alias = "t")]
+    #[command(about = "Create context files", visible_alias = "t")]
     Touch {
         key: String,
         #[arg(short = 'f', long = "force")]
         force: bool,
     },
-    #[command(visible_alias = "ct")]
+    #[command(about = "Display context file contents", visible_alias = "ct")]
     Cat { key: String },
-    #[command(visible_alias = "cl")]
+    #[command(about = "Clean context files or directory", visible_alias = "cl")]
     Clean { key: Option<String> },
-    #[command(visible_alias = "c")]
+    #[command(about = "Copy a snippet to the clipboard", visible_alias = "c")]
     Copy { snippet: String },
 }
 
