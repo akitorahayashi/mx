@@ -141,7 +141,7 @@ Combine this with the `mx t if`, `mx t rp`, or `mx t aif` aliases to keep contex
 
 The workspace follows the original template's testing culture:
 
-- **Unit tests** live next to their modules (clipboard abstraction, snippet storage, touch).
-- **Test support** (`src/commands/test_support.rs`) provides helpers like in-memory clipboard stubs.
-- **Integration tests** under `tests/commands/` exercise each CLI command in a separate file (e.g., `copy.rs`, `touch.rs`). Shared helpers in `tests/common/` seed snippet catalogs inside a
-  temporary HOME and expose utilities for overriding clipboard/destination paths.
+- Unit tests live next to domain and adapter modules.
+- Internal test doubles are centralized under `src/testing/ports/`.
+- Integration tests are organized by concern at `tests/cli/`, `tests/context/`, `tests/snippets/`, and `tests/security/`.
+- Shared integration fixtures are centralized under `tests/harness/`.
