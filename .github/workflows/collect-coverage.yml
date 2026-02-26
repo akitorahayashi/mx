@@ -1,0 +1,33 @@
+name: Collect Coverage
+
+on:
+  workflow_call:
+
+jobs:
+  coverage:
+    name: Run test coverage
+    runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          rust-version: 1.90.0
+          install-mise: 'true'
+          mise-tools: cargo:cargo-tarpaulin
+
+      - name: Generate coverage
+        run: mise exec -- cargo tarpaulin --out Xml --output-dir coverage --all-features --fail-under 30
+        env:
+          RUST_TEST_THREADS: 1
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage
+          path: coverage/cobertura.xml
