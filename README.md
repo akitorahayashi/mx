@@ -133,11 +133,11 @@ Combine this with the `mx t if`, `mx t rp`, or `mx t aif` aliases to keep contex
 
 ## Development guide
 
-```bash
-cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-RUST_TEST_THREADS=1 cargo test --all-targets --all-features
-```
+- `just setup`: install pinned development tools from `mise.toml`.
+- `cargo fmt --check`: check formatting.
+- `cargo clippy --all-targets --all-features -- -D warnings`: run clippy in strict mode.
+- `RUST_TEST_THREADS=1 cargo test --all-targets --all-features`: run test suites.
+- `just setup && mise exec -- cargo tarpaulin --out Xml --output-dir coverage --all-features --fail-under 30`: run coverage with pinned tarpaulin.
 
 The workspace follows the original template's testing culture:
 

@@ -14,6 +14,8 @@ jobs:
 
       - name: Setup Rust Environment
         uses: ./.github/actions/setup
+        with:
+          rust-version: 1.90.0
 
       - name: Build debug binary
         run: cargo build
@@ -21,6 +23,7 @@ jobs:
   build-release:
     name: Build release binary
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -44,20 +47,22 @@ jobs:
 
       - name: Setup Rust Environment
         uses: ./.github/actions/setup
+        with:
+          rust-version: 1.90.0
 
       - name: Add target
         run: rustup target add ${{ matrix.target }}
 
       - name: Install cross (for cross-compilation)
         if: matrix.cross
-        run: cargo install cross --locked
+        run: cargo install cross --version 0.2.5 --locked
 
       - name: Build release binary (native)
-        if: ${{ !matrix.cross }}
+        if: '!matrix.cross'
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Build release binary (cross)
-        if: ${{ matrix.cross }}
+        if: matrix.cross
         run: cross build --release --target ${{ matrix.target }}
 
       - name: Rename binary
