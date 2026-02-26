@@ -5,6 +5,7 @@ use predicates::prelude::*;
 fn copy_fails_for_unknown_snippet() {
     let ctx = TestContext::new();
     install_sample_catalog(&ctx);
+    let _ = ctx.clipboard_file("clipboard_missing.txt");
 
     ctx.cli()
         .args(["copy", "unknown"])
