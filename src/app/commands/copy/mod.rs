@@ -81,3 +81,76 @@ fn render_placeholder(raw_token: &str, workspace_store: &dyn ContextFileStore) -
         Err(err) => format!("[mx missing: {trimmed} ({})]", err.kind()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::snippet::SnippetEntry;
+    use crate::testing::{InMemoryCatalog, InMemoryClipboard, InMemoryContextStore};
+    use std::fs;
+    use tempfile::TempDir;
+
+    fn build_catalog_with_snippet(
+        contents: &str,
+    ) -> (InMemoryCatalog, TempDir, std::path::PathBuf) {
+        let dir = tempfile::tempdir().expect("tempdir should be created");
+        let snippet_path = dir.path().join("commands/w/wc.md");
+        fs::create_dir_all(snippet_path.parent().unwrap())
+            .expect("snippet parent should be created");
+        fs::write(&snippet_path, contents).expect("snippet file should be written");
+
+        let catalog = InMemoryCatalog::new(vec![SnippetEntry {
+            key: "wc".to_string(),
+            relative_path: "w/wc".to_string(),
+            absolute_path: snippet_path.clone(),
+        }]);
+        (catalog, dir, snippet_path)
+    }
+
+    #[test]
+    fn execute_copies_snippet_with_placeholder_expansion() {
+        let (catalog, _dir, snippet_path) = build_catalog_with_snippet("header {{.mx/info.md}}");
+        let clipboard = InMemoryClipboard::default();
+        let workspace_store = InMemoryContextStore::default();
+        workspace_store.set_workspace_file(".mx/info.md", "expanded");
+
+        let outcome = execute("wc", &catalog, &clipboard, Some(&workspace_store))
+            .expect("copy command should succeed");
+
+        assert_eq!(outcome.snippet, "wc");
+        assert_eq!(outcome.relative_path, "w/wc");
+        assert_eq!(outcome.absolute_path, snippet_path);
+        assert_eq!(clipboard.contents(), "header expanded");
+    }
+
+    #[test]
+    fn execute_preserves_placeholders_without_workspace_store() {
+        let (catalog, _dir, _) = build_catalog_with_snippet("{{.mx/info.md}}");
+        let clipboard = InMemoryClipboard::default();
+
+        execute("wc", &catalog, &clipboard, None).expect("copy command should succeed");
+        assert_eq!(clipboard.contents(), "{{.mx/info.md}}");
+    }
+
+    #[test]
+    fn execute_surfaces_missing_snippet_errors() {
+        let catalog = InMemoryCatalog::new(Vec::new());
+        let clipboard = InMemoryClipboard::default();
+        let workspace_store = InMemoryContextStore::default();
+
+        let error = execute("unknown", &catalog, &clipboard, Some(&workspace_store))
+            .expect_err("missing snippet should fail");
+        assert!(matches!(error, AppError::NotFound(_)));
+    }
+
+    #[test]
+    fn execute_marks_invalid_placeholder_as_error() {
+        let (catalog, _dir, _) = build_catalog_with_snippet("{{../secret}}");
+        let clipboard = InMemoryClipboard::default();
+        let workspace_store = InMemoryContextStore::default();
+
+        execute("wc", &catalog, &clipboard, Some(&workspace_store))
+            .expect("copy command should succeed with placeholder marker");
+        assert!(clipboard.contents().contains("[mx error:"));
+    }
+}

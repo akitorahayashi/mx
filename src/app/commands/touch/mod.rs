@@ -33,3 +33,46 @@ pub fn execute(
         overwritten: status.overwritten,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::context_file::resolve_context_path;
+    use crate::ports::ContextFileStore;
+    use crate::testing::{InMemoryClipboard, InMemoryContextStore};
+
+    #[test]
+    fn execute_creates_context_file_with_clipboard_content() {
+        let store = InMemoryContextStore::default();
+        let clipboard = InMemoryClipboard::default();
+        clipboard.set_contents("fresh content");
+
+        let outcome = execute("tk", false, &store, &clipboard).expect("touch should succeed");
+        assert_eq!(outcome.key, "tk");
+        assert!(!outcome.existed);
+        assert!(!outcome.overwritten);
+        assert!(outcome.path.ends_with(".mx/tasks.md"));
+
+        let content = store.read_context_contents(&resolve_context_path("tk")).unwrap();
+        assert_eq!(content, "fresh content");
+    }
+
+    #[test]
+    fn execute_reports_existing_file_and_force_overwrite() {
+        let store = InMemoryContextStore::default();
+        let clipboard = InMemoryClipboard::default();
+        clipboard.set_contents("initial");
+        execute("tk", false, &store, &clipboard).unwrap();
+
+        clipboard.set_contents("updated");
+        let skipped = execute("tk", false, &store, &clipboard).unwrap();
+        assert!(skipped.existed);
+        assert!(!skipped.overwritten);
+        assert_eq!(store.read_context_contents(&resolve_context_path("tk")).unwrap(), "initial");
+
+        let forced = execute("tk", true, &store, &clipboard).unwrap();
+        assert!(forced.existed);
+        assert!(forced.overwritten);
+        assert_eq!(store.read_context_contents(&resolve_context_path("tk")).unwrap(), "updated");
+    }
+}
