@@ -1,9 +1,10 @@
+use crate::domain::context_file::path_policy::validate_relative_components;
 use crate::domain::error::AppError;
 use crate::ports::{ContextFileStore, ContextWriteStatus};
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct LocalContextFileStore {
@@ -18,20 +19,6 @@ impl LocalContextFileStore {
     fn mx_dir(&self) -> PathBuf {
         self.workspace_root.join(".mx")
     }
-
-    fn ensure_safe_relative_path(&self, relative_path: &Path) -> Result<(), AppError> {
-        for component in relative_path.components() {
-            match component {
-                Component::Normal(_) | Component::CurDir => {}
-                _ => {
-                    return Err(AppError::path_traversal(
-                        "Invalid path. Cannot create files outside of .mx directory.",
-                    ));
-                }
-            }
-        }
-        Ok(())
-    }
 }
 
 impl ContextFileStore for LocalContextFileStore {
@@ -40,7 +27,7 @@ impl ContextFileStore for LocalContextFileStore {
         relative_path: &Path,
         force: bool,
     ) -> Result<ContextWriteStatus, AppError> {
-        self.ensure_safe_relative_path(relative_path)?;
+        validate_relative_components(relative_path)?;
 
         let mx_dir = self.mx_dir();
         if !mx_dir.exists() {
@@ -85,7 +72,7 @@ impl ContextFileStore for LocalContextFileStore {
     }
 
     fn read_context_contents(&self, relative_path: &Path) -> Result<String, AppError> {
-        self.ensure_safe_relative_path(relative_path)?;
+        validate_relative_components(relative_path)?;
         let full_path = self.mx_dir().join(relative_path);
 
         if !full_path.is_file() {
@@ -121,7 +108,7 @@ impl ContextFileStore for LocalContextFileStore {
     }
 
     fn remove_context_file(&self, relative_path: &Path) -> Result<PathBuf, AppError> {
-        self.ensure_safe_relative_path(relative_path)?;
+        validate_relative_components(relative_path)?;
         let mx_dir = self.mx_dir();
         let target_path = mx_dir.join(relative_path);
 

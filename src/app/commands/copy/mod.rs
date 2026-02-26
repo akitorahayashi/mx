@@ -42,27 +42,25 @@ fn expand_placeholders<'a>(
         return Cow::Borrowed(content);
     }
 
-    let mut remainder = content;
     let mut output = String::with_capacity(content.len());
+    let mut parts = content.split("{{");
 
-    while let Some(start) = remainder.find("{{") {
-        output.push_str(&remainder[..start]);
-        let tail = &remainder[start + 2..];
+    if let Some(first) = parts.next() {
+        output.push_str(first);
+    } else {
+        return Cow::Borrowed(content);
+    }
 
-        match tail.find("}}") {
-            Some(end) => {
-                let token = &tail[..end];
-                output.push_str(&render_placeholder(token, store));
-                remainder = &tail[end + 2..];
-            }
-            None => {
-                output.push_str(&remainder[start..]);
-                return Cow::Owned(output);
-            }
+    for part in parts {
+        if let Some((token, rest)) = part.split_once("}}") {
+            output.push_str(&render_placeholder(token, store));
+            output.push_str(rest);
+        } else {
+            output.push_str("{{");
+            output.push_str(part);
         }
     }
 
-    output.push_str(remainder);
     Cow::Owned(output)
 }
 
@@ -152,5 +150,17 @@ mod tests {
         execute("wc", &catalog, &clipboard, Some(&workspace_store))
             .expect("copy command should succeed with placeholder marker");
         assert!(clipboard.contents().contains("[mx error:"));
+    }
+
+    #[test]
+    fn execute_keeps_unclosed_placeholder_literal() {
+        let (catalog, _dir, _) = build_catalog_with_snippet("prefix {{.mx/info.md");
+        let clipboard = InMemoryClipboard::default();
+        let workspace_store = InMemoryContextStore::default();
+        workspace_store.set_workspace_file(".mx/info.md", "expanded");
+
+        execute("wc", &catalog, &clipboard, Some(&workspace_store))
+            .expect("copy command should succeed");
+        assert_eq!(clipboard.contents(), "prefix {{.mx/info.md");
     }
 }
