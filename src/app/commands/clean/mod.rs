@@ -1,6 +1,6 @@
 use crate::domain::context_file::resolve_validated_context_path;
 use crate::domain::error::AppError;
-use crate::ports::ContextFileStore;
+use crate::domain::ports::ContextFileStore;
 
 #[derive(Debug, Clone)]
 pub struct CleanOutcome {
@@ -31,7 +31,7 @@ pub fn execute(
 mod tests {
     use super::*;
     use crate::domain::context_file::resolve_context_path;
-    use crate::ports::ContextFileStore;
+    use crate::domain::ports::ContextFileStore;
     use crate::testing::InMemoryContextStore;
 
     #[test]

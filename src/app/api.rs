@@ -1,10 +1,9 @@
 use crate::adapters::clipboard::clipboard_from_env;
 use crate::adapters::context_file_store::LocalContextFileStore;
-use crate::adapters::snippet_catalog::FilesystemSnippetCatalog;
 use crate::adapters::workspace_locator::CurrentDirectoryLocator;
 use crate::app::commands;
 use crate::domain::error::AppError;
-use crate::ports::{Clipboard, ContextFileStore, WorkspaceLocator};
+use crate::domain::ports::{Clipboard, ContextFileStore, SnippetCatalog, WorkspaceLocator};
 
 pub use crate::app::commands::clean::CleanOutcome;
 pub use crate::app::commands::copy::CopyOutcome;
@@ -25,23 +24,20 @@ pub fn clean_context(key: Option<String>) -> Result<CleanOutcome, AppError> {
     clean_context_with_store(key, &store)
 }
 
-pub fn copy_snippet(
-    snippet: &str,
-    storage: &FilesystemSnippetCatalog,
-) -> Result<CopyOutcome, AppError> {
+pub fn copy_snippet(snippet: &str, catalog: &impl SnippetCatalog) -> Result<CopyOutcome, AppError> {
     let clipboard = clipboard_from_env()?;
     let workspace_store = find_workspace_root().ok().map(LocalContextFileStore::new);
 
     commands::copy::execute(
         snippet,
-        storage,
+        catalog,
         clipboard.as_ref(),
         workspace_store.as_ref().map(|store| store as &dyn ContextFileStore),
     )
 }
 
-pub fn list_snippets(storage: &FilesystemSnippetCatalog) -> Result<Vec<ListEntry>, AppError> {
-    commands::list::execute(storage)
+pub fn list_snippets(catalog: &impl SnippetCatalog) -> Result<Vec<ListEntry>, AppError> {
+    commands::list::execute(catalog)
 }
 
 pub fn touch_context(key: &str, force: bool) -> Result<TouchOutcome, AppError> {

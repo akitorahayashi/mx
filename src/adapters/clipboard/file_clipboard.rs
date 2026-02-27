@@ -1,5 +1,5 @@
 use crate::domain::error::AppError;
-use crate::ports::Clipboard;
+use crate::domain::ports::Clipboard;
 use std::fs;
 use std::path::PathBuf;
 

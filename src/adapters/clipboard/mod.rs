@@ -2,7 +2,7 @@ mod file_clipboard;
 mod system_clipboard;
 
 use crate::domain::error::AppError;
-use crate::ports::Clipboard;
+use crate::domain::ports::Clipboard;
 use std::env;
 use std::path::PathBuf;
 

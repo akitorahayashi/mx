@@ -1,6 +1,6 @@
 use crate::domain::context_file::path_policy::validate_relative_components;
 use crate::domain::error::AppError;
-use crate::ports::{ContextFileStore, ContextWriteStatus};
+use crate::domain::ports::{ContextFileStore, ContextWriteStatus};
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
