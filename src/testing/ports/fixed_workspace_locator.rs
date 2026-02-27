@@ -1,5 +1,5 @@
 use crate::domain::error::AppError;
-use crate::ports::WorkspaceLocator;
+use crate::domain::ports::WorkspaceLocator;
 use std::path::PathBuf;
 
 pub struct FixedWorkspaceLocator {

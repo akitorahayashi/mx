@@ -1,5 +1,5 @@
 use crate::domain::error::AppError;
-use crate::ports::SnippetCatalog;
+use crate::domain::ports::SnippetCatalog;
 
 #[derive(Debug, Clone)]
 pub struct ListEntry {

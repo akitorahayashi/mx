@@ -1,6 +1,6 @@
 use crate::domain::context_file::validate_path;
 use crate::domain::error::AppError;
-use crate::ports::{Clipboard, ContextFileStore, SnippetCatalog};
+use crate::domain::ports::{Clipboard, ContextFileStore, SnippetCatalog};
 use std::borrow::Cow;
 use std::fs;
 use std::path::Path;

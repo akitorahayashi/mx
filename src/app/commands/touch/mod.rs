@@ -1,6 +1,6 @@
 use crate::domain::context_file::resolve_validated_context_path;
 use crate::domain::error::AppError;
-use crate::ports::{Clipboard, ContextFileStore};
+use crate::domain::ports::{Clipboard, ContextFileStore};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -37,7 +37,7 @@ pub fn execute(
 mod tests {
     use super::*;
     use crate::domain::context_file::resolve_context_path;
-    use crate::ports::ContextFileStore;
+    use crate::domain::ports::ContextFileStore;
     use crate::testing::{InMemoryClipboard, InMemoryContextStore};
 
     #[test]

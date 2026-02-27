@@ -1,6 +1,6 @@
 use crate::domain::context_file::resolve_validated_context_path;
 use crate::domain::error::AppError;
-use crate::ports::ContextFileStore;
+use crate::domain::ports::ContextFileStore;
 
 pub fn execute(key: &str, store: &dyn ContextFileStore) -> Result<String, AppError> {
     let relative_path = resolve_validated_context_path(key)?;
@@ -11,7 +11,7 @@ pub fn execute(key: &str, store: &dyn ContextFileStore) -> Result<String, AppErr
 mod tests {
     use super::*;
     use crate::domain::context_file::resolve_context_path;
-    use crate::ports::ContextFileStore;
+    use crate::domain::ports::ContextFileStore;
     use crate::testing::InMemoryContextStore;
 
     #[test]

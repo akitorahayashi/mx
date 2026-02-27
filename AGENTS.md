@@ -8,7 +8,7 @@ This document provides a comprehensive overview of the `mx` project, including i
 1.  Quickly copying predefined code snippets to the clipboard.
 2.  Managing context files in project directories with flexible path resolution, automatic directory creation, and clipboard paste via the `mx touch` command.
 
-It uses a layered architecture (CLI -> Commands -> Core -> Storage) and relies on a local directory (`~/.config/mx/`) to store markdown snippets and a central `config.yml` for metadata.
+It uses a layered architecture where `domain/` contains pure invariants and port contracts (`domain/ports/`), `adapters/` provides concrete implementations (filesystem, clipboard, workspace resolution), and `app/` wires commands with injected dependencies. Port traits are owned by the domain that requires them; `adapters/` and `app/` depend on `domain::ports`, not the reverse.
 
 ## Directory Structure
 

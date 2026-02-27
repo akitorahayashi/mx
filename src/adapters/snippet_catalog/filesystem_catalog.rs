@@ -1,7 +1,7 @@
 use crate::domain::error::AppError;
+use crate::domain::ports::SnippetCatalog;
 use crate::domain::snippet::query::{candidate_key, normalize_query, path_to_string};
 use crate::domain::snippet::SnippetEntry;
-use crate::ports::SnippetCatalog;
 use std::env;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
