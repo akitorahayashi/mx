@@ -12,6 +12,7 @@ pub use crate::app::commands::add::AddOutcome;
 pub use crate::app::commands::checkout::CheckoutOutcome;
 pub use crate::app::commands::clean::CleanOutcome;
 pub use crate::app::commands::copy::CopyOutcome;
+pub use crate::app::commands::create_command::CreateCommandOutcome;
 pub use crate::app::commands::list::ListEntry;
 pub use crate::app::commands::remove::RemoveOutcome;
 pub use crate::app::commands::touch::TouchOutcome;
@@ -80,6 +81,14 @@ pub fn remove_snippet(
     store: &impl SnippetStore,
 ) -> Result<RemoveOutcome, AppError> {
     commands::remove::execute(snippet, catalog, store)
+}
+
+pub fn create_command(
+    path: &str,
+    force: bool,
+    store: &impl SnippetStore,
+) -> Result<CreateCommandOutcome, AppError> {
+    commands::create_command::execute(path, force, store)
 }
 
 pub(crate) fn cat_context_with_store(

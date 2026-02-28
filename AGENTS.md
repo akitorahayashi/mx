@@ -54,6 +54,8 @@ Snippets are stored as Markdown files under `~/.config/mx/commands/`. Metadata (
         - `--title`, `--description`: Embed front matter in the saved file.
         - `--force`: Overwrite an existing snippet.
     - `mx remove <snippet>` / `mx rm <snippet>`: Delete a snippet from `~/.config/mx/commands/`.
+    - `mx create-command <path>` / `mx cc <path>`: Create a new snippet file at `<path>` (under `.mx/commands/`) pre-populated with a front matter template embedded in the binary.
+        - `--force`: Overwrite an existing file.
 - **Linting**:
     - `cargo fmt --check`: Check code formatting.
     - `cargo clippy --all-targets --all-features -- -D warnings`: Run the linter and check for warnings.
