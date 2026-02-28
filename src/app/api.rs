@@ -1,13 +1,19 @@
 use crate::adapters::clipboard::clipboard_from_env;
 use crate::adapters::context_file_store::LocalContextFileStore;
+use crate::adapters::snippet_checkout::SymlinkCheckout;
 use crate::adapters::workspace_locator::CurrentDirectoryLocator;
 use crate::app::commands;
 use crate::domain::error::AppError;
-use crate::domain::ports::{Clipboard, ContextFileStore, SnippetCatalog, WorkspaceLocator};
+use crate::domain::ports::{
+    Clipboard, ContextFileStore, SnippetCatalog, SnippetStore, WorkspaceLocator,
+};
 
+pub use crate::app::commands::add::AddOutcome;
+pub use crate::app::commands::checkout::CheckoutOutcome;
 pub use crate::app::commands::clean::CleanOutcome;
 pub use crate::app::commands::copy::CopyOutcome;
 pub use crate::app::commands::list::ListEntry;
+pub use crate::app::commands::remove::RemoveOutcome;
 pub use crate::app::commands::touch::TouchOutcome;
 
 fn find_workspace_root() -> Result<std::path::PathBuf, AppError> {
@@ -44,6 +50,36 @@ pub fn touch_context(key: &str, force: bool) -> Result<TouchOutcome, AppError> {
     let store = LocalContextFileStore::new(find_workspace_root()?);
     let clipboard = clipboard_from_env()?;
     touch_context_with_deps(key, force, &store, clipboard.as_ref())
+}
+
+pub fn checkout_snippets(
+    query: Option<&str>,
+    all: bool,
+    catalog: &impl SnippetCatalog,
+) -> Result<CheckoutOutcome, AppError> {
+    let workspace_root = find_workspace_root()?;
+    let target_root = workspace_root.join(".mx").join("commands");
+    let checkout = SymlinkCheckout::new();
+    commands::checkout::execute(query, all, catalog, &checkout, &target_root)
+}
+
+pub fn add_snippet(
+    path: &str,
+    title: Option<&str>,
+    description: Option<&str>,
+    force: bool,
+    store: &impl SnippetStore,
+) -> Result<AddOutcome, AppError> {
+    let clipboard = clipboard_from_env()?;
+    commands::add::execute(path, title, description, force, store, clipboard.as_ref())
+}
+
+pub fn remove_snippet(
+    snippet: &str,
+    catalog: &impl SnippetCatalog,
+    store: &impl SnippetStore,
+) -> Result<RemoveOutcome, AppError> {
+    commands::remove::execute(snippet, catalog, store)
 }
 
 pub(crate) fn cat_context_with_store(

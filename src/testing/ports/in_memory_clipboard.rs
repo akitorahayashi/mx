@@ -8,6 +8,12 @@ pub struct InMemoryClipboard {
 }
 
 impl InMemoryClipboard {
+    pub fn with_content(value: &str) -> Self {
+        let cb = Self::default();
+        cb.set_contents(value);
+        cb
+    }
+
     pub fn contents(&self) -> String {
         self.buffer.borrow().clone()
     }

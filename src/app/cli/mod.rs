@@ -1,7 +1,10 @@
+mod add;
 mod cat;
+mod checkout;
 mod clean;
 mod copy;
 mod list;
+mod remove;
 mod touch;
 
 use crate::domain::error::AppError;
@@ -32,6 +35,24 @@ enum Commands {
     Clean { key: Option<String> },
     #[command(about = "Copy a snippet to the clipboard", visible_alias = "c")]
     Copy { snippet: String },
+    #[command(about = "Check out snippet(s) as symlinks in .mx/commands/", visible_alias = "co")]
+    Checkout {
+        path: Option<String>,
+        #[arg(short = 'a', long)]
+        all: bool,
+    },
+    #[command(about = "Add a snippet from clipboard", visible_aliases = ["a", "ad"])]
+    Add {
+        path: String,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        description: Option<String>,
+        #[arg(short = 'f', long)]
+        force: bool,
+    },
+    #[command(about = "Remove a snippet", visible_alias = "rm")]
+    Remove { snippet: String },
 }
 
 pub fn run() {
@@ -43,6 +64,11 @@ pub fn run() {
         Some(Commands::Cat { key }) => cat::run(&key),
         Some(Commands::Clean { key }) => clean::run(key),
         Some(Commands::Copy { snippet }) => copy::run(&snippet),
+        Some(Commands::Checkout { path, all }) => checkout::run(path.as_deref(), all),
+        Some(Commands::Add { path, title, description, force }) => {
+            add::run(&path, title.as_deref(), description.as_deref(), force)
+        }
+        Some(Commands::Remove { snippet }) => remove::run(&snippet),
         None => {
             Cli::command().print_help().ok();
             println!();
