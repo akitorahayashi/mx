@@ -1,0 +1,37 @@
+# jlo execution configuration
+
+[run]
+jlo_target_branch = "main"
+jules_worker_branch = "jules"
+
+[workflow]
+runner_mode = "remote"
+wait_minutes_default = 30
+jules_api_worker_max_parallel = 15
+
+[workflow.layers.innovators]
+roles = [
+  { name = "leverage_architect", enabled = true },
+]
+
+[workflow.layers.observers]
+roles = [
+  { name = "consistency", enabled = true },
+  { name = "taxonomy", enabled = true },
+  { name = "librarian", enabled = true },
+  { name = "tactician", enabled = true },
+  { name = "data_arch", enabled = true },
+  { name = "structural_arch", enabled = true },
+  { name = "qa", enabled = true },
+  { name = "cov", enabled = true },
+  { name = "cli_sentinel", enabled = true },
+  { name = "rustacean", enabled = true },
+]
+
+[workflow.layers.implementer]
+max_requirements_per_run = -1
+
+[schedule]
+cron = ["0 19 * * *"]
+skip_narrator_on_schedule = false
+

@@ -1,0 +1,21 @@
+# This file is auto-generated. Do not edit manually.
+name: 'Install jlo'
+description: 'Installs the jlo CLI binary pinned to .jlo/.jlo-version on the control branch with bounded local cache'
+inputs:
+  token:
+    description: 'GitHub PAT with read access to the jlo release repository'
+    required: true
+  submodule_token:
+    description: 'Optional GitHub PAT with read access to submodule repositories used by main source builds'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install jlo
+      shell: bash
+      env:
+        INSTALL_JLO_TOKEN: ${{ inputs.token }}
+        INSTALL_JLO_SUBMODULE_TOKEN: ${{ inputs.submodule_token }}
+      run: |
+        bash "${{ github.action_path }}/scripts/install.sh"

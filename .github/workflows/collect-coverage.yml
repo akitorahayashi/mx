@@ -21,8 +21,15 @@ jobs:
           install-mise: 'true'
           mise-tools: cargo:cargo-tarpaulin
 
+      - name: Reset tarpaulin runtime outputs
+        run: |
+          rm -rf target/tarpaulin
+          rm -rf coverage
+        shell: bash
+
       - name: Generate coverage
-        run: mise exec -- cargo tarpaulin --out Xml --output-dir coverage --all-features --fail-under 30
+        # --all-targets is intentionally absent; tarpaulin runs its own test harness
+        run: mise exec -- cargo tarpaulin --engine llvm --out Xml --output-dir coverage --all-features --fail-under 30
         env:
           RUST_TEST_THREADS: 1
 
