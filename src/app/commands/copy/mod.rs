@@ -1,6 +1,7 @@
 use crate::domain::context_file::validate_path;
 use crate::domain::error::AppError;
 use crate::domain::ports::{Clipboard, ContextFileStore, SnippetCatalog};
+use crate::domain::snippet::strip_frontmatter;
 use std::borrow::Cow;
 use std::fs;
 use std::path::Path;
@@ -19,8 +20,9 @@ pub fn execute(
     workspace_store: Option<&dyn ContextFileStore>,
 ) -> Result<CopyOutcome, AppError> {
     let snippet_entry = catalog.resolve_snippet(snippet)?;
-    let content = fs::read_to_string(&snippet_entry.absolute_path)?;
-    let expanded = expand_placeholders(&content, workspace_store);
+    let raw = fs::read_to_string(&snippet_entry.absolute_path)?;
+    let content = strip_frontmatter(&raw);
+    let expanded = expand_placeholders(content, workspace_store);
     clipboard.copy(expanded.as_ref())?;
 
     Ok(CopyOutcome {
@@ -162,5 +164,36 @@ mod tests {
         execute("wc", &catalog, &clipboard, Some(&workspace_store))
             .expect("copy command should succeed");
         assert_eq!(clipboard.contents(), "prefix {{.mx/info.md");
+    }
+
+    #[test]
+    fn execute_strips_frontmatter_before_copy() {
+        let (catalog, _dir, _) =
+            build_catalog_with_snippet("---\ntitle: My Snippet\n---\nbody only\n");
+        let clipboard = InMemoryClipboard::default();
+
+        execute("wc", &catalog, &clipboard, None).expect("copy should succeed");
+        assert_eq!(clipboard.contents(), "body only\n");
+    }
+
+    #[test]
+    fn execute_strips_frontmatter_then_expands_placeholders() {
+        let (catalog, _dir, _) =
+            build_catalog_with_snippet("---\ntitle: T\n---\nheader {{.mx/info.md}}");
+        let clipboard = InMemoryClipboard::default();
+        let workspace_store = InMemoryContextStore::default();
+        workspace_store.set_workspace_file(".mx/info.md", "injected");
+
+        execute("wc", &catalog, &clipboard, Some(&workspace_store)).expect("copy should succeed");
+        assert_eq!(clipboard.contents(), "header injected");
+    }
+
+    #[test]
+    fn execute_unaffected_when_no_frontmatter() {
+        let (catalog, _dir, _) = build_catalog_with_snippet("plain body\n");
+        let clipboard = InMemoryClipboard::default();
+
+        execute("wc", &catalog, &clipboard, None).expect("copy should succeed");
+        assert_eq!(clipboard.contents(), "plain body\n");
     }
 }

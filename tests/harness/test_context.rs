@@ -35,10 +35,6 @@ impl TestContext {
         self.home().join(".config").join("mx").join("commands")
     }
 
-    pub fn config_path(&self) -> PathBuf {
-        self.home().join(".config").join("mx").join("config.yml")
-    }
-
     pub fn cli(&self) -> Command {
         self.cli_in(self.work_dir())
     }
@@ -61,14 +57,6 @@ impl TestContext {
         }
         fs::write(&path, contents).expect("Failed to write snippet");
         path
-    }
-
-    pub fn write_config(&self, contents: &str) {
-        let path = self.config_path();
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).expect("Failed to create config parent");
-        }
-        fs::write(path, contents).expect("Failed to write config file");
     }
 
     pub fn clipboard_file(&self, name: &str) -> PathBuf {

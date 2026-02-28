@@ -1,6 +1,9 @@
+mod add;
 mod cat;
+mod checkout;
 mod clean;
 mod copy;
 mod help_and_version;
 mod list;
+mod remove;
 mod touch;
