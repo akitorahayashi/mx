@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Strips the YAML front matter from `content` and returns the body.
 /// If no valid front matter exists, returns `content` unchanged.
@@ -11,8 +11,15 @@ pub fn strip_frontmatter(content: &str) -> &str {
     let after_open = &content[open_len..];
 
     if let Some(close_pos) = find_closing_fence(after_open) {
-        let fence_line_len = 4; // "---\n"
-        &after_open[close_pos + fence_line_len..]
+        let fence_and_after = &after_open[close_pos..];
+        let fence_len = if fence_and_after.starts_with("---\r\n") {
+            5
+        } else if fence_and_after.starts_with("---\n") {
+            4
+        } else {
+            3 // "---" at end of file without trailing newline
+        };
+        &after_open[close_pos + fence_len..]
     } else {
         content
     }
@@ -31,20 +38,28 @@ pub fn parse_frontmatter(content: &str) -> Option<&str> {
 }
 
 fn find_closing_fence(text: &str) -> Option<usize> {
-    let mut pos = 0;
-    for line in text.lines() {
-        if line == "---" {
-            return Some(pos);
+    let mut start = 0;
+    loop {
+        let end = text[start..].find('\n').map(|i| start + i).unwrap_or(text.len());
+        let line = &text[start..end];
+        if line.strip_suffix('\r').unwrap_or(line) == "---" {
+            return Some(start);
         }
-        pos += line.len() + 1; // +1 for '\n'
+        if end == text.len() {
+            break;
+        }
+        start = end + 1;
     }
     None
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SnippetFrontmatter {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub aliases: Option<Vec<String>>,
 }
 

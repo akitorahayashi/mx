@@ -1,5 +1,6 @@
 use crate::domain::error::AppError;
 use crate::domain::ports::{Clipboard, SnippetStore};
+use crate::domain::snippet::SnippetFrontmatter;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -68,16 +69,15 @@ fn build_contents(body: &str, title: Option<&str>, description: Option<&str>) ->
         return body.to_string();
     }
 
-    let mut fm = String::from("---\n");
-    if let Some(t) = title {
-        fm.push_str(&format!("title: {}\n", t));
-    }
-    if let Some(d) = description {
-        fm.push_str(&format!("description: {}\n", d));
-    }
-    fm.push_str("---\n");
-    fm.push_str(body);
-    fm
+    let fm = SnippetFrontmatter {
+        title: title.map(ToOwned::to_owned),
+        description: description.map(ToOwned::to_owned),
+        aliases: None,
+    };
+
+    let yaml = serde_yaml::to_string(&fm).unwrap_or_default();
+    // serde_yaml serializes structs without the leading "---\n", add delimiters manually
+    format!("---\n{}---\n{}", yaml, body)
 }
 
 #[cfg(test)]
