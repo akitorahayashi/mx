@@ -3,6 +3,7 @@ mod cat;
 mod checkout;
 mod clean;
 mod copy;
+mod create_command;
 mod list;
 mod remove;
 mod touch;
@@ -53,6 +54,12 @@ enum Commands {
     },
     #[command(about = "Remove a snippet", visible_alias = "rm")]
     Remove { snippet: String },
+    #[command(about = "Create a new command template in .mx/commands/", visible_alias = "cc")]
+    CreateCommand {
+        path: String,
+        #[arg(short = 'f', long)]
+        force: bool,
+    },
 }
 
 pub fn run() {
@@ -69,6 +76,7 @@ pub fn run() {
             add::run(&path, title.as_deref(), description.as_deref(), force)
         }
         Some(Commands::Remove { snippet }) => remove::run(&snippet),
+        Some(Commands::CreateCommand { path, force }) => create_command::run(&path, force),
         None => {
             Cli::command().print_help().ok();
             println!();
