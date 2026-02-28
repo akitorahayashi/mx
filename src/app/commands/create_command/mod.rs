@@ -20,17 +20,20 @@ fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
         return Err(AppError::invalid_key("Path cannot be empty after .mx/commands/"));
     }
 
-    let rel = Path::new(stripped);
-    for component in rel.components() {
-        use std::path::Component::*;
-        match component {
-            Normal(_) | CurDir => {}
-            _ => {
-                return Err(AppError::path_traversal(format!(
-                    "Path contains unsafe segments: '{raw_path}'"
-                )))
-            }
+    // Reject raw dot/double-dot segments before path normalization erases them.
+    for segment in stripped.split('/') {
+        if segment == "." || segment == ".." || segment.is_empty() {
+            return Err(AppError::path_traversal(format!(
+                "Path contains unsafe segments: '{raw_path}'"
+            )));
         }
+    }
+
+    let rel = Path::new(stripped);
+    if rel.extension().map(|e| e != "md").unwrap_or(false) {
+        return Err(AppError::invalid_key(format!(
+            "Path must have a .md extension (got '{raw_path}')"
+        )));
     }
 
     Ok(rel.to_path_buf())
@@ -51,7 +54,13 @@ pub fn execute(
     }
 
     let path = store.write_snippet(&relative, TEMPLATE)?;
-    let key = relative.file_stem().and_then(|s| s.to_str()).unwrap_or(raw_path).to_string();
+    let key = relative
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| {
+            AppError::invalid_key(format!("Path must end with a valid filename: '{raw_path}'"))
+        })?
+        .to_string();
 
     Ok(CreateCommandOutcome { key, path })
 }
@@ -93,5 +102,19 @@ mod tests {
         let store = InMemorySnippetStore::new();
         let err = execute("other/path.md", false, &store).unwrap_err();
         assert!(err.to_string().contains("must be under .mx/commands/"));
+    }
+
+    #[test]
+    fn rejects_path_with_dot_segments() {
+        let store = InMemorySnippetStore::new();
+        let err = execute(".mx/commands/sub/./bad.md", false, &store).unwrap_err();
+        assert!(err.to_string().contains("unsafe segments"));
+    }
+
+    #[test]
+    fn rejects_non_markdown_extension() {
+        let store = InMemorySnippetStore::new();
+        let err = execute(".mx/commands/not-markdown.txt", false, &store).unwrap_err();
+        assert!(err.to_string().contains(".md"));
     }
 }
