@@ -1,0 +1,11 @@
+# jlo setup configuration
+# List the tools you want to install
+
+tools:
+  - gh
+  # Optional additions:
+  # - mise
+  # - submodule
+  # - just
+  # - swift
+  # - uv
