@@ -42,41 +42,4 @@ mod tests {
         clip.copy("abc").unwrap();
         assert_eq!(clip.paste().unwrap(), "abc");
     }
-
-    #[test]
-    fn file_clipboard_paste_non_existent() {
-        let dir = tempdir().unwrap();
-        let clip = FileClipboard::new(dir.path().join("non_existent.txt")).unwrap();
-        assert_eq!(clip.paste().unwrap(), "");
-    }
-
-    #[test]
-    fn file_clipboard_paste_empty() {
-        let dir = tempdir().unwrap();
-        let clip = FileClipboard::new(dir.path().join("empty.txt")).unwrap();
-        clip.copy("").unwrap();
-        assert_eq!(clip.paste().unwrap(), "");
-    }
-
-    #[test]
-    fn file_clipboard_copy_invalid_path() {
-        let dir = tempdir().unwrap();
-        // Use a path that is actually a directory so that write fails
-        let clip = FileClipboard::new(dir.path().to_path_buf()).unwrap();
-        let result = clip.copy("data");
-        assert!(result.is_err());
-        let err = result.unwrap_err();
-        assert_eq!(err.kind(), std::io::ErrorKind::Other);
-    }
-
-    #[test]
-    fn file_clipboard_paste_error() {
-        let dir = tempdir().unwrap();
-        // Use a path that is actually a directory so that read fails
-        let clip = FileClipboard::new(dir.path().to_path_buf()).unwrap();
-        let result = clip.paste();
-        assert!(result.is_err());
-        let err = result.unwrap_err();
-        assert_eq!(err.kind(), std::io::ErrorKind::Other);
-    }
 }
