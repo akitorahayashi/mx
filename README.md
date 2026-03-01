@@ -2,9 +2,9 @@
 
 `mx` is a Rust CLI that unifies two daily workflows:
 
-1. Snippet command – type `mx copy <snippet>` (alias `mx c`) to stream any markdown snippet under
+1. **Snippet command** – type `mx command <snippet>` (alias `mx c`) to stream any markdown snippet under
    `~/.config/mx/commands/` into your clipboard.
-2. Context Orchestration – type `mx touch <key>` (alias `mx t`) to create context files in your project with clipboard content, and `mx cat <key>` (alias `mx ct`) to view their contents.
+2. **Context Orchestration** – type `mx touch <key>` (alias `mx t`) to create context files in your project with clipboard content, and `mx cat <key>` (alias `mx ct`) to view their contents.
 
 ## Storage layout
 
@@ -16,7 +16,7 @@
     ... (any nested directory structure)
 ```
 
-- Snippet lookup scans `commands/` recursively for `.md` files. Both `mx c wc` and `mx c w/wc` resolve to
+- **Snippet lookup** scans `commands/` recursively for `.md` files. Both `mx c wc` and `mx c w/wc` resolve to
   `commands/w/wc.md`.
 
 ## CLI usage
@@ -29,7 +29,7 @@ mx list (alias: ls)
 mx --version
 
 # Copy a snippet into the clipboard (uses pbcopy/wl-copy/xclip/clip automatically)
-mx copy wc (alias: mx c wc)
+mx command wc (alias: mx c wc)
 
 # Create context files with clipboard content (alias: mx t)
 mx touch tk   # Creates .mx/tasks.md with clipboard content
@@ -84,26 +84,26 @@ mx t config.yaml     # Creates .mx/config.yaml (preserves extension)
 
 ### Dynamic Path Resolution
 
-- Pending Prefix: `pd-` prefix places the file under `pending/`.
+- **Pending Prefix**: `pd-` prefix places the file under `pending/`.
     - `mx t pd-tk` -> `.mx/pending/tasks.md`
     - `mx t pd-feature/spec` -> `.mx/pending/feature/spec.md`
-- Numbered Aliases: `tk` followed by a number (e.g., `tk1`, `tk2`) maps to `tasks/tasks{N}.md`.
+- **Numbered Aliases**: `tk` followed by a number (e.g., `tk1`, `tk2`) maps to `tasks/tasks{N}.md`.
 
 When no alias matches, the input is treated as a relative path:
 
-- Extension completion: If no extension is specified, `.md` is automatically appended
-- Directory creation: Parent directories are created automatically (e.g., `sdd/rq` creates `.mx/sdd/rq.md`)
-- Security: Path traversal attempts (using `..`) are rejected to prevent creating files outside `.mx/`
+- **Extension completion**: If no extension is specified, `.md` is automatically appended
+- **Directory creation**: Parent directories are created automatically (e.g., `sdd/rq` creates `.mx/sdd/rq.md`)
+- **Security**: Path traversal attempts (using `..`) are rejected to prevent creating files outside `.mx/`
 
 ### Default Clipboard Paste Behavior
 
 `mx touch` automatically pastes clipboard contents into newly created context files. This is the default behavior.
 
-Important: `mx touch` will not overwrite existing files by default. It will display a warning `⚠️ Context file already exists`.
+**Important**: `mx touch` will **not** overwrite existing files by default. It will display a warning `⚠️ Context file already exists`.
 
 To overwrite an existing file, use the `--force` (or `-f`) flag. This will overwrite the file with the current clipboard content.
 
-Common workflow:
+**Common workflow**:
 1. Copy error message or specification from browser
 2. Run `mx t er` to save it as `.mx/error.md`
 3. View it with `mx ct er` or reference it in your work using template placeholders like `{{.mx/error.md}}`
