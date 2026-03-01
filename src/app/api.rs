@@ -26,9 +26,9 @@ pub fn cat_context(key: &str) -> Result<String, AppError> {
     cat_context_with_store(key, &store)
 }
 
-pub fn clean_context(key: Option<String>) -> Result<CleanOutcome, AppError> {
+pub fn clean_context(key: Option<String>, force: bool) -> Result<CleanOutcome, AppError> {
     let store = LocalContextFileStore::new(find_workspace_root()?);
-    clean_context_with_store(key, &store)
+    clean_context_with_store(key, force, &store)
 }
 
 pub fn copy_snippet(snippet: &str, catalog: &impl SnippetCatalog) -> Result<CopyOutcome, AppError> {
@@ -77,10 +77,11 @@ pub fn add_snippet(
 
 pub fn remove_snippet(
     snippet: &str,
+    force: bool,
     catalog: &impl SnippetCatalog,
     store: &impl SnippetStore,
 ) -> Result<RemoveOutcome, AppError> {
-    commands::remove::execute(snippet, catalog, store)
+    commands::remove::execute(snippet, force, catalog, store)
 }
 
 pub fn create_command(
@@ -100,9 +101,10 @@ pub(crate) fn cat_context_with_store(
 
 pub(crate) fn clean_context_with_store(
     key: Option<String>,
+    force: bool,
     store: &dyn ContextFileStore,
 ) -> Result<CleanOutcome, AppError> {
-    commands::clean::execute(key, store)
+    commands::clean::execute(key, force, store)
 }
 
 pub(crate) fn touch_context_with_deps(

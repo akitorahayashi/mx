@@ -28,7 +28,7 @@ fn touch_cat_clean_lifecycle_is_consistent() {
     Command::cargo_bin("mx")
         .unwrap()
         .current_dir(&dir)
-        .args(["clean", "tk"])
+        .args(["clean", "--force", "tk"])
         .assert()
         .success()
         .stdout(predicate::str::contains("Removed"));

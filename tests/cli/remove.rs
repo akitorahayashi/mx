@@ -7,7 +7,7 @@ fn remove_deletes_existing_snippet() {
     install_sample_catalog(&ctx);
 
     ctx.cli()
-        .args(["remove", "wc"])
+        .args(["remove", "--force", "wc"])
         .assert()
         .success()
         .stdout(predicates::str::contains("Removed snippet 'wc'"));
@@ -20,7 +20,7 @@ fn remove_alias_rm_works() {
     let ctx = TestContext::new();
     install_sample_catalog(&ctx);
 
-    ctx.cli().args(["rm", "wc"]).assert().success();
+    ctx.cli().args(["rm", "--force", "wc"]).assert().success();
     assert!(!ctx.commands_root().join("w").join("wc.md").exists());
 }
 
@@ -29,7 +29,7 @@ fn remove_then_list_no_longer_shows_snippet() {
     let ctx = TestContext::new();
     install_sample_catalog(&ctx);
 
-    ctx.cli().args(["remove", "wc"]).assert().success();
+    ctx.cli().args(["remove", "--force", "wc"]).assert().success();
     ctx.cli().args(["list"]).assert().success().stdout(predicate::str::contains("wc").not());
 }
 
@@ -39,7 +39,7 @@ fn remove_fails_for_nonexistent_snippet() {
     install_sample_catalog(&ctx);
 
     ctx.cli()
-        .args(["remove", "does-not-exist"])
+        .args(["remove", "--force", "does-not-exist"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("No snippet named"));
@@ -56,9 +56,23 @@ fn remove_checkout_symlink_becomes_broken() {
     assert!(link.exists(), "symlink should exist before remove");
 
     // Now remove the actual file
-    ctx.cli().args(["remove", "wc"]).assert().success();
+    ctx.cli().args(["remove", "--force", "wc"]).assert().success();
 
     // Symlink should now be broken (exists as symlink entry but target is gone)
     assert!(!link.exists(), "symlink target is gone");
     assert!(link.symlink_metadata().is_ok(), "broken symlink should still have metadata entry");
+}
+
+#[test]
+fn remove_without_force_aborts_non_interactive() {
+    let ctx = TestContext::new();
+    install_sample_catalog(&ctx);
+
+    ctx.cli()
+        .args(["remove", "wc"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Operation cancelled by user"));
+
+    assert!(ctx.commands_root().join("w").join("wc.md").exists());
 }

@@ -33,7 +33,11 @@ enum Commands {
     #[command(about = "Display context file contents", visible_alias = "ct")]
     Cat { key: String },
     #[command(about = "Clean context files or directory", visible_alias = "cl")]
-    Clean { key: Option<String> },
+    Clean {
+        key: Option<String>,
+        #[arg(short = 'f', long)]
+        force: bool,
+    },
     #[command(about = "Copy a snippet to the clipboard", visible_alias = "c")]
     Copy { snippet: String },
     #[command(about = "Check out snippet(s) as symlinks in .mx/commands/", visible_alias = "co")]
@@ -53,7 +57,11 @@ enum Commands {
         force: bool,
     },
     #[command(about = "Remove a snippet", visible_alias = "rm")]
-    Remove { snippet: String },
+    Remove {
+        snippet: String,
+        #[arg(short = 'f', long)]
+        force: bool,
+    },
     #[command(about = "Create a new command template in .mx/commands/", visible_alias = "cc")]
     CreateCommand {
         path: String,
@@ -69,13 +77,13 @@ pub fn run() {
         Some(Commands::List) => list::run(),
         Some(Commands::Touch { key, force }) => touch::run(&key, force),
         Some(Commands::Cat { key }) => cat::run(&key),
-        Some(Commands::Clean { key }) => clean::run(key),
+        Some(Commands::Clean { key, force }) => clean::run(key, force),
         Some(Commands::Copy { snippet }) => copy::run(&snippet),
         Some(Commands::Checkout { path, all }) => checkout::run(path.as_deref(), all),
         Some(Commands::Add { path, title, description, force }) => {
             add::run(&path, title.as_deref(), description.as_deref(), force)
         }
-        Some(Commands::Remove { snippet }) => remove::run(&snippet),
+        Some(Commands::Remove { snippet, force }) => remove::run(&snippet, force),
         Some(Commands::CreateCommand { path, force }) => create_command::run(&path, force),
         None => {
             Cli::command().print_help().ok();

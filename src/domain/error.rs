@@ -19,6 +19,9 @@ pub enum AppError {
 
     #[error("{0}")]
     PathTraversal(String),
+
+    #[error("Aborted: {0}")]
+    Aborted(String),
 }
 
 impl AppError {
@@ -42,6 +45,10 @@ impl AppError {
         Self::PathTraversal(message.into())
     }
 
+    pub fn aborted<S: Into<String>>(message: S) -> Self {
+        Self::Aborted(message.into())
+    }
+
     pub fn kind(&self) -> io::ErrorKind {
         match self {
             Self::Io(err) => err.kind(),
@@ -50,6 +57,7 @@ impl AppError {
             Self::ClipboardError(_) => io::ErrorKind::Other,
             Self::InvalidKey(_) => io::ErrorKind::InvalidInput,
             Self::PathTraversal(_) => io::ErrorKind::InvalidInput,
+            Self::Aborted(_) => io::ErrorKind::Other,
         }
     }
 }
