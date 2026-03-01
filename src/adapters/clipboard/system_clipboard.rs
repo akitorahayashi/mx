@@ -34,7 +34,7 @@ impl ClipboardCommand {
 
 pub struct SystemClipboard {
     copy_command: ClipboardCommand,
-    paste_command: ClipboardCommand,
+    paste_command: Option<ClipboardCommand>,
 }
 
 impl SystemClipboard {
@@ -47,7 +47,7 @@ impl SystemClipboard {
                 .ok_or_else(|| AppError::clipboard_error("MX_COPY_CMD is empty"))?;
             let paste_command = ClipboardCommand::from_string(paste_str)
                 .ok_or_else(|| AppError::clipboard_error("MX_PASTE_CMD is empty"))?;
-            return Ok(Self { copy_command, paste_command });
+            return Ok(Self { copy_command, paste_command: Some(paste_command) });
         }
 
         if copy_var.is_ok() || paste_var.is_ok() {
@@ -59,22 +59,22 @@ impl SystemClipboard {
         if let Ok(custom) = env::var("MX_CLIPBOARD_CMD") {
             let command = ClipboardCommand::from_string(&custom)
                 .ok_or_else(|| AppError::clipboard_error("MX_CLIPBOARD_CMD is empty"))?;
-            return Ok(Self { copy_command: command.clone(), paste_command: command });
+            return Ok(Self { copy_command: command, paste_command: None });
         }
 
         match env::consts::OS {
             "macos" => Ok(Self {
                 copy_command: ClipboardCommand::new("pbcopy"),
-                paste_command: ClipboardCommand::new("pbpaste"),
+                paste_command: Some(ClipboardCommand::new("pbpaste")),
             }),
             "linux" => Self::detect_linux(),
             "windows" => Ok(Self {
                 copy_command: ClipboardCommand::new("clip"),
-                paste_command: ClipboardCommand::new("powershell").with_args([
+                paste_command: Some(ClipboardCommand::new("powershell").with_args([
                     "-noprofile",
                     "-command",
                     "Get-Clipboard",
-                ]),
+                ])),
             }),
             other => Err(AppError::clipboard_error(format!(
                 "Unsupported platform '{other}' for clipboard operations"
@@ -86,18 +86,18 @@ impl SystemClipboard {
         if Self::command_available("wl-copy", ["--version"]) {
             return Ok(Self {
                 copy_command: ClipboardCommand::new("wl-copy"),
-                paste_command: ClipboardCommand::new("wl-paste"),
+                paste_command: Some(ClipboardCommand::new("wl-paste")),
             });
         }
 
         if Self::command_available("xclip", ["-version"]) {
             return Ok(Self {
                 copy_command: ClipboardCommand::new("xclip").with_args(["-selection", "clipboard"]),
-                paste_command: ClipboardCommand::new("xclip").with_args([
+                paste_command: Some(ClipboardCommand::new("xclip").with_args([
                     "-selection",
                     "clipboard",
                     "-o",
-                ]),
+                ])),
             });
         }
 
@@ -155,15 +155,16 @@ impl Clipboard for SystemClipboard {
     }
 
     fn paste(&self) -> Result<String, AppError> {
-        let output = Command::new(&self.paste_command.program)
-            .args(&self.paste_command.args)
+        let cmd = self.paste_command.as_ref().unwrap_or(&self.copy_command);
+        let output = Command::new(&cmd.program)
+            .args(&cmd.args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .output()
             .map_err(|err| {
                 AppError::clipboard_error(format!(
                     "Failed to run paste command '{}': {err}",
-                    self.paste_command.program
+                    cmd.program
                 ))
             })?;
 
