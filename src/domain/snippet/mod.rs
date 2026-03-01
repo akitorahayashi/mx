@@ -4,4 +4,3 @@ pub mod query;
 
 pub use catalog_entry::SnippetEntry;
 pub use frontmatter::{parse_frontmatter_metadata, strip_frontmatter, SnippetFrontmatter};
-pub use query::{candidate_key, normalize_query};
