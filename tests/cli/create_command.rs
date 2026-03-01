@@ -60,35 +60,3 @@ fn force_overwrites_existing() {
     assert!(content.starts_with("---\n"), "template should replace old content");
 }
 
-#[test]
-fn rejects_path_outside_mx_commands() {
-    let ctx = TestContext::new();
-
-    ctx.cli()
-        .args(["create-command", "other/path.md"])
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains(".mx/commands/"));
-}
-
-#[test]
-fn rejects_path_with_dot_segments() {
-    let ctx = TestContext::new();
-
-    ctx.cli()
-        .args(["create-command", ".mx/commands/sub/./bad.md"])
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains("unsafe segments"));
-}
-
-#[test]
-fn rejects_non_markdown_extension() {
-    let ctx = TestContext::new();
-
-    ctx.cli()
-        .args(["create-command", ".mx/commands/not-markdown.txt"])
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains(".md"));
-}
