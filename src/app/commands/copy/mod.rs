@@ -197,20 +197,3 @@ mod tests {
         assert_eq!(clipboard.contents(), "plain body\n");
     }
 }
-
-use crate::adapters::snippet_catalog::FilesystemSnippetCatalog;
-use crate::app::api;
-
-#[derive(clap::Args)]
-pub struct Cli {
-    pub snippet: String,
-}
-
-pub fn run(args: Cli) -> Result<(), crate::domain::error::AppError> {
-    let storage = FilesystemSnippetCatalog::from_env()?;
-    let api::CopyOutcome { snippet: snippet_key, relative_path, absolute_path } =
-        api::copy_snippet(&args.snippet, &storage)?;
-
-    println!("✅ Copied '{snippet_key}' from {relative_path} -> {}", absolute_path.display());
-    Ok(())
-}

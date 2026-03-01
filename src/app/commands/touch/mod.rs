@@ -75,26 +75,3 @@ mod tests {
         assert_eq!(store.read_context_contents(&resolve_context_path("tk")).unwrap(), "updated");
     }
 }
-
-use crate::app::api;
-
-#[derive(clap::Args)]
-pub struct Cli {
-    pub key: String,
-    #[arg(short = 'f', long = "force")]
-    pub force: bool,
-}
-
-pub fn run(args: Cli) -> Result<(), crate::domain::error::AppError> {
-    let outcome = api::touch_context(&args.key, args.force)?;
-
-    if outcome.overwritten {
-        println!("✅ Context file overwritten: {}", outcome.path.display());
-    } else if outcome.existed {
-        println!("⚠️ Context file already exists: {}", outcome.path.display());
-    } else {
-        println!("✅ Context file created: {}", outcome.path.display());
-    }
-
-    Ok(())
-}

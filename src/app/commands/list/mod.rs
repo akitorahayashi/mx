@@ -119,31 +119,3 @@ mod tests {
         assert!(entries[1].title.is_none());
     }
 }
-
-use crate::adapters::snippet_catalog::FilesystemSnippetCatalog;
-use crate::app::api;
-
-#[derive(clap::Args)]
-pub struct Cli {}
-
-pub fn run(_args: Cli) -> Result<(), crate::domain::error::AppError> {
-    let storage = FilesystemSnippetCatalog::from_env()?;
-    let entries = api::list_snippets(&storage)?;
-    if entries.is_empty() {
-        println!("(no snippets found)");
-        return Ok(());
-    }
-
-    println!("📚 Available snippets:\n");
-    for api::ListEntry { snippet, relative_path, title, description } in entries {
-        println!("- {snippet} ({relative_path})");
-        if let Some(title) = title {
-            println!("  • {title}");
-        }
-        if let Some(description) = description {
-            println!("    {description}");
-        }
-    }
-
-    Ok(())
-}

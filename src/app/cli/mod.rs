@@ -1,4 +1,13 @@
-use crate::app::commands;
+mod add;
+mod cat;
+mod checkout;
+mod clean;
+mod copy;
+mod create_command;
+mod list;
+mod remove;
+mod touch;
+
 use crate::domain::error::AppError;
 use clap::{CommandFactory, Parser, Subcommand};
 
@@ -6,46 +15,68 @@ use clap::{CommandFactory, Parser, Subcommand};
 #[command(name = "mx")]
 #[command(version)]
 #[command(about = "Unified CLI for mx snippets")]
-pub struct Cli {
+struct Cli {
     #[command(subcommand)]
-    pub command: Option<Commands>,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
-pub enum Commands {
+enum Commands {
     #[command(about = "List available snippets", visible_alias = "ls")]
-    List(commands::list::Cli),
+    List,
     #[command(about = "Create context files", visible_alias = "t")]
-    Touch(commands::touch::Cli),
+    Touch {
+        key: String,
+        #[arg(short = 'f', long = "force")]
+        force: bool,
+    },
     #[command(about = "Display context file contents", visible_alias = "ct")]
-    Cat(commands::cat::Cli),
+    Cat { key: String },
     #[command(about = "Clean context files or directory", visible_alias = "cl")]
-    Clean(commands::clean::Cli),
+    Clean { key: Option<String> },
     #[command(about = "Copy a snippet to the clipboard", visible_alias = "c")]
-    Copy(commands::copy::Cli),
+    Copy { snippet: String },
     #[command(about = "Check out snippet(s) as symlinks in .mx/commands/", visible_alias = "co")]
-    Checkout(commands::checkout::Cli),
+    Checkout {
+        path: Option<String>,
+        #[arg(short = 'a', long)]
+        all: bool,
+    },
     #[command(about = "Add a snippet from clipboard", visible_aliases = ["a", "ad"])]
-    Add(commands::add::Cli),
+    Add {
+        path: String,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        description: Option<String>,
+        #[arg(short = 'f', long)]
+        force: bool,
+    },
     #[command(about = "Remove a snippet", visible_alias = "rm")]
-    Remove(commands::remove::Cli),
+    Remove { snippet: String },
     #[command(about = "Create a new command template in .mx/commands/", visible_alias = "cc")]
-    CreateCommand(commands::create_command::Cli),
+    CreateCommand {
+        path: String,
+        #[arg(short = 'f', long)]
+        force: bool,
+    },
 }
 
 pub fn run() {
     let cli = Cli::parse();
 
     let result = match cli.command {
-        Some(Commands::List(args)) => commands::list::run(args),
-        Some(Commands::Touch(args)) => commands::touch::run(args),
-        Some(Commands::Cat(args)) => commands::cat::run(args),
-        Some(Commands::Clean(args)) => commands::clean::run(args),
-        Some(Commands::Copy(args)) => commands::copy::run(args),
-        Some(Commands::Checkout(args)) => commands::checkout::run(args),
-        Some(Commands::Add(args)) => commands::add::run(args),
-        Some(Commands::Remove(args)) => commands::remove::run(args),
-        Some(Commands::CreateCommand(args)) => commands::create_command::run(args),
+        Some(Commands::List) => list::run(),
+        Some(Commands::Touch { key, force }) => touch::run(&key, force),
+        Some(Commands::Cat { key }) => cat::run(&key),
+        Some(Commands::Clean { key }) => clean::run(key),
+        Some(Commands::Copy { snippet }) => copy::run(&snippet),
+        Some(Commands::Checkout { path, all }) => checkout::run(path.as_deref(), all),
+        Some(Commands::Add { path, title, description, force }) => {
+            add::run(&path, title.as_deref(), description.as_deref(), force)
+        }
+        Some(Commands::Remove { snippet }) => remove::run(&snippet),
+        Some(Commands::CreateCommand { path, force }) => create_command::run(&path, force),
         None => {
             Cli::command().print_help().ok();
             println!();
