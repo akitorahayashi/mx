@@ -36,3 +36,16 @@ mod tests {
         assert!(matches!(result, Err(AppError::PathTraversal(_))));
     }
 }
+
+use crate::app::api;
+
+#[derive(clap::Args)]
+pub struct Cli {
+    pub key: String,
+}
+
+pub fn run(args: Cli) -> Result<(), crate::domain::error::AppError> {
+    let content = api::cat_context(&args.key)?;
+    print!("{}", content);
+    Ok(())
+}

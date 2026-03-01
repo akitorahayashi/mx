@@ -109,3 +109,31 @@ mod tests {
         assert_eq!(contents, "*\n");
     }
 }
+
+use crate::adapters::snippet_catalog::FilesystemSnippetCatalog;
+use crate::app::api;
+
+#[derive(clap::Args)]
+pub struct Cli {
+    pub path: Option<String>,
+    #[arg(short = 'a', long)]
+    pub all: bool,
+}
+
+pub fn run(args: Cli) -> Result<(), crate::domain::error::AppError> {
+    let catalog = FilesystemSnippetCatalog::from_env()?;
+    let outcome = api::checkout_snippets(args.path.as_deref(), args.all, &catalog)?;
+
+    for created in &outcome.created {
+        println!("  linked {}", created.display());
+    }
+    if outcome.skipped > 0 {
+        println!("  {} already linked (skipped)", outcome.skipped);
+    }
+    println!(
+        "✅ Checked out {} snippet(s) into {}",
+        outcome.created.len(),
+        outcome.gitignore_path.parent().map(|p| p.display().to_string()).unwrap_or_default()
+    );
+    Ok(())
+}

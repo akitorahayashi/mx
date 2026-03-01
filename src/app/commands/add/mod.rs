@@ -150,3 +150,24 @@ mod tests {
         assert!(matches!(err, AppError::InvalidKey(_)));
     }
 }
+
+use crate::adapters::snippet_store::FilesystemSnippetStore;
+use crate::app::api;
+
+#[derive(clap::Args)]
+pub struct Cli {
+    pub path: String,
+    #[arg(long)]
+    pub title: Option<String>,
+    #[arg(long)]
+    pub description: Option<String>,
+    #[arg(short = 'f', long)]
+    pub force: bool,
+}
+
+pub fn run(args: Cli) -> Result<(), AppError> {
+    let store = FilesystemSnippetStore::from_env()?;
+    let outcome = api::add_snippet(&args.path, args.title.as_deref(), args.description.as_deref(), args.force, &store)?;
+    println!("✅ Added snippet '{}' at {}", outcome.key, outcome.path.display());
+    Ok(())
+}

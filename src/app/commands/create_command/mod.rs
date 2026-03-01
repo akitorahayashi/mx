@@ -118,3 +118,20 @@ mod tests {
         assert!(err.to_string().contains(".md"));
     }
 }
+
+use crate::adapters::snippet_store::FilesystemSnippetStore;
+use crate::app::api;
+
+#[derive(clap::Args)]
+pub struct Cli {
+    pub path: String,
+    #[arg(short = 'f', long)]
+    pub force: bool,
+}
+
+pub fn run(args: Cli) -> Result<(), crate::domain::error::AppError> {
+    let store = FilesystemSnippetStore::from_env()?;
+    let outcome = api::create_command(&args.path, args.force, &store)?;
+    println!("Created command template: {} ({})", outcome.key, outcome.path.display());
+    Ok(())
+}

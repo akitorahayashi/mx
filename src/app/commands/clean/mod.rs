@@ -57,3 +57,16 @@ mod tests {
         assert!(outcome.message.contains(".mx/tasks.md"));
     }
 }
+
+use crate::app::api;
+
+#[derive(clap::Args)]
+pub struct Cli {
+    pub key: Option<String>,
+}
+
+pub fn run(args: Cli) -> Result<(), crate::domain::error::AppError> {
+    let outcome = api::clean_context(args.key)?;
+    println!("✅ {}", outcome.message);
+    Ok(())
+}
