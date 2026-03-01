@@ -1,6 +1,6 @@
-mod adapters;
+pub mod adapters;
 mod app;
-mod domain;
+pub mod domain;
 
 #[cfg(test)]
 pub(crate) mod testing;
