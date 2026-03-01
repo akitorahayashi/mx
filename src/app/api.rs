@@ -39,7 +39,7 @@ pub fn copy_snippet(snippet: &str, catalog: &impl SnippetCatalog) -> Result<Copy
         snippet,
         catalog,
         clipboard.as_ref(),
-        workspace_store.as_ref(),
+        workspace_store.as_ref().map(|store| store as &dyn ContextFileStore),
     )
 }
 
