@@ -31,21 +31,15 @@ pub fn execute(
     match key {
         None => {
             if store.remove_context_root()? {
-                Ok(CleanOutcome {
-                    message: "Removed .mx directory".to_string(),
-                })
+                Ok(CleanOutcome { message: "Removed .mx directory".to_string() })
             } else {
-                Ok(CleanOutcome {
-                    message: ".mx directory not found".to_string(),
-                })
+                Ok(CleanOutcome { message: ".mx directory not found".to_string() })
             }
         }
         Some(key) => {
             let relative_path = resolve_validated_context_path(&key)?;
             let target_path = store.remove_context_file(&relative_path)?;
-            Ok(CleanOutcome {
-                message: format!("Removed {}", target_path.display()),
-            })
+            Ok(CleanOutcome { message: format!("Removed {}", target_path.display()) })
         }
     }
 }
