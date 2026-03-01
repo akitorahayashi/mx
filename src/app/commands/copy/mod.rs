@@ -13,11 +13,11 @@ pub struct CopyOutcome {
     pub absolute_path: std::path::PathBuf,
 }
 
-pub fn execute(
+pub fn execute<C: SnippetCatalog + ?Sized, L: Clipboard + ?Sized, S: ContextFileStore>(
     snippet: &str,
-    catalog: &dyn SnippetCatalog,
-    clipboard: &dyn Clipboard,
-    workspace_store: Option<&dyn ContextFileStore>,
+    catalog: &C,
+    clipboard: &L,
+    workspace_store: Option<&S>,
 ) -> Result<CopyOutcome, AppError> {
     let snippet_entry = catalog.resolve_snippet(snippet)?;
     let raw = fs::read_to_string(&snippet_entry.absolute_path)?;
@@ -32,9 +32,9 @@ pub fn execute(
     })
 }
 
-fn expand_placeholders<'a>(
+fn expand_placeholders<'a, S: ContextFileStore>(
     content: &'a str,
-    workspace_store: Option<&dyn ContextFileStore>,
+    workspace_store: Option<&S>,
 ) -> Cow<'a, str> {
     let Some(store) = workspace_store else {
         return Cow::Borrowed(content);
@@ -66,7 +66,7 @@ fn expand_placeholders<'a>(
     Cow::Owned(output)
 }
 
-fn render_placeholder(raw_token: &str, workspace_store: &dyn ContextFileStore) -> String {
+fn render_placeholder<S: ContextFileStore>(raw_token: &str, workspace_store: &S) -> String {
     let trimmed = raw_token.trim();
     if trimmed.is_empty() {
         return format!("{{{{{raw_token}}}}}");
@@ -128,7 +128,7 @@ mod tests {
         let (catalog, _dir, _) = build_catalog_with_snippet("{{.mx/info.md}}");
         let clipboard = InMemoryClipboard::default();
 
-        execute("wc", &catalog, &clipboard, None).expect("copy command should succeed");
+        execute("wc", &catalog, &clipboard, None::<&InMemoryContextStore>).expect("copy command should succeed");
         assert_eq!(clipboard.contents(), "{{.mx/info.md}}");
     }
 
@@ -172,7 +172,7 @@ mod tests {
             build_catalog_with_snippet("---\ntitle: My Snippet\n---\nbody only\n");
         let clipboard = InMemoryClipboard::default();
 
-        execute("wc", &catalog, &clipboard, None).expect("copy should succeed");
+        execute("wc", &catalog, &clipboard, None::<&InMemoryContextStore>).expect("copy should succeed");
         assert_eq!(clipboard.contents(), "body only\n");
     }
 
@@ -193,7 +193,7 @@ mod tests {
         let (catalog, _dir, _) = build_catalog_with_snippet("plain body\n");
         let clipboard = InMemoryClipboard::default();
 
-        execute("wc", &catalog, &clipboard, None).expect("copy should succeed");
+        execute("wc", &catalog, &clipboard, None::<&InMemoryContextStore>).expect("copy should succeed");
         assert_eq!(clipboard.contents(), "plain body\n");
     }
 }
