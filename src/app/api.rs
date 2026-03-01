@@ -1,9 +1,7 @@
 use crate::adapters::clipboard::clipboard_from_env;
 use crate::app::commands;
 use crate::domain::error::AppError;
-use crate::domain::ports::{
-    ContextFileStore, SnippetCatalog, SnippetStore, SnippetCheckout
-};
+use crate::domain::ports::{ContextFileStore, SnippetCatalog, SnippetCheckout, SnippetStore};
 use std::path::Path;
 
 pub use crate::app::commands::add::AddOutcome;
@@ -19,7 +17,10 @@ pub fn cat_context(key: &str, store: &impl ContextFileStore) -> Result<String, A
     commands::cat::execute(key, store)
 }
 
-pub fn clean_context(key: Option<String>, store: &impl ContextFileStore) -> Result<CleanOutcome, AppError> {
+pub fn clean_context(
+    key: Option<String>,
+    store: &impl ContextFileStore,
+) -> Result<CleanOutcome, AppError> {
     commands::clean::execute(key, store)
 }
 
@@ -42,7 +43,11 @@ pub fn list_snippets(catalog: &impl SnippetCatalog) -> Result<Vec<ListEntry>, Ap
     commands::list::execute(catalog)
 }
 
-pub fn touch_context(key: &str, force: bool, store: &impl ContextFileStore) -> Result<TouchOutcome, AppError> {
+pub fn touch_context(
+    key: &str,
+    force: bool,
+    store: &impl ContextFileStore,
+) -> Result<TouchOutcome, AppError> {
     let clipboard = clipboard_from_env()?;
     commands::touch::execute(key, force, store, clipboard.as_ref())
 }
@@ -83,4 +88,3 @@ pub fn create_command(
 ) -> Result<CreateCommandOutcome, AppError> {
     commands::create_command::execute(path, force, store)
 }
-
