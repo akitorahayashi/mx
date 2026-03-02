@@ -1,10 +1,14 @@
 # Development guide
 
+## Common Commands
+
 - `just setup`: install pinned development tools from `mise.toml`.
 - `cargo fmt --check`: check formatting.
 - `cargo clippy --all-targets --all-features -- -D warnings`: run clippy in strict mode.
 - `RUST_TEST_THREADS=1 cargo test --all-targets --all-features`: run test suites.
 - `just coverage`: run coverage with pinned tarpaulin.
+
+## Testing Culture
 
 The workspace follows the original template's testing culture:
 
