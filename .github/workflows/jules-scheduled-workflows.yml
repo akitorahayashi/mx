@@ -52,7 +52,6 @@ env:
 
 
 
-
 jobs:
   # ============================================================
   # Phase 0: Bootstrap runtime repository on worker branch
@@ -371,6 +370,10 @@ jobs:
 
   wait-after-narrator:
     needs: ["resolve-run-plan", "run-narrator"]
+    # Boundary contract:
+    # - plan flag true + executable targets => run job is success
+    # - plan flag true + zero matrix targets => run job may be skipped
+    # - plan flag false => run job is skipped
     if: |
       !cancelled() &&
       always() &&
@@ -518,14 +521,25 @@ jobs:
 
   wait-after-observers:
     needs: ["resolve-run-plan", "resolve-observers-matrix", "run-observers"]
+    # Boundary contract:
+    # - plan flag true + executable targets => run job is success
+    # - plan flag true + zero matrix targets => run job may be skipped
+    # - plan flag false => run job is skipped
     if: |
       !cancelled() &&
       always() &&
       needs.resolve-run-plan.result == 'success' &&
+      needs.resolve-observers-matrix.result == 'success' &&
       (
         (
           fromJSON(needs.resolve-run-plan.outputs.json || '{}').run_observers == true &&
-          needs.run-observers.result == 'success'
+          (
+            needs.run-observers.result == 'success' ||
+            (
+              needs.run-observers.result == 'skipped' &&
+              fromJSON(needs.resolve-observers-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count == 0
+            )
+          )
         ) ||
         (
           fromJSON(needs.resolve-run-plan.outputs.json || '{}').run_observers == false &&
@@ -621,6 +635,10 @@ jobs:
 
   wait-after-merger:
     needs: ["resolve-run-plan", "run-merger"]
+    # Boundary contract:
+    # - plan flag true + executable targets => run job is success
+    # - plan flag true + zero matrix targets => run job may be skipped
+    # - plan flag false => run job is skipped
     if: |
       !cancelled() &&
       always() &&
@@ -766,18 +784,42 @@ jobs:
   # ============================================================
   # Phase 12: Wait for planner PRs
   # ============================================================
+  # Matrix boundary is normalized in the macro so planner skip/zero-target
+  # behavior does not leak into downstream implementer gating.
 
   wait-after-planner:
-    needs: ["resolve-planner-matrix", "run-planner"]
+    needs: ["resolve-run-plan", "resolve-planner-matrix", "run-planner"]
+    # Boundary contract:
+    # - plan flag true + executable targets => run job is success
+    # - plan flag true + zero matrix targets => run job may be skipped
+    # - plan flag false => run job is skipped
     if: |
       !cancelled() &&
       always() &&
-      needs.run-planner.result == 'success' &&
-      fromJSON(needs.resolve-planner-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0
+      needs.resolve-run-plan.result == 'success' &&
+      needs.resolve-planner-matrix.result == 'success' &&
+      (
+        (
+          fromJSON(needs.resolve-run-plan.outputs.json || '{}').run_planner == true &&
+          (
+            needs.run-planner.result == 'success' ||
+            (
+              needs.run-planner.result == 'skipped' &&
+              fromJSON(needs.resolve-planner-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count == 0
+            )
+          )
+        ) ||
+        (
+          fromJSON(needs.resolve-run-plan.outputs.json || '{}').run_planner == false &&
+          needs.run-planner.result == 'skipped'
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
       json: ${{ steps.wait.outputs.json }}
+    env:
+      WAIT_REQUESTED: ${{ fromJSON(needs.resolve-run-plan.outputs.json || '{}').run_planner == true && needs.run-planner.result == 'success' && fromJSON(needs.resolve-planner-matrix.outputs.json || '{"count":0,"skipped_count":0,"matrix":[]}').count > 0 }}
     steps:
       - name: Wait ${{ env.WAIT_MINUTES }} minutes for Jules async processing
         id: wait
@@ -794,7 +836,11 @@ jobs:
             exit 130
           }
           trap on_cancel INT TERM
-          if [ "${{ env.MOCK_MODE }}" = "true" ]; then
+
+          if [ "$WAIT_REQUESTED" != "true" ]; then
+            TOTAL_SECONDS=0
+            echo "Planner wait not required; skipping wait."
+          elif [ "${{ env.MOCK_MODE }}" = "true" ]; then
             TOTAL_SECONDS=15
             echo "Mock mode enabled: overriding wait to 15 seconds."
           else
@@ -806,9 +852,8 @@ jobs:
             echo "json={}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-            echo "Waiting ${TOTAL_SECONDS} seconds for Jules to process planner..."
-          # Foreground sleep delays trap handling until sleep returns in bash.
-          # Use background sleep + wait so cancellation signals are processed immediately.
+
+          echo "Waiting ${TOTAL_SECONDS} seconds for Jules to process planner..."
           sleep "$TOTAL_SECONDS" &
           SLEEP_PID=$!
           wait "$SLEEP_PID"
