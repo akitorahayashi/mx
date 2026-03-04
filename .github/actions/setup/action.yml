@@ -44,18 +44,9 @@ runs:
         restore-keys: |
           ${{ runner.os }}-cargo-
 
-    - name: Normalize mise install args
-      if: inputs.install-mise == 'true'
-      id: setup-mise-args
-      shell: bash
-      run: |
-        set -euo pipefail
-        normalized="$(printf '%s' "${{ inputs.mise-tools }}" | tr -s '[:space:]' ' ' | sed 's/^ //;s/ $//')"
-        echo "install_args=${normalized}" >> "${GITHUB_OUTPUT}"
-
     - name: Setup mise
       if: inputs.install-mise == 'true'
       uses: jdx/mise-action@v3
       with:
         version: ${{ inputs.mise-version }}
-        install_args: ${{ steps.setup-mise-args.outputs.install_args }}
+        install_args: --locked ${{ inputs.mise-tools }}
