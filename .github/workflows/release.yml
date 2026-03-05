@@ -10,29 +10,61 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   lint:
+    permissions:
+      contents: read
     uses: ./.github/workflows/run-linters.yml
 
   test:
+    permissions:
+      contents: read
     uses: ./.github/workflows/run-tests.yml
 
   coverage:
+    permissions:
+      contents: read
     uses: ./.github/workflows/collect-coverage.yml
 
   build:
+    permissions:
+      contents: read
     uses: ./.github/workflows/build.yml
 
   release:
     needs: [lint, test, coverage, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           merge-multiple: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+
+      - name: Sign release binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          for artifact in \
+            mx-linux-x86_64 \
+            mx-linux-aarch64 \
+            mx-darwin-x86_64 \
+            mx-darwin-aarch64; do
+            if [ ! -f "${artifact}" ]; then
+              echo "::error::Release artifact '${artifact}' not found."
+              exit 1
+            fi
+
+            echo "Signing ${artifact}..."
+            cosign sign-blob --yes --bundle "${artifact}.bundle" "${artifact}" > "${artifact}.sig"
+          done
 
       - name: Create release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
@@ -42,4 +74,12 @@ jobs:
             mx-linux-aarch64
             mx-darwin-x86_64
             mx-darwin-aarch64
+            mx-linux-x86_64.sig
+            mx-linux-aarch64.sig
+            mx-darwin-x86_64.sig
+            mx-darwin-aarch64.sig
+            mx-linux-x86_64.bundle
+            mx-linux-aarch64.bundle
+            mx-darwin-x86_64.bundle
+            mx-darwin-aarch64.bundle
           generate_release_notes: true
