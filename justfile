@@ -1,7 +1,18 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 
+default: help
+
+help:
+    @echo "Usage: just [recipe]"
+    @echo ""
+    @echo "Development tasks for mx CLI:"
+    @just --list | tail -n +2 | awk '{printf "  \033[36m%-20s\033[0m %s\n", $1, substr($0, index($0, $2))}'
+
+# Initialize project: install dependencies
 setup:
-    mise install
+    @echo "🪄 Installing tools with mise..."
+    @mise trust
+    @mise install --locked
 
 # Format code with rustfmt
 fmt:
