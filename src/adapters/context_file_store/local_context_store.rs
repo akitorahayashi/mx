@@ -7,6 +7,8 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+const GITIGNORE_FILE: &str = ".gitignore";
+
 #[derive(Debug, Clone)]
 pub struct LocalContextFileStore {
     workspace_root: PathBuf,
@@ -35,7 +37,7 @@ impl ContextFileStore for LocalContextFileStore {
             fs::create_dir(&mx_dir)?;
         }
 
-        let gitignore = mx_dir.join(".gitignore");
+        let gitignore = mx_dir.join(GITIGNORE_FILE);
         if !gitignore.exists() {
             let mut file = OpenOptions::new().write(true).create_new(true).open(&gitignore)?;
             writeln!(file, "*")?;
@@ -103,7 +105,7 @@ impl ContextFileStore for LocalContextFileStore {
         if mx_dir.exists() {
             for entry in fs::read_dir(&mx_dir)? {
                 let entry = entry?;
-                if entry.file_name() == OsStr::new(".gitignore") {
+                if entry.file_name() == OsStr::new(GITIGNORE_FILE) {
                     continue;
                 }
 
