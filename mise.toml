@@ -1,4 +1,5 @@
 min_version = "2026.2.19"
 
 [tools]
-"cargo:cargo-tarpaulin" = { version = "0.35.2", locked = true }
+just = "1.46.0"
+"cargo:cargo-tarpaulin" = "0.35.2"

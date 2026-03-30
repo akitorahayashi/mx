@@ -16,6 +16,9 @@ jobs:
 
       - name: Setup environment
         uses: ./.github/actions/setup
+        with:
+          install-mise: 'true'
+          mise-tools: just
 
       - name: Run all tests
-        run: cargo test --all-targets --all-features
+        run: mise exec -- just test

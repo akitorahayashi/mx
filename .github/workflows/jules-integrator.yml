@@ -7,7 +7,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: 'jules-integrator'
+  group: 'jules-worker'
   cancel-in-progress: false
 
 env:
@@ -30,30 +30,25 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           ref: 'main'
           fetch-depth: 0
-          token: ${{ secrets.JLO_BOT_TOKEN }}
+          token: ${{ secrets.JLO_BOT_PAT }}
 
       - name: Install jlo
-        uses: ./.github/actions/install-jlo
+        uses: asterismhq/setup-jlo@v1
         with:
-          token: ${{ secrets.JLO_RELEASE_TOKEN }}
-          submodule_token: ${{ secrets.SUBMODULE_PAT }}
-
-      - name: Validate gh availability
-        run: |
-          set -euo pipefail
-          if ! command -v gh &>/dev/null; then
-            echo "::error::gh CLI is required but not found."
-            exit 1
-          fi
-          gh --version
+          token: ${{ secrets.JLO_INSTALL_PAT }}
+          version: '25.0.1'
+          submodule_token: ${{ secrets.JLO_SUBMODULE_PAT }}
 
       - name: Run integrator
+        uses: akitorahayashi/retry@v1
         env:
           JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
-        run: |
-          set -euo pipefail
-          jlo workflow exec integrator
+        with:
+          command: >-
+            jlo run integrator
+          max_attempts: '7'
+          retry_delay_schedule_seconds: '1,2,4,8,16,32'
