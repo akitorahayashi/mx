@@ -1,6 +1,7 @@
 use crate::domain::context_file::path_policy::validate_relative_components;
 use crate::domain::error::AppError;
 use crate::domain::ports::{ContextFileStore, ContextWriteStatus};
+use std::ffi::OsStr;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -100,7 +101,21 @@ impl ContextFileStore for LocalContextFileStore {
     fn remove_context_root(&self) -> Result<bool, AppError> {
         let mx_dir = self.mx_dir();
         if mx_dir.exists() {
-            fs::remove_dir_all(&mx_dir)?;
+            for entry in fs::read_dir(&mx_dir)? {
+                let entry = entry?;
+                if entry.file_name() == OsStr::new(".gitignore") {
+                    continue;
+                }
+
+                let file_type = entry.file_type()?;
+                let path = entry.path();
+                if file_type.is_dir() {
+                    fs::remove_dir_all(path)?;
+                } else {
+                    fs::remove_file(path)?;
+                }
+            }
+
             return Ok(true);
         }
 
@@ -176,5 +191,26 @@ mod tests {
 
         let result = store.write_context_contents(&outside, "content");
         assert!(matches!(result, Err(AppError::PathTraversal(_))));
+    }
+
+    #[test]
+    fn remove_context_root_preserves_gitignore() {
+        let workspace = tempdir().unwrap();
+        let store = LocalContextFileStore::new(workspace.path().to_path_buf());
+        let mx_dir = workspace.path().join(".mx");
+        fs::create_dir_all(&mx_dir).unwrap();
+        fs::write(mx_dir.join(".gitignore"), "*").unwrap();
+        fs::write(mx_dir.join("tasks.md"), "task").unwrap();
+        let nested_dir = mx_dir.join("nested");
+        fs::create_dir_all(&nested_dir).unwrap();
+        fs::write(nested_dir.join("notes.md"), "note").unwrap();
+
+        let removed = store.remove_context_root().unwrap();
+
+        assert!(removed);
+        assert!(mx_dir.exists());
+        assert!(mx_dir.join(".gitignore").exists());
+        assert!(!mx_dir.join("tasks.md").exists());
+        assert!(!mx_dir.join("nested").exists());
     }
 }

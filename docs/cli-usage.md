@@ -27,7 +27,7 @@ mx t tk --force      # Overwrites .mx/tasks.md with clipboard content
 mx t tk -f           # Short form
 
 # Clean context files
-mx cl             # Deletes the entire .mx/ directory (alias for clean)
+mx cl             # Clears .mx/ contents and keeps .mx/.gitignore (alias for clean)
 mx cl tk          # Deletes only .mx/tasks.md
 mx cl tk1         # Deletes only .mx/tasks/tasks1.md
 
