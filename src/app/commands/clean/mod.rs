@@ -14,7 +14,7 @@ pub fn execute(
     match key {
         None => {
             if store.remove_context_root()? {
-                Ok(CleanOutcome { message: "Removed .mx directory".to_string() })
+                Ok(CleanOutcome { message: "Cleared .mx directory contents".to_string() })
             } else {
                 Ok(CleanOutcome { message: ".mx directory not found".to_string() })
             }
@@ -42,7 +42,7 @@ mod tests {
         store.write_context_contents(&status.path, "content").unwrap();
 
         let outcome = execute(None, &store).expect("clean command should succeed");
-        assert_eq!(outcome.message, "Removed .mx directory");
+        assert_eq!(outcome.message, "Cleared .mx directory contents");
     }
 
     #[test]

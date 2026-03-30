@@ -31,9 +31,12 @@ fn clean_full_directory() {
         .arg("clean")
         .assert()
         .success()
-        .stdout(predicate::eq("✅ Removed .mx directory\n"));
+        .stdout(predicate::eq("✅ Cleared .mx directory contents\n"));
 
-    assert!(!dir.path().join(".mx").exists());
+    let mx_dir = dir.path().join(".mx");
+    assert!(mx_dir.exists());
+    assert!(mx_dir.join(".gitignore").exists());
+    assert!(!mx_dir.join("tasks.md").exists());
 }
 
 #[test]
@@ -55,5 +58,5 @@ fn clean_alias_cl_works() {
         .arg("cl")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Removed"));
+        .stdout(predicate::str::contains("Cleared"));
 }
