@@ -21,10 +21,7 @@ fn add_subcommand_saves_snippet_from_clipboard() {
 
     let saved = ctx.commands_root().join("test-snippet.md");
     assert!(saved.exists(), "snippet file should be created");
-    ctx.cli()
-        .args(["copy", "test-snippet"])
-        .assert()
-        .success();
+    ctx.cli().args(["copy", "test-snippet"]).assert().success();
 }
 
 #[test]
@@ -52,7 +49,6 @@ fn add_with_title_and_description_creates_frontmatter() {
     assert!(content.contains("body\n"));
 }
 
-
 #[test]
 fn add_force_overwrites_existing() {
     let ctx = TestContext::new();
@@ -64,13 +60,8 @@ fn add_force_overwrites_existing() {
 
     ctx.cli().args(["copy", "force-test"]).assert().success();
     ctx.cli().args(["touch", "tk"]).assert().success();
-    ctx.cli()
-        .args(["cat", "tk"])
-        .assert()
-        .success()
-        .stdout(predicate::eq("v2\n"));
+    ctx.cli().args(["cat", "tk"]).assert().success().stdout(predicate::eq("v2\n"));
 }
-
 
 #[test]
 fn add_then_copy_roundtrip() {

@@ -14,11 +14,7 @@ fn copy_subcommand_works() {
         .stdout(predicate::str::contains("Copied 'wc'"));
 
     ctx.cli().args(["touch", "tk"]).assert().success();
-    ctx.cli()
-        .args(["cat", "tk"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("/wc"));
+    ctx.cli().args(["cat", "tk"]).assert().success().stdout(predicate::str::contains("/wc"));
 }
 
 #[test]
@@ -30,11 +26,7 @@ fn copy_alias_c_works() {
     ctx.cli().args(["c", "wc"]).assert().success().stdout(predicate::str::contains("Copied 'wc'"));
 
     ctx.cli().args(["touch", "tk"]).assert().success();
-    ctx.cli()
-        .args(["cat", "tk"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("/wc"));
+    ctx.cli().args(["cat", "tk"]).assert().success().stdout(predicate::str::contains("/wc"));
 }
 
 #[test]

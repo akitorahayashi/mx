@@ -13,11 +13,7 @@ fn clean_full_directory() {
     let ctx = TestContext::new();
     let _ = setup_clipboard(&ctx, "test content");
 
-    ctx.cli()
-        .arg("touch")
-        .arg("tk")
-        .assert()
-        .success();
+    ctx.cli().arg("touch").arg("tk").assert().success();
 
     ctx.cli()
         .arg("clean")
@@ -38,14 +34,7 @@ fn clean_alias_cl_works() {
     let ctx = TestContext::new();
     let _ = setup_clipboard(&ctx, "test content");
 
-    ctx.cli()
-        .args(["touch", "tk"])
-        .assert()
-        .success();
+    ctx.cli().args(["touch", "tk"]).assert().success();
 
-    ctx.cli()
-        .arg("cl")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Cleared"));
+    ctx.cli().arg("cl").assert().success().stdout(predicate::str::contains("Cleared"));
 }

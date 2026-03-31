@@ -20,11 +20,7 @@ fn touch_creates_context_files() {
         .success()
         .stdout(predicate::str::contains("✅ Context file created"));
 
-    ctx.cli()
-        .args(["cat", "tk"])
-        .assert()
-        .success()
-        .stdout(predicate::eq("test content"));
+    ctx.cli().args(["cat", "tk"]).assert().success().stdout(predicate::eq("test content"));
 }
 
 #[test]
@@ -45,9 +41,5 @@ fn touch_force_overwrites() {
         .success()
         .stdout(predicate::str::contains("✅ Context file overwritten"));
 
-    ctx.cli()
-        .args(["cat", "tk"])
-        .assert()
-        .success()
-        .stdout(predicate::eq("new clipboard content"));
+    ctx.cli().args(["cat", "tk"]).assert().success().stdout(predicate::eq("new clipboard content"));
 }
