@@ -1,6 +1,6 @@
-use crate::domain::context_file::path_policy::validate_relative_components;
 use crate::domain::error::AppError;
 use crate::domain::ports::{ContextFileStore, ContextWriteStatus};
+use crate::domain::SafePath;
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::OpenOptions;
@@ -27,11 +27,9 @@ impl LocalContextFileStore {
 impl ContextFileStore for LocalContextFileStore {
     fn prepare_context_file(
         &self,
-        relative_path: &Path,
+        relative_path: &SafePath,
         force: bool,
     ) -> Result<ContextWriteStatus, AppError> {
-        validate_relative_components(relative_path)?;
-
         let mx_dir = self.mx_dir();
         if !mx_dir.exists() {
             fs::create_dir(&mx_dir)?;
@@ -74,8 +72,7 @@ impl ContextFileStore for LocalContextFileStore {
         Ok(())
     }
 
-    fn read_context_contents(&self, relative_path: &Path) -> Result<String, AppError> {
-        validate_relative_components(relative_path)?;
+    fn read_context_contents(&self, relative_path: &SafePath) -> Result<String, AppError> {
         let full_path = self.mx_dir().join(relative_path);
 
         if !full_path.is_file() {
@@ -124,8 +121,7 @@ impl ContextFileStore for LocalContextFileStore {
         Ok(false)
     }
 
-    fn remove_context_file(&self, relative_path: &Path) -> Result<PathBuf, AppError> {
-        validate_relative_components(relative_path)?;
+    fn remove_context_file(&self, relative_path: &SafePath) -> Result<PathBuf, AppError> {
         let mx_dir = self.mx_dir();
         let target_path = mx_dir.join(relative_path);
 
@@ -169,20 +165,11 @@ mod tests {
         fs::write(&target, "original").unwrap();
 
         let store = LocalContextFileStore::new(workspace.path().to_path_buf());
-        let status = store.prepare_context_file(Path::new("tasks.md"), true).unwrap();
+        let status = store.prepare_context_file(&SafePath::try_from_path(Path::new("tasks.md")).unwrap(), true).unwrap();
 
         assert!(status.existed);
         assert!(status.overwritten);
         assert_eq!(fs::read_to_string(&target).unwrap(), "original");
-    }
-
-    #[test]
-    fn adapter_rejects_unsafe_relative_paths() {
-        let workspace = tempdir().unwrap();
-        let store = LocalContextFileStore::new(workspace.path().to_path_buf());
-
-        let result = store.prepare_context_file(Path::new("../escape.md"), false);
-        assert!(matches!(result, Err(AppError::PathTraversal(_))));
     }
 
     #[test]

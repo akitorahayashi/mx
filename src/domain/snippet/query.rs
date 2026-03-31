@@ -1,7 +1,8 @@
 use crate::domain::error::AppError;
+use crate::domain::SafePath;
 use std::path::{Component, Path};
 
-pub fn normalize_query(raw: &str) -> Result<String, AppError> {
+pub fn normalize_query(raw: &str) -> Result<SafePath, AppError> {
     let trimmed = raw.trim().trim_start_matches('/');
     if trimmed.is_empty() {
         return Err(AppError::config_error("Snippet name cannot be empty"));
@@ -15,33 +16,23 @@ pub fn normalize_query(raw: &str) -> Result<String, AppError> {
         normalized = stripped.to_string();
     }
 
-    ensure_safe_segments(&normalized)?;
-    Ok(normalized)
-}
-
-pub fn candidate_key(normalized_query: &str) -> String {
-    normalized_query.rsplit('/').next().unwrap_or(normalized_query).to_string()
-}
-
-pub fn ensure_safe_segments(value: &str) -> Result<(), AppError> {
-    if value.split('/').any(|segment| segment.is_empty()) {
+    if normalized.split('/').any(|segment| segment.is_empty()) {
         return Err(AppError::config_error(
             "Snippet paths cannot contain empty, absolute, or traversal segments",
         ));
     }
 
-    for component in Path::new(value).components() {
-        match component {
-            Component::Normal(_) | Component::CurDir => {}
-            _ => {
-                return Err(AppError::config_error(
-                    "Snippet paths cannot contain empty, absolute, or traversal segments",
-                ));
-            }
-        }
-    }
+    let safe_path = SafePath::try_from_path(Path::new(&normalized)).map_err(|_| {
+        AppError::config_error(
+            "Snippet paths cannot contain empty, absolute, or traversal segments",
+        )
+    })?;
 
-    Ok(())
+    Ok(safe_path)
+}
+
+pub fn candidate_key(normalized_query: &str) -> String {
+    normalized_query.rsplit('/').next().unwrap_or(normalized_query).to_string()
 }
 
 pub fn path_to_string(path: &Path) -> Result<String, AppError> {
@@ -75,12 +66,11 @@ mod tests {
         assert!(normalize_query("  ").is_err());
         assert!(normalize_query("../secret").is_err());
         assert!(normalize_query("foo//bar").is_err());
-        assert!(ensure_safe_segments("foo/../bar").is_err());
     }
 
     #[test]
     fn normalize_query_strips_prefix_and_extension() {
-        assert_eq!(normalize_query("commands/w/wc.md").unwrap(), "w/wc");
-        assert_eq!(normalize_query("/foo").unwrap(), "foo");
+        assert_eq!(normalize_query("commands/w/wc.md").unwrap().to_string(), "w/wc");
+        assert_eq!(normalize_query("/foo").unwrap().to_string(), "foo");
     }
 }

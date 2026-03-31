@@ -38,7 +38,8 @@ mod tests {
     fn execute_removes_root_when_no_key_is_provided() {
         let store = InMemoryContextStore::default();
         let relative_path = resolve_context_path("tk");
-        let status = store.prepare_context_file(&relative_path, false).unwrap();
+        let safe_path = crate::domain::SafePath::try_from_path(&relative_path).unwrap();
+        let status = store.prepare_context_file(&safe_path, false).unwrap();
         store.write_context_contents(&status.path, "content").unwrap();
 
         let outcome = execute(None, &store).expect("clean command should succeed");
@@ -49,7 +50,8 @@ mod tests {
     fn execute_removes_specific_context_file() {
         let store = InMemoryContextStore::default();
         let relative_path = resolve_context_path("tk");
-        let status = store.prepare_context_file(&relative_path, false).unwrap();
+        let safe_path = crate::domain::SafePath::try_from_path(&relative_path).unwrap();
+        let status = store.prepare_context_file(&safe_path, false).unwrap();
         store.write_context_contents(&status.path, "content").unwrap();
 
         let outcome =

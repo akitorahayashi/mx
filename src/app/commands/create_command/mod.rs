@@ -1,5 +1,6 @@
 use crate::domain::error::AppError;
 use crate::domain::ports::SnippetStore;
+use crate::domain::SafePath;
 use std::path::{Path, PathBuf};
 
 const TEMPLATE: &str = include_str!("../../../assets/command_template.md");
@@ -10,7 +11,7 @@ pub struct CreateCommandOutcome {
     pub path: PathBuf,
 }
 
-fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
+fn extract_relative_path(raw_path: &str) -> Result<SafePath, AppError> {
     let normalized = raw_path.trim_start_matches("./");
     let stripped = normalized.strip_prefix(".mx/commands/").ok_or_else(|| {
         AppError::invalid_key(format!("Path must be under .mx/commands/ (got '{raw_path}')"))
@@ -36,7 +37,11 @@ fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
         )));
     }
 
-    Ok(rel.to_path_buf())
+    let safe_path = SafePath::try_from_path(rel).map_err(|_| {
+        AppError::path_traversal(format!("Path contains unsafe segments: '{raw_path}'"))
+    })?;
+
+    Ok(safe_path)
 }
 
 pub fn execute(

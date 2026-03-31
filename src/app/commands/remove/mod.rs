@@ -1,6 +1,7 @@
 use crate::domain::error::AppError;
 use crate::domain::ports::{SnippetCatalog, SnippetStore};
 use std::path::PathBuf;
+use crate::domain::SafePath;
 
 #[derive(Debug, Clone)]
 pub struct RemoveOutcome {
@@ -15,7 +16,10 @@ pub fn execute(
 ) -> Result<RemoveOutcome, AppError> {
     let entry = catalog.resolve_snippet(snippet)?;
     let relative = std::path::Path::new(&entry.relative_path).with_extension("md");
-    let path = store.remove_snippet(&relative)?;
+    let safe_path = SafePath::try_from_path(&relative).map_err(|_| {
+        AppError::path_traversal(format!("Path contains unsafe segments: '{}'", relative.display()))
+    })?;
+    let path = store.remove_snippet(&safe_path)?;
     Ok(RemoveOutcome { key: entry.key, path })
 }
 

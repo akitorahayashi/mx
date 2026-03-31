@@ -1,5 +1,6 @@
 use crate::domain::error::AppError;
 use crate::domain::ports::SnippetStore;
+use crate::domain::SafePath;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -29,7 +30,7 @@ impl FilesystemSnippetStore {
 }
 
 impl SnippetStore for FilesystemSnippetStore {
-    fn write_snippet(&self, relative_path: &Path, contents: &str) -> Result<PathBuf, AppError> {
+    fn write_snippet(&self, relative_path: &SafePath, contents: &str) -> Result<PathBuf, AppError> {
         let target = if relative_path.extension().is_some() {
             self.commands_root.join(relative_path)
         } else {
@@ -43,7 +44,7 @@ impl SnippetStore for FilesystemSnippetStore {
         Ok(target)
     }
 
-    fn snippet_exists(&self, relative_path: &Path) -> bool {
+    fn snippet_exists(&self, relative_path: &SafePath) -> bool {
         let target = if relative_path.extension().is_some() {
             self.commands_root.join(relative_path)
         } else {
@@ -52,7 +53,7 @@ impl SnippetStore for FilesystemSnippetStore {
         target.exists()
     }
 
-    fn remove_snippet(&self, relative_path: &Path) -> Result<PathBuf, AppError> {
+    fn remove_snippet(&self, relative_path: &SafePath) -> Result<PathBuf, AppError> {
         let target = if relative_path.extension().is_some() {
             self.commands_root.join(relative_path)
         } else {
