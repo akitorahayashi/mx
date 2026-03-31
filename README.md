@@ -2,7 +2,7 @@
 
 `mx` is a Rust CLI that unifies two daily workflows:
 
-1. **Snippet command** – type `mx command <snippet>` (alias `mx c`) to stream any markdown snippet under
+1. **Snippet command** – type `mx copy <snippet>` (alias `mx c`) to stream any markdown snippet under
    `~/.config/mx/commands/` into your clipboard.
 2. **Context Orchestration** – type `mx touch <key>` (alias `mx t`) to create context files in your project with clipboard content, and `mx cat <key>` (alias `mx ct`) to view their contents.
 
