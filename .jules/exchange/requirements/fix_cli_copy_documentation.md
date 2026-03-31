@@ -1,6 +1,6 @@
 ---
 label: "docs"
-implementation_ready: false
+implementation_ready: true
 ---
 
 ## Goal
@@ -37,7 +37,6 @@ The CLI provides a command to copy snippets to the clipboard. The code implement
 
 - `README.md`
 - `docs/cli-usage.md`
-- `AGENTS.md`
 
 ## Constraints
 
@@ -48,4 +47,3 @@ The CLI provides a command to copy snippets to the clipboard. The code implement
 
 - `README.md` correctly references `mx copy` instead of `mx command`.
 - `docs/cli-usage.md` correctly references `mx copy` instead of `mx command`.
-- `AGENTS.md` correctly references `mx copy` instead of `mx command`.
