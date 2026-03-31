@@ -1,7 +1,7 @@
-use crate::domain::SafePath;
 use crate::domain::error::AppError;
 use crate::domain::ports::{Clipboard, ContextFileStore, SnippetCatalog};
 use crate::domain::snippet::strip_frontmatter;
+use crate::domain::SafePath;
 use std::borrow::Cow;
 use std::fs;
 use std::path::Path;

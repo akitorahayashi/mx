@@ -52,7 +52,11 @@ mod tests {
         assert!(!outcome.overwritten);
         assert!(outcome.path.ends_with(".mx/tasks.md"));
 
-        let content = store.read_context_contents(&crate::domain::SafePath::try_from_path(&resolve_context_path("tk")).unwrap()).unwrap();
+        let content = store
+            .read_context_contents(
+                &crate::domain::SafePath::try_from_path(&resolve_context_path("tk")).unwrap(),
+            )
+            .unwrap();
         assert_eq!(content, "fresh content");
     }
 
@@ -67,11 +71,25 @@ mod tests {
         let skipped = execute("tk", false, &store, &clipboard).unwrap();
         assert!(skipped.existed);
         assert!(!skipped.overwritten);
-        assert_eq!(store.read_context_contents(&crate::domain::SafePath::try_from_path(&resolve_context_path("tk")).unwrap()).unwrap(), "initial");
+        assert_eq!(
+            store
+                .read_context_contents(
+                    &crate::domain::SafePath::try_from_path(&resolve_context_path("tk")).unwrap()
+                )
+                .unwrap(),
+            "initial"
+        );
 
         let forced = execute("tk", true, &store, &clipboard).unwrap();
         assert!(forced.existed);
         assert!(forced.overwritten);
-        assert_eq!(store.read_context_contents(&crate::domain::SafePath::try_from_path(&resolve_context_path("tk")).unwrap()).unwrap(), "updated");
+        assert_eq!(
+            store
+                .read_context_contents(
+                    &crate::domain::SafePath::try_from_path(&resolve_context_path("tk")).unwrap()
+                )
+                .unwrap(),
+            "updated"
+        );
     }
 }

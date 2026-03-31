@@ -1,7 +1,7 @@
 use crate::domain::error::AppError;
 use crate::domain::ports::{SnippetCatalog, SnippetStore};
-use std::path::PathBuf;
 use crate::domain::SafePath;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct RemoveOutcome {

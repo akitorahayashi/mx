@@ -165,7 +165,9 @@ mod tests {
         fs::write(&target, "original").unwrap();
 
         let store = LocalContextFileStore::new(workspace.path().to_path_buf());
-        let status = store.prepare_context_file(&SafePath::try_from_path(Path::new("tasks.md")).unwrap(), true).unwrap();
+        let status = store
+            .prepare_context_file(&SafePath::try_from_path(Path::new("tasks.md")).unwrap(), true)
+            .unwrap();
 
         assert!(status.existed);
         assert!(status.overwritten);
