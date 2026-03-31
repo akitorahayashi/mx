@@ -1,10 +1,10 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, ConfigError};
 use std::path::{Component, Path};
 
 pub fn normalize_query(raw: &str) -> Result<String, AppError> {
     let trimmed = raw.trim().trim_start_matches('/');
     if trimmed.is_empty() {
-        return Err(AppError::config_error("Snippet name cannot be empty"));
+        return Err(AppError::ConfigError(ConfigError::EmptySnippetName));
     }
 
     let mut normalized = trimmed.replace('\\', "/");
@@ -25,18 +25,18 @@ pub fn candidate_key(normalized_query: &str) -> String {
 
 pub fn ensure_safe_segments(value: &str) -> Result<(), AppError> {
     if value.split('/').any(|segment| segment.is_empty()) {
-        return Err(AppError::config_error(
-            "Snippet paths cannot contain empty, absolute, or traversal segments",
-        ));
+        return Err(AppError::ConfigError(ConfigError::Other(
+            "Snippet paths cannot contain empty, absolute, or traversal segments".to_string(),
+        )));
     }
 
     for component in Path::new(value).components() {
         match component {
             Component::Normal(_) | Component::CurDir => {}
             _ => {
-                return Err(AppError::config_error(
-                    "Snippet paths cannot contain empty, absolute, or traversal segments",
-                ));
+                return Err(AppError::ConfigError(ConfigError::Other(
+                    "Snippet paths cannot contain empty, absolute, or traversal segments".to_string(),
+                )));
             }
         }
     }
@@ -51,14 +51,14 @@ pub fn path_to_string(path: &Path) -> Result<String, AppError> {
             Component::Normal(segment) => parts.push(
                 segment
                     .to_str()
-                    .ok_or_else(|| AppError::config_error("Snippet paths must be UTF-8"))?
+                    .ok_or_else(|| AppError::ConfigError(ConfigError::InvalidUtf8))?
                     .to_string(),
             ),
             Component::CurDir => continue,
             _ => {
-                return Err(AppError::config_error(
-                    "Snippet paths cannot include traversal components",
-                ));
+                return Err(AppError::ConfigError(ConfigError::Other(
+                    "Snippet paths cannot include traversal components".to_string(),
+                )));
             }
         }
     }

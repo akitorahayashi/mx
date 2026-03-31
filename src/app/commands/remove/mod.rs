@@ -51,6 +51,6 @@ mod tests {
         let store = InMemorySnippetStore::new();
 
         let err = execute("missing", &catalog, &store).expect_err("should fail");
-        assert!(matches!(err, AppError::NotFound(_)));
+        assert!(matches!(err, AppError::NotFound(crate::domain::error::NotFoundError::Snippet(_))));
     }
 }

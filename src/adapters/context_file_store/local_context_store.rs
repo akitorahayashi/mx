@@ -1,5 +1,5 @@
 use crate::domain::context_file::path_policy::validate_relative_components;
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, NotFoundError, PathTraversalError};
 use crate::domain::ports::{ContextFileStore, ContextWriteStatus};
 use std::ffi::OsStr;
 use std::fs;
@@ -66,9 +66,9 @@ impl ContextFileStore for LocalContextFileStore {
 
     fn write_context_contents(&self, absolute_path: &Path, contents: &str) -> Result<(), AppError> {
         if !absolute_path.starts_with(self.mx_dir()) {
-            return Err(AppError::path_traversal(
-                "Invalid path. Cannot create files outside of .mx directory.",
-            ));
+            return Err(AppError::PathTraversal(PathTraversalError::Detected(
+                "Invalid path. Cannot create files outside of .mx directory.".to_string(),
+            )));
         }
         fs::write(absolute_path, contents)?;
         Ok(())
@@ -80,16 +80,16 @@ impl ContextFileStore for LocalContextFileStore {
 
         if !full_path.is_file() {
             if full_path.exists() {
-                return Err(AppError::not_found(format!(
+                return Err(AppError::NotFound(NotFoundError::ContextFile(format!(
                     "⚠️ Path is not a file: {}",
                     relative_path.display()
-                )));
+                ))));
             }
 
-            return Err(AppError::not_found(format!(
+            return Err(AppError::NotFound(NotFoundError::ContextFile(format!(
                 "⚠️ Context file not found: {}",
                 relative_path.display()
-            )));
+            ))));
         }
 
         fs::read_to_string(&full_path).map_err(|err| {
@@ -146,7 +146,7 @@ impl ContextFileStore for LocalContextFileStore {
             return Ok(target_path);
         }
 
-        Err(AppError::not_found(format!("File not found: {}", target_path.display())))
+        Err(AppError::NotFound(crate::domain::error::NotFoundError::File(format!("File not found: {}", target_path.display()))))
     }
 
     fn read_workspace_file(&self, relative_path: &Path) -> Result<String, std::io::Error> {
@@ -182,7 +182,7 @@ mod tests {
         let store = LocalContextFileStore::new(workspace.path().to_path_buf());
 
         let result = store.prepare_context_file(Path::new("../escape.md"), false);
-        assert!(matches!(result, Err(AppError::PathTraversal(_))));
+        assert!(matches!(result, Err(AppError::PathTraversal(PathTraversalError::Detected(_)))));
     }
 
     #[test]
@@ -192,7 +192,7 @@ mod tests {
         let outside = workspace.path().join("outside.md");
 
         let result = store.write_context_contents(&outside, "content");
-        assert!(matches!(result, Err(AppError::PathTraversal(_))));
+        assert!(matches!(result, Err(AppError::PathTraversal(PathTraversalError::Detected(_)))));
     }
 
     #[test]
