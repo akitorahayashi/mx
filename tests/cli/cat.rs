@@ -1,20 +1,26 @@
-use assert_cmd::Command;
+use crate::harness::TestContext;
 use predicates::prelude::*;
 use std::fs;
-use tempfile::tempdir;
+
+fn setup_clipboard(ctx: &TestContext, content: &str) -> std::path::PathBuf {
+    let clipboard_file = ctx.clipboard_file("clipboard.txt");
+    fs::write(&clipboard_file, content).unwrap();
+    clipboard_file
+}
 
 #[test]
 fn cat_displays_file_contents() {
-    let temp = tempdir().unwrap();
-    let mx_dir = temp.path().join(".mx");
-    fs::create_dir_all(&mx_dir).unwrap();
-
+    let ctx = TestContext::new();
     let expected_content = "# Tasks\n\n- Task 1\n- Task 2\n";
-    fs::write(mx_dir.join("tasks.md"), expected_content).unwrap();
+    let _ = setup_clipboard(&ctx, expected_content);
 
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&temp)
+    ctx.cli()
+        .arg("touch")
+        .arg("tk")
+        .assert()
+        .success();
+
+    ctx.cli()
         .arg("cat")
         .arg("tk")
         .assert()
@@ -24,16 +30,17 @@ fn cat_displays_file_contents() {
 
 #[test]
 fn cat_alias_ct_works() {
-    let temp = tempdir().unwrap();
-    let mx_dir = temp.path().join(".mx");
-    fs::create_dir_all(&mx_dir).unwrap();
-
+    let ctx = TestContext::new();
     let content = "Requirements document";
-    fs::write(mx_dir.join("requirements.md"), content).unwrap();
+    let _ = setup_clipboard(&ctx, content);
 
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&temp)
+    ctx.cli()
+        .arg("touch")
+        .arg("rq")
+        .assert()
+        .success();
+
+    ctx.cli()
         .arg("ct")
         .arg("rq")
         .assert()
@@ -43,23 +50,17 @@ fn cat_alias_ct_works() {
 
 #[test]
 fn cat_with_touch_integration() {
-    let temp = tempdir().unwrap();
-    let clipboard_file = temp.path().join("clipboard.txt");
+    let ctx = TestContext::new();
     let content = "Content from clipboard";
-    fs::write(&clipboard_file, content).unwrap();
+    let _ = setup_clipboard(&ctx, content);
 
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&temp)
-        .env("MX_CLIPBOARD_FILE", &clipboard_file)
+    ctx.cli()
         .arg("touch")
         .arg("tk")
         .assert()
         .success();
 
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&temp)
+    ctx.cli()
         .arg("cat")
         .arg("tk")
         .assert()

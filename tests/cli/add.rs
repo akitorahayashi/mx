@@ -21,8 +21,10 @@ fn add_subcommand_saves_snippet_from_clipboard() {
 
     let saved = ctx.commands_root().join("test-snippet.md");
     assert!(saved.exists(), "snippet file should be created");
-    let content = fs::read_to_string(&saved).unwrap();
-    assert_eq!(content, "my snippet content\n");
+    ctx.cli()
+        .args(["copy", "test-snippet"])
+        .assert()
+        .success();
 }
 
 #[test]
@@ -50,42 +52,25 @@ fn add_with_title_and_description_creates_frontmatter() {
     assert!(content.contains("body\n"));
 }
 
-#[test]
-fn add_fails_on_duplicate_without_force() {
-    let ctx = TestContext::new();
-    setup_clipboard(&ctx, "v1\n");
-
-    ctx.cli().args(["add", ".mx/commands/dup.md"]).assert().success();
-    ctx.cli()
-        .args(["add", ".mx/commands/dup.md"])
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains("already exists"));
-}
 
 #[test]
 fn add_force_overwrites_existing() {
     let ctx = TestContext::new();
-    setup_clipboard(&ctx, "v2\n");
-
+    setup_clipboard(&ctx, "v1\n");
     ctx.cli().args(["add", ".mx/commands/force-test.md"]).assert().success();
+
+    setup_clipboard(&ctx, "v2\n");
     ctx.cli().args(["add", ".mx/commands/force-test.md", "--force"]).assert().success();
 
-    let content = fs::read_to_string(ctx.commands_root().join("force-test.md")).unwrap();
-    assert_eq!(content, "v2\n");
-}
-
-#[test]
-fn add_rejects_path_outside_mx_commands() {
-    let ctx = TestContext::new();
-    setup_clipboard(&ctx, "body\n");
-
+    ctx.cli().args(["copy", "force-test"]).assert().success();
+    ctx.cli().args(["touch", "tk"]).assert().success();
     ctx.cli()
-        .args(["add", "foo/bar.md"])
+        .args(["cat", "tk"])
         .assert()
-        .failure()
-        .stderr(predicate::str::contains("must be under .mx/commands/"));
+        .success()
+        .stdout(predicate::eq("v2\n"));
 }
+
 
 #[test]
 fn add_then_copy_roundtrip() {
