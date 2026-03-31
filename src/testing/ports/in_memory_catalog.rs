@@ -31,11 +31,11 @@ impl SnippetCatalog for InMemoryCatalog {
         }
 
         if key_match.len() > 1 {
-            return Err(AppError::config_error(format!(
+            return Err(AppError::ConfigError(crate::domain::error::ConfigError::Other(format!(
                 "Multiple snippets share the name '{raw_query}'",
-            )));
+            ))));
         }
 
-        Err(AppError::not_found(format!("No snippet named '{raw_query}'")))
+        Err(AppError::NotFound(crate::domain::error::NotFoundError::Snippet(format!("No snippet named '{raw_query}'"))))
     }
 }

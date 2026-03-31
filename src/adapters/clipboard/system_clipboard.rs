@@ -1,4 +1,4 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, ClipboardError, ConfigError};
 use crate::domain::ports::Clipboard;
 use std::env;
 use std::io::Write;
@@ -44,21 +44,21 @@ impl SystemClipboard {
 
         if let (Ok(copy_str), Ok(paste_str)) = (copy_var.as_ref(), paste_var.as_ref()) {
             let copy_command = ClipboardCommand::from_string(copy_str)
-                .ok_or_else(|| AppError::clipboard_error("MX_COPY_CMD is empty"))?;
+                .ok_or_else(|| AppError::ClipboardError(ClipboardError::CommandMissing("MX_COPY_CMD".to_string())))?;
             let paste_command = ClipboardCommand::from_string(paste_str)
-                .ok_or_else(|| AppError::clipboard_error("MX_PASTE_CMD is empty"))?;
+                .ok_or_else(|| AppError::ClipboardError(ClipboardError::CommandMissing("MX_PASTE_CMD".to_string())))?;
             return Ok(Self { copy_command, paste_command });
         }
 
         if copy_var.is_ok() || paste_var.is_ok() {
-            return Err(AppError::clipboard_error(
-                "Both MX_COPY_CMD and MX_PASTE_CMD must be set if either is provided",
-            ));
+            return Err(AppError::ConfigError(ConfigError::Other(
+                "Both MX_COPY_CMD and MX_PASTE_CMD must be set if either is provided".to_string(),
+            )));
         }
 
         if let Ok(custom) = env::var("MX_CLIPBOARD_CMD") {
             let command = ClipboardCommand::from_string(&custom)
-                .ok_or_else(|| AppError::clipboard_error("MX_CLIPBOARD_CMD is empty"))?;
+                .ok_or_else(|| AppError::ClipboardError(ClipboardError::CommandMissing("MX_CLIPBOARD_CMD".to_string())))?;
             return Ok(Self { copy_command: command.clone(), paste_command: command });
         }
 
@@ -76,9 +76,7 @@ impl SystemClipboard {
                     "Get-Clipboard",
                 ]),
             }),
-            other => Err(AppError::clipboard_error(format!(
-                "Unsupported platform '{other}' for clipboard operations"
-            ))),
+            other => Err(AppError::ClipboardError(ClipboardError::UnsupportedPlatform(other.to_string()))),
         }
     }
 
@@ -101,9 +99,9 @@ impl SystemClipboard {
             });
         }
 
-        Err(AppError::clipboard_error(
-            "No supported clipboard command found. Install wl-copy or xclip, or set MX_CLIPBOARD_FILE.",
-        ))
+        Err(AppError::ClipboardError(ClipboardError::UnsupportedPlatform(
+            "No supported clipboard command found. Install wl-copy or xclip, or set MX_CLIPBOARD_FILE.".to_string()
+        )))
     }
 
     fn command_available<'a, I>(program: &str, args: I) -> bool
@@ -129,28 +127,28 @@ impl Clipboard for SystemClipboard {
             .stderr(Stdio::null());
 
         let mut child = command.spawn().map_err(|err| {
-            AppError::clipboard_error(format!(
+            AppError::ClipboardError(ClipboardError::ExecutionFailed(format!(
                 "Failed to run clipboard command '{}': {err}",
                 self.copy_command.program
-            ))
+            )))
         })?;
 
         if let Some(mut stdin) = child.stdin.take() {
             stdin.write_all(text.as_bytes()).map_err(|err| {
-                AppError::clipboard_error(format!(
+                AppError::ClipboardError(ClipboardError::Other(format!(
                     "Failed to send data to clipboard command: {err}"
-                ))
+                )))
             })?;
         }
 
         let status = child
             .wait()
-            .map_err(|err| AppError::clipboard_error(format!("Clipboard command failed: {err}")))?;
+            .map_err(|err| AppError::ClipboardError(ClipboardError::ExecutionFailed(format!("Clipboard command failed: {err}"))))?;
 
         if status.success() {
             Ok(())
         } else {
-            Err(AppError::clipboard_error(format!("Clipboard command exited with status {status}")))
+            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(status.code().unwrap_or(-1))))
         }
     }
 
@@ -161,23 +159,19 @@ impl Clipboard for SystemClipboard {
             .stderr(Stdio::piped())
             .output()
             .map_err(|err| {
-                AppError::clipboard_error(format!(
+                AppError::ClipboardError(ClipboardError::ExecutionFailed(format!(
                     "Failed to run paste command '{}': {err}",
                     self.paste_command.program
-                ))
+                )))
             })?;
 
         if output.status.success() {
             String::from_utf8(output.stdout).map_err(|err| {
-                AppError::clipboard_error(format!("Clipboard content is not valid UTF-8: {err}"))
+                AppError::ClipboardError(ClipboardError::InvalidUtf8(err.to_string()))
             })
         } else {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            Err(AppError::clipboard_error(format!(
-                "Paste command exited with status {}. Stderr: {}",
-                output.status,
-                stderr.trim()
-            )))
+            let _stderr = String::from_utf8_lossy(&output.stderr);
+            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(output.status.code().unwrap_or(-1))))
         }
     }
 }

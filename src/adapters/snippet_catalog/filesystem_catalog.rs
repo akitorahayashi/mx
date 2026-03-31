@@ -1,4 +1,4 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, ConfigError, NotFoundError};
 use crate::domain::ports::SnippetCatalog;
 use crate::domain::snippet::query::{candidate_key, normalize_query, path_to_string};
 use crate::domain::snippet::SnippetEntry;
@@ -22,7 +22,7 @@ impl FilesystemSnippetCatalog {
         }
 
         let home = env::var("HOME")
-            .map_err(|_| AppError::config_error("HOME environment variable not set"))?;
+            .map_err(|_| AppError::ConfigError(ConfigError::MissingEnvVar("HOME".to_string())))?;
         let root = PathBuf::from(home).join(".config").join("mx");
         Self::from_root(root)
     }
@@ -44,7 +44,7 @@ impl SnippetCatalog for FilesystemSnippetCatalog {
 
         let mut files = Vec::new();
         for entry in WalkDir::new(&self.commands_root) {
-            let entry = entry.map_err(|err| AppError::config_error(err.to_string()))?;
+            let entry = entry.map_err(|err| AppError::ConfigError(ConfigError::Io(err.to_string())))?;
             if !entry.file_type().is_file() {
                 continue;
             }
@@ -52,17 +52,16 @@ impl SnippetCatalog for FilesystemSnippetCatalog {
                 continue;
             }
 
-            let relative = entry
-                .path()
+            let path = entry.path();
+            let relative = path
                 .strip_prefix(&self.commands_root)
-                .map_err(|_| AppError::config_error("Unable to derive relative snippet path"))?;
+                .map_err(|_| AppError::ConfigError(ConfigError::RelativePathDerivation(path.display().to_string())))?;
             let relative_without_ext = relative.with_extension("");
             let relative_path = path_to_string(&relative_without_ext)?;
-            let key = entry
-                .path()
+            let key = path
                 .file_stem()
                 .and_then(|stem| stem.to_str())
-                .ok_or_else(|| AppError::config_error("Snippet names must be valid UTF-8"))?
+                .ok_or_else(|| AppError::ConfigError(ConfigError::InvalidUtf8))?
                 .to_string();
 
             files.push(SnippetEntry { key, relative_path, absolute_path: entry.into_path() });
@@ -92,24 +91,24 @@ impl SnippetCatalog for FilesystemSnippetCatalog {
         }
 
         if exact_matches.len() > 1 {
-            return Err(AppError::config_error(format!(
+            return Err(AppError::ConfigError(ConfigError::DuplicateSnippet(format!(
                 "Multiple snippets match '{raw_query}': {}",
                 Self::join_paths(&exact_matches)
-            )));
+            ))));
         }
 
         if key_matches.is_empty() {
-            return Err(AppError::not_found(format!(
+            return Err(AppError::NotFound(NotFoundError::Snippet(format!(
                 "No snippet named '{raw_query}' under {}",
                 self.commands_root.display()
-            )));
+            ))));
         }
 
         if key_matches.len() > 1 {
-            return Err(AppError::config_error(format!(
+            return Err(AppError::ConfigError(ConfigError::DuplicateSnippet(format!(
                 "Multiple snippets share the name '{raw_query}': {}",
                 Self::join_paths(&key_matches)
-            )));
+            ))));
         }
 
         Ok(key_matches.remove(0))

@@ -8,7 +8,7 @@ pub(crate) fn validate_relative_components(path: &Path) -> Result<(), AppError> 
         match component {
             std::path::Component::Normal(_) | std::path::Component::CurDir => {}
             _ => {
-                return Err(AppError::path_traversal(PATH_TRAVERSAL_MESSAGE));
+                return Err(AppError::PathTraversal(crate::domain::error::PathTraversalError::Detected(PATH_TRAVERSAL_MESSAGE.to_string())));
             }
         }
     }

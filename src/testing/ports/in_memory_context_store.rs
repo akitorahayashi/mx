@@ -41,7 +41,7 @@ impl ContextFileStore for InMemoryContextStore {
     fn read_context_contents(&self, relative_path: &Path) -> Result<String, AppError> {
         let path = PathBuf::from(".mx").join(relative_path);
         self.files.borrow().get(&path).cloned().ok_or_else(|| {
-            AppError::not_found(format!("⚠️ Context file not found: {}", relative_path.display()))
+            AppError::NotFound(crate::domain::error::NotFoundError::ContextFile(format!("⚠️ Context file not found: {}", relative_path.display())))
         })
     }
 
@@ -57,7 +57,7 @@ impl ContextFileStore for InMemoryContextStore {
             return Ok(path);
         }
 
-        Err(AppError::not_found(format!("File not found: {}", path.display())))
+        Err(AppError::NotFound(crate::domain::error::NotFoundError::ContextFile(format!("File not found: {}", path.display()))))
     }
 
     fn read_workspace_file(&self, relative_path: &Path) -> Result<String, std::io::Error> {
