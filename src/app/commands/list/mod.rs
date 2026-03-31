@@ -18,18 +18,19 @@ pub fn execute(catalog: &dyn SnippetCatalog) -> Result<Vec<ListEntry>, AppError>
         .into_iter()
         .map(|snippet| {
             let content = fs::read_to_string(&snippet.absolute_path)?;
-            let (title, description) = if crate::domain::snippet::frontmatter::parse_frontmatter(&content).is_some() {
-                if let Some(fm) = parse_frontmatter_metadata(&content) {
-                    (fm.title, fm.description)
+            let (title, description) =
+                if crate::domain::snippet::frontmatter::parse_frontmatter(&content).is_some() {
+                    if let Some(fm) = parse_frontmatter_metadata(&content) {
+                        (fm.title, fm.description)
+                    } else {
+                        return Err(AppError::config_error(format!(
+                            "Failed to parse frontmatter in snippet: {}",
+                            snippet.absolute_path.display()
+                        )));
+                    }
                 } else {
-                    return Err(AppError::config_error(format!(
-                        "Failed to parse frontmatter in snippet: {}",
-                        snippet.absolute_path.display()
-                    )));
-                }
-            } else {
-                (None, None)
-            };
+                    (None, None)
+                };
 
             Ok(ListEntry {
                 snippet: snippet.key,
@@ -117,13 +118,11 @@ mod tests {
 
     #[test]
     fn execute_fails_on_missing_file() {
-        let catalog = InMemoryCatalog::new(vec![
-            SnippetEntry {
-                key: "wc".to_string(),
-                relative_path: "w/wc".to_string(),
-                absolute_path: std::path::PathBuf::from("does_not_exist.md"),
-            },
-        ]);
+        let catalog = InMemoryCatalog::new(vec![SnippetEntry {
+            key: "wc".to_string(),
+            relative_path: "w/wc".to_string(),
+            absolute_path: std::path::PathBuf::from("does_not_exist.md"),
+        }]);
         let result = execute(&catalog);
         assert!(result.is_err());
     }
