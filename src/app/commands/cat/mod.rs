@@ -19,9 +19,8 @@ mod tests {
         let store = InMemoryContextStore::default();
         let relative_path = resolve_context_path("tk");
         let safe_path = crate::domain::SafePath::try_from_path(&relative_path).unwrap();
-        let status = store
-            .prepare_context_file(&safe_path, false)
-            .expect("context file should be prepared");
+        let status =
+            store.prepare_context_file(&safe_path, false).expect("context file should be prepared");
         store
             .write_context_contents(&status.path, "task body")
             .expect("context file should be written");
