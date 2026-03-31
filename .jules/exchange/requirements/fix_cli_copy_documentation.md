@@ -1,17 +1,15 @@
 ---
 label: "docs"
-created_at: "2024-05-30"
-author_role: "consistency"
-confidence: "high"
+implementation_ready: false
 ---
-
-## Problem
-
-The documentation in `README.md` and `docs/cli-usage.md` claims that the CLI supports a `mx command <snippet>` command to copy snippets to the clipboard. However, the implemented command is actually `mx copy <snippet>`. The CLI does not recognize the `command` subcommand.
 
 ## Goal
 
 Update the documentation to correctly reflect the implemented command (`mx copy`), ensuring that users following the documentation verbatim will succeed.
+
+## Problem
+
+The documentation in `README.md` and `docs/cli-usage.md` claims that the CLI supports a `mx command <snippet>` command to copy snippets to the clipboard. However, the implemented command is actually `mx copy <snippet>`. The CLI does not recognize the `command` subcommand.
 
 ## Context
 
@@ -40,3 +38,14 @@ The CLI provides a command to copy snippets to the clipboard. The code implement
 - `README.md`
 - `docs/cli-usage.md`
 - `AGENTS.md`
+
+## Constraints
+
+- The command usage documented must match the actual implementation (`mx copy <snippet>`).
+- Existing aliases (like `c`) should be preserved if mentioned.
+
+## Acceptance Criteria
+
+- `README.md` correctly references `mx copy` instead of `mx command`.
+- `docs/cli-usage.md` correctly references `mx copy` instead of `mx command`.
+- `AGENTS.md` correctly references `mx copy` instead of `mx command`.
