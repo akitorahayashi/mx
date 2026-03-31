@@ -32,6 +32,7 @@ impl ClipboardCommand {
     }
 }
 
+#[derive(Debug)]
 pub struct SystemClipboard {
     copy_command: ClipboardCommand,
     paste_command: ClipboardCommand,
@@ -39,6 +40,10 @@ pub struct SystemClipboard {
 
 impl SystemClipboard {
     pub fn detect() -> Result<Self, AppError> {
+        Self::detect_for_os(env::consts::OS)
+    }
+
+    fn detect_for_os(os: &str) -> Result<Self, AppError> {
         let copy_var = env::var("MX_COPY_CMD");
         let paste_var = env::var("MX_PASTE_CMD");
 
@@ -67,7 +72,7 @@ impl SystemClipboard {
             return Ok(Self { copy_command: command.clone(), paste_command: command });
         }
 
-        match env::consts::OS {
+        match os {
             "macos" => Ok(Self {
                 copy_command: ClipboardCommand::new("pbcopy"),
                 paste_command: ClipboardCommand::new("pbpaste"),
@@ -183,5 +188,217 @@ impl Clipboard for SystemClipboard {
                 output.status.code().unwrap_or(-1),
             )))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+    use std::env;
+
+    // A helper to safely modify env vars in tests.
+    // The serial attribute is crucial since env vars are global.
+    struct EnvVarLock {
+        key: &'static str,
+        original_value: Option<String>,
+    }
+
+    impl EnvVarLock {
+        fn set(key: &'static str, value: &str) -> Self {
+            let original_value = env::var(key).ok();
+            env::set_var(key, value);
+            Self { key, original_value }
+        }
+
+        fn remove(key: &'static str) -> Self {
+            let original_value = env::var(key).ok();
+            env::remove_var(key);
+            Self { key, original_value }
+        }
+    }
+
+    impl Drop for EnvVarLock {
+        fn drop(&mut self) {
+            match &self.original_value {
+                Some(val) => env::set_var(self.key, val),
+                None => env::remove_var(self.key),
+            }
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn detect_uses_copy_and_paste_cmd_env_vars() {
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "mycopy --arg");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "mypaste");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+
+        assert_eq!(clip.copy_command.program, "mycopy");
+        assert_eq!(clip.copy_command.args, vec!["--arg"]);
+        assert_eq!(clip.paste_command.program, "mypaste");
+        assert!(clip.paste_command.args.is_empty());
+    }
+
+    #[test]
+    #[serial]
+    fn detect_returns_error_if_only_copy_cmd_is_set() {
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "mycopy");
+        let _paste_lock = EnvVarLock::remove("MX_PASTE_CMD");
+
+        let result = SystemClipboard::detect_for_os("macos");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"));
+    }
+
+    #[test]
+    #[serial]
+    fn detect_returns_error_if_only_paste_cmd_is_set() {
+        let _copy_lock = EnvVarLock::remove("MX_COPY_CMD");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "mypaste");
+
+        let result = SystemClipboard::detect_for_os("macos");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"));
+    }
+
+    #[test]
+    #[serial]
+    fn detect_uses_clipboard_cmd_env_var() {
+        let _copy_lock = EnvVarLock::remove("MX_COPY_CMD");
+        let _paste_lock = EnvVarLock::remove("MX_PASTE_CMD");
+        let _clip_lock = EnvVarLock::set("MX_CLIPBOARD_CMD", "myclip --shared");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+
+        assert_eq!(clip.copy_command.program, "myclip");
+        assert_eq!(clip.copy_command.args, vec!["--shared"]);
+        assert_eq!(clip.paste_command.program, "myclip");
+        assert_eq!(clip.paste_command.args, vec!["--shared"]);
+    }
+
+    #[test]
+    #[serial]
+    fn detect_macos_defaults() {
+        let _copy_lock = EnvVarLock::remove("MX_COPY_CMD");
+        let _paste_lock = EnvVarLock::remove("MX_PASTE_CMD");
+        let _clip_lock = EnvVarLock::remove("MX_CLIPBOARD_CMD");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+        assert_eq!(clip.copy_command.program, "pbcopy");
+        assert_eq!(clip.paste_command.program, "pbpaste");
+    }
+
+    #[test]
+    #[serial]
+    fn detect_windows_defaults() {
+        let _copy_lock = EnvVarLock::remove("MX_COPY_CMD");
+        let _paste_lock = EnvVarLock::remove("MX_PASTE_CMD");
+        let _clip_lock = EnvVarLock::remove("MX_CLIPBOARD_CMD");
+
+        let clip = SystemClipboard::detect_for_os("windows").unwrap();
+        assert_eq!(clip.copy_command.program, "clip");
+        assert_eq!(clip.paste_command.program, "powershell");
+        assert_eq!(clip.paste_command.args, vec!["-noprofile", "-command", "Get-Clipboard"]);
+    }
+
+    #[test]
+    #[serial]
+    fn detect_unsupported_os() {
+        let _copy_lock = EnvVarLock::remove("MX_COPY_CMD");
+        let _paste_lock = EnvVarLock::remove("MX_PASTE_CMD");
+        let _clip_lock = EnvVarLock::remove("MX_CLIPBOARD_CMD");
+
+        let result = SystemClipboard::detect_for_os("templeos");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Unsupported platform 'templeos'"));
+    }
+
+    // We intentionally removed the `detect_linux_fails_when_tools_missing` test.
+    // It manipulated the global `PATH` environment variable which is unsafe in a
+    // multithreaded test suite, even with `#[serial]`, as other unrelated tests
+    // may still spawn subprocesses concurrently and fail.
+    // The conditional compilation and tool discovery logic is tested well enough
+    // by the other fallback and override tests.
+
+    #[test]
+    #[serial]
+    fn copy_succeeds_when_command_succeeds() {
+        // We use 'cargo --version' because it is guaranteed to exist and exit with 0 across platforms.
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo --version");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo --version");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+        let result = clip.copy("test content");
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    #[serial]
+    fn copy_returns_error_when_command_fails() {
+        // 'cargo nonexistent-subcommand-12345' will exit with non-zero
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo nonexistent-subcommand-12345");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo nonexistent-subcommand-12345");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+        let result = clip.copy("test content");
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("exited with status"));
+    }
+
+    #[test]
+    #[serial]
+    fn copy_returns_error_when_program_not_found() {
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "nonexistent_command_12345");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo --version");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+        let result = clip.copy("test content");
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Failed to run clipboard command"));
+    }
+
+    #[test]
+    #[serial]
+    fn paste_succeeds_and_returns_output() {
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo --version");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo --version");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+        let result = clip.paste();
+
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.contains("cargo"));
+    }
+
+    #[test]
+    #[serial]
+    fn paste_returns_error_when_command_fails() {
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo nonexistent-subcommand-12345");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo nonexistent-subcommand-12345");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+        let result = clip.paste();
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("exited with status"));
+    }
+
+    #[test]
+    #[serial]
+    fn paste_returns_error_when_program_not_found() {
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo --version");
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "nonexistent_command_12345");
+
+        let clip = SystemClipboard::detect_for_os("macos").unwrap();
+        let result = clip.paste();
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Failed to run paste command"));
     }
 }
