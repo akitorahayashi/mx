@@ -14,18 +14,9 @@ fn cat_displays_file_contents() {
     let expected_content = "# Tasks\n\n- Task 1\n- Task 2\n";
     let _ = setup_clipboard(&ctx, expected_content);
 
-    ctx.cli()
-        .arg("touch")
-        .arg("tk")
-        .assert()
-        .success();
+    ctx.cli().arg("touch").arg("tk").assert().success();
 
-    ctx.cli()
-        .arg("cat")
-        .arg("tk")
-        .assert()
-        .success()
-        .stdout(predicate::eq(expected_content));
+    ctx.cli().arg("cat").arg("tk").assert().success().stdout(predicate::eq(expected_content));
 }
 
 #[test]
@@ -34,18 +25,9 @@ fn cat_alias_ct_works() {
     let content = "Requirements document";
     let _ = setup_clipboard(&ctx, content);
 
-    ctx.cli()
-        .arg("touch")
-        .arg("rq")
-        .assert()
-        .success();
+    ctx.cli().arg("touch").arg("rq").assert().success();
 
-    ctx.cli()
-        .arg("ct")
-        .arg("rq")
-        .assert()
-        .success()
-        .stdout(predicate::eq(content));
+    ctx.cli().arg("ct").arg("rq").assert().success().stdout(predicate::eq(content));
 }
 
 #[test]
@@ -54,16 +36,7 @@ fn cat_with_touch_integration() {
     let content = "Content from clipboard";
     let _ = setup_clipboard(&ctx, content);
 
-    ctx.cli()
-        .arg("touch")
-        .arg("tk")
-        .assert()
-        .success();
+    ctx.cli().arg("touch").arg("tk").assert().success();
 
-    ctx.cli()
-        .arg("cat")
-        .arg("tk")
-        .assert()
-        .success()
-        .stdout(predicate::eq(content));
+    ctx.cli().arg("cat").arg("tk").assert().success().stdout(predicate::eq(content));
 }
