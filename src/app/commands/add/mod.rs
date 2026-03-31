@@ -1,6 +1,7 @@
 use crate::domain::error::{AppError, ConfigError, InvalidKeyError, PathTraversalError};
 use crate::domain::ports::{Clipboard, SnippetStore};
 use crate::domain::snippet::SnippetFrontmatter;
+use crate::domain::SafePath;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -11,7 +12,7 @@ pub struct AddOutcome {
 
 /// Validate that `raw_path` starts with `.mx/commands/` (with optional `./` prefix)
 /// and return the relative portion after that prefix.
-fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
+fn extract_relative_path(raw_path: &str) -> Result<SafePath, AppError> {
     let normalized = raw_path.trim_start_matches("./");
     let stripped = normalized.strip_prefix(".mx/commands/").ok_or_else(|| {
         AppError::InvalidKey(InvalidKeyError::NotInCommands {
@@ -27,19 +28,13 @@ fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
     }
 
     let rel = Path::new(stripped);
-    for component in rel.components() {
-        use std::path::Component::*;
-        match component {
-            Normal(_) | CurDir => {}
-            _ => {
-                return Err(AppError::PathTraversal(PathTraversalError::Detected(format!(
-                    "Path contains unsafe segments: '{raw_path}'"
-                ))))
-            }
-        }
-    }
+    let safe_path = SafePath::try_from_path(rel).map_err(|_| {
+        AppError::PathTraversal(PathTraversalError::Detected(format!(
+            "Path contains unsafe segments: '{raw_path}'"
+        )))
+    })?;
 
-    Ok(rel.to_path_buf())
+    Ok(safe_path)
 }
 
 pub fn execute(

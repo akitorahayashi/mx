@@ -1,8 +1,9 @@
 use crate::domain::error::AppError;
-use std::path::{Path, PathBuf};
+use crate::domain::SafePath;
+use std::path::PathBuf;
 
 pub trait SnippetStore {
-    fn write_snippet(&self, relative_path: &Path, contents: &str) -> Result<PathBuf, AppError>;
-    fn snippet_exists(&self, relative_path: &Path) -> bool;
-    fn remove_snippet(&self, relative_path: &Path) -> Result<PathBuf, AppError>;
+    fn write_snippet(&self, relative_path: &SafePath, contents: &str) -> Result<PathBuf, AppError>;
+    fn snippet_exists(&self, relative_path: &SafePath) -> bool;
+    fn remove_snippet(&self, relative_path: &SafePath) -> Result<PathBuf, AppError>;
 }

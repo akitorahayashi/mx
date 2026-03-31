@@ -10,6 +10,8 @@ This document provides a comprehensive overview of the `mx` project, including i
 
 It uses a layered architecture where `domain/` contains pure invariants and port contracts (`domain/ports/`), `adapters/` provides concrete implementations (filesystem, clipboard, workspace resolution), and `app/` wires commands with injected dependencies. Port traits are owned by the domain that requires them; `adapters/` and `app/` depend on `domain::ports`, not the reverse.
 
+`SafePath` serves as the sole domain-level boundary for validated, safe paths across the system. It guarantees that any path it wraps is free from traversal segments, allowing domain logic and commands to rely on strongly typed safe traversal.
+
 Snippets are stored as Markdown files under `~/.config/mx/commands/`. Metadata (title, description) is embedded as YAML front matter in each file. `mx copy` strips front matter before putting the body on the clipboard.
 
 ## Directory Structure

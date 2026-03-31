@@ -1,5 +1,6 @@
 use crate::domain::error::AppError;
 use crate::domain::ports::{ContextFileStore, ContextWriteStatus};
+use crate::domain::SafePath;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -19,7 +20,7 @@ impl InMemoryContextStore {
 impl ContextFileStore for InMemoryContextStore {
     fn prepare_context_file(
         &self,
-        relative_path: &Path,
+        relative_path: &SafePath,
         force: bool,
     ) -> Result<ContextWriteStatus, AppError> {
         let path = PathBuf::from(".mx").join(relative_path);
@@ -38,7 +39,7 @@ impl ContextFileStore for InMemoryContextStore {
         Ok(())
     }
 
-    fn read_context_contents(&self, relative_path: &Path) -> Result<String, AppError> {
+    fn read_context_contents(&self, relative_path: &SafePath) -> Result<String, AppError> {
         let path = PathBuf::from(".mx").join(relative_path);
         self.files.borrow().get(&path).cloned().ok_or_else(|| {
             AppError::NotFound(crate::domain::error::NotFoundError::ContextFile(format!(
@@ -54,7 +55,7 @@ impl ContextFileStore for InMemoryContextStore {
         Ok(had_entries)
     }
 
-    fn remove_context_file(&self, relative_path: &Path) -> Result<PathBuf, AppError> {
+    fn remove_context_file(&self, relative_path: &SafePath) -> Result<PathBuf, AppError> {
         let path = PathBuf::from(".mx").join(relative_path);
         if self.files.borrow_mut().remove(&path).is_some() {
             return Ok(path);

@@ -1,5 +1,6 @@
-use mx::domain::context_file::{resolve_context_path, validate_path};
-use std::path::PathBuf;
+use mx::domain::context_file::resolve_context_path;
+use mx::domain::SafePath;
+use std::path::{Path, PathBuf};
 
 #[test]
 fn resolves_alias_dynamic_and_pending_paths() {
@@ -11,5 +12,5 @@ fn resolves_alias_dynamic_and_pending_paths() {
 
 #[test]
 fn validation_rejects_traversal() {
-    assert!(validate_path("../etc/passwd", &PathBuf::from("../etc/passwd")).is_err());
+    assert!(SafePath::try_from_path(Path::new("../etc/passwd")).is_err());
 }
