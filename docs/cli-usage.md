@@ -8,7 +8,7 @@ mx list (alias: ls)
 mx --version
 
 # Copy a snippet into the clipboard (uses pbcopy/wl-copy/xclip/clip automatically)
-mx command wc (alias: mx c wc)
+mx copy wc (alias: mx c wc)
 
 # Create context files with clipboard content (alias: mx t)
 mx touch tk   # Creates .mx/tasks.md with clipboard content
