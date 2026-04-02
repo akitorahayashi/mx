@@ -12,10 +12,7 @@ pub struct FilesystemSnippetStore {
 impl FilesystemSnippetStore {
     pub fn from_env() -> Result<Self, AppError> {
         if let Ok(custom) = env::var("MX_COMMANDS_ROOT") {
-            let custom_path = PathBuf::from(custom);
-            let legacy = custom_path.join("commands");
-            let commands_root = if legacy.is_dir() { legacy } else { custom_path };
-            return Ok(Self { commands_root });
+            return Ok(Self { commands_root: PathBuf::from(custom) });
         }
 
         let home = env::var("HOME")
@@ -145,20 +142,6 @@ mod tests {
 
         let store = FilesystemSnippetStore::from_env().unwrap();
         assert_eq!(store.commands_root, custom_root);
-    }
-
-    #[test]
-    #[serial_test::serial]
-    fn from_env_with_mx_commands_root_and_legacy_commands_subdir() {
-        let dir = tempdir().unwrap();
-        let custom_root = dir.path().join("my_legacy_root");
-        let legacy_commands_dir = custom_root.join("commands");
-        fs::create_dir_all(&legacy_commands_dir).unwrap();
-
-        let _env_root = EnvGuard::set("MX_COMMANDS_ROOT", &custom_root);
-
-        let store = FilesystemSnippetStore::from_env().unwrap();
-        assert_eq!(store.commands_root, legacy_commands_dir);
     }
 
     #[test]

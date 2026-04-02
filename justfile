@@ -12,7 +12,7 @@ help:
     @echo "Usage: just [recipe]"
     @echo ""
     @echo "Development tasks for mx CLI:"
-    @just --list | tail -n +2 | awk '{printf "  \033[36m%-20s\033[0m %s\n", $1, substr($0, index($0, $2))}'
+    @mise exec -- just --list | tail -n +2 | awk '{printf "  \033[36m%-20s\033[0m %s\n", $1, substr($0, index($0, $2))}'
 
 # ==============================================================================
 # Environment Setup
@@ -31,13 +31,13 @@ setup:
 # Format code
 fix:
     cargo fmt
-    just --fmt --unstable
+    mise exec -- just --fmt --unstable
 
 # Verify formatting, lint, and compilation
 check:
     cargo fmt --check
     cargo clippy --all-targets --all-features -- -D warnings
-    just --fmt --check --unstable
+    mise exec -- just --fmt --check --unstable
 
 # ==============================================================================
 # Testing
