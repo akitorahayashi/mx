@@ -249,7 +249,10 @@ mod tests {
 
         let result = SystemClipboard::detect_for_os("macos");
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"));
     }
 
     #[test]
@@ -260,7 +263,10 @@ mod tests {
 
         let result = SystemClipboard::detect_for_os("macos");
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Both MX_COPY_CMD and MX_PASTE_CMD must be set"));
     }
 
     #[test]
