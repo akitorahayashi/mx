@@ -56,7 +56,9 @@ impl SnippetStore for InMemorySnippetStore {
         let k = key(relative_path);
         let mut files = self.files.lock().unwrap();
         if files.remove(&k).is_none() {
-            return Err(AppError::NotFound(crate::domain::error::NotFoundError::Snippet(format!("Snippet not found: {k}"))));
+            return Err(AppError::NotFound(crate::domain::error::NotFoundError::Snippet(format!(
+                "Snippet not found: {k}"
+            ))));
         }
         Ok(PathBuf::from(k))
     }

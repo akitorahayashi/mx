@@ -33,6 +33,9 @@ mod tests {
     fn execute_rejects_path_traversal() {
         let store = InMemoryContextStore::default();
         let result = execute("../secret", &store);
-        assert!(matches!(result, Err(AppError::PathTraversal(crate::domain::error::PathTraversalError::Detected(_)))));
+        assert!(matches!(
+            result,
+            Err(AppError::PathTraversal(crate::domain::error::PathTraversalError::Detected(_)))
+        ));
     }
 }

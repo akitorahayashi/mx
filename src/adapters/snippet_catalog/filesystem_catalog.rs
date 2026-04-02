@@ -44,7 +44,8 @@ impl SnippetCatalog for FilesystemSnippetCatalog {
 
         let mut files = Vec::new();
         for entry in WalkDir::new(&self.commands_root) {
-            let entry = entry.map_err(|err| AppError::ConfigError(ConfigError::Io(err.to_string())))?;
+            let entry =
+                entry.map_err(|err| AppError::ConfigError(ConfigError::Io(err.to_string())))?;
             if !entry.file_type().is_file() {
                 continue;
             }
@@ -53,9 +54,11 @@ impl SnippetCatalog for FilesystemSnippetCatalog {
             }
 
             let path = entry.path();
-            let relative = path
-                .strip_prefix(&self.commands_root)
-                .map_err(|_| AppError::ConfigError(ConfigError::RelativePathDerivation(path.display().to_string())))?;
+            let relative = path.strip_prefix(&self.commands_root).map_err(|_| {
+                AppError::ConfigError(ConfigError::RelativePathDerivation(
+                    path.display().to_string(),
+                ))
+            })?;
             let relative_without_ext = relative.with_extension("");
             let relative_path = path_to_string(&relative_without_ext)?;
             let key = path

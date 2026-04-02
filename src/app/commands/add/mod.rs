@@ -1,4 +1,4 @@
-use crate::domain::error::{AppError, InvalidKeyError, PathTraversalError, ConfigError};
+use crate::domain::error::{AppError, ConfigError, InvalidKeyError, PathTraversalError};
 use crate::domain::ports::{Clipboard, SnippetStore};
 use crate::domain::snippet::SnippetFrontmatter;
 use std::path::{Path, PathBuf};
@@ -21,7 +21,9 @@ fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
     })?;
 
     if stripped.is_empty() {
-        return Err(AppError::InvalidKey(InvalidKeyError::EmptyAfterPrefix(".mx/commands/".to_string())));
+        return Err(AppError::InvalidKey(InvalidKeyError::EmptyAfterPrefix(
+            ".mx/commands/".to_string(),
+        )));
     }
 
     let rel = Path::new(stripped);
@@ -129,7 +131,10 @@ mod tests {
         execute(".mx/commands/dup.md", None, None, false, &store, &clipboard).unwrap();
         let err = execute(".mx/commands/dup.md", None, None, false, &store, &clipboard)
             .expect_err("should fail on duplicate");
-        assert!(matches!(err, AppError::ConfigError(crate::domain::error::ConfigError::DuplicateSnippet(_))));
+        assert!(matches!(
+            err,
+            AppError::ConfigError(crate::domain::error::ConfigError::DuplicateSnippet(_))
+        ));
     }
 
     #[test]
@@ -150,6 +155,9 @@ mod tests {
 
         let err = execute("foo/bar.md", None, None, false, &store, &clipboard)
             .expect_err("should reject path outside .mx/commands/");
-        assert!(matches!(err, AppError::InvalidKey(crate::domain::error::InvalidKeyError::NotInCommands { .. })));
+        assert!(matches!(
+            err,
+            AppError::InvalidKey(crate::domain::error::InvalidKeyError::NotInCommands { .. })
+        ));
     }
 }

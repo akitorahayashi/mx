@@ -18,14 +18,18 @@ impl FileClipboard {
 
 impl Clipboard for FileClipboard {
     fn copy(&self, text: &str) -> Result<(), AppError> {
-        fs::write(&self.path, text).map_err(|err| AppError::ClipboardError(crate::domain::error::ClipboardError::Other(err.to_string())))
+        fs::write(&self.path, text).map_err(|err| {
+            AppError::ClipboardError(crate::domain::error::ClipboardError::Other(err.to_string()))
+        })
     }
 
     fn paste(&self) -> Result<String, AppError> {
         match fs::read_to_string(&self.path) {
             Ok(content) => Ok(content),
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
-            Err(err) => Err(AppError::ClipboardError(crate::domain::error::ClipboardError::Other(err.to_string()))),
+            Err(err) => Err(AppError::ClipboardError(crate::domain::error::ClipboardError::Other(
+                err.to_string(),
+            ))),
         }
     }
 }

@@ -36,6 +36,8 @@ impl SnippetCatalog for InMemoryCatalog {
             ))));
         }
 
-        Err(AppError::NotFound(crate::domain::error::NotFoundError::Snippet(format!("No snippet named '{raw_query}'"))))
+        Err(AppError::NotFound(crate::domain::error::NotFoundError::Snippet(format!(
+            "No snippet named '{raw_query}'"
+        ))))
     }
 }
