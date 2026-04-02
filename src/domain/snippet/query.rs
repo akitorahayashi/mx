@@ -52,7 +52,7 @@ pub fn path_to_string(path: &Path) -> Result<String, AppError> {
             Component::Normal(segment) => parts.push(
                 segment
                     .to_str()
-                    .ok_or_else(|| AppError::ConfigError(ConfigError::InvalidUtf8))?
+                    .ok_or(AppError::ConfigError(ConfigError::InvalidUtf8))?
                     .to_string(),
             ),
             Component::CurDir => continue,

@@ -64,7 +64,7 @@ impl SnippetCatalog for FilesystemSnippetCatalog {
             let key = path
                 .file_stem()
                 .and_then(|stem| stem.to_str())
-                .ok_or_else(|| AppError::ConfigError(ConfigError::InvalidUtf8))?
+                .ok_or(AppError::ConfigError(ConfigError::InvalidUtf8))?
                 .to_string();
 
             files.push(SnippetEntry { key, relative_path, absolute_path: entry.into_path() });
