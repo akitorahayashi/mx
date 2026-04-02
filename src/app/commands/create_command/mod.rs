@@ -20,7 +20,9 @@ fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
     })?;
 
     if stripped.is_empty() {
-        return Err(AppError::InvalidKey(InvalidKeyError::EmptyAfterPrefix(".mx/commands/".to_string())));
+        return Err(AppError::InvalidKey(InvalidKeyError::EmptyAfterPrefix(
+            ".mx/commands/".to_string(),
+        )));
     }
 
     // Reject raw dot/double-dot segments before path normalization erases them.
@@ -60,9 +62,7 @@ pub fn execute(
     let key = relative
         .file_stem()
         .and_then(|s| s.to_str())
-        .ok_or_else(|| {
-            AppError::InvalidKey(InvalidKeyError::NoFilename(raw_path.to_string()))
-        })?
+        .ok_or_else(|| AppError::InvalidKey(InvalidKeyError::NoFilename(raw_path.to_string())))?
         .to_string();
 
     Ok(CreateCommandOutcome { key, path })

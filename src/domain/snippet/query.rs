@@ -35,7 +35,8 @@ pub fn ensure_safe_segments(value: &str) -> Result<(), AppError> {
             Component::Normal(_) | Component::CurDir => {}
             _ => {
                 return Err(AppError::ConfigError(ConfigError::Other(
-                    "Snippet paths cannot contain empty, absolute, or traversal segments".to_string(),
+                    "Snippet paths cannot contain empty, absolute, or traversal segments"
+                        .to_string(),
                 )));
             }
         }

@@ -43,10 +43,12 @@ impl SystemClipboard {
         let paste_var = env::var("MX_PASTE_CMD");
 
         if let (Ok(copy_str), Ok(paste_str)) = (copy_var.as_ref(), paste_var.as_ref()) {
-            let copy_command = ClipboardCommand::from_string(copy_str)
-                .ok_or_else(|| AppError::ClipboardError(ClipboardError::CommandMissing("MX_COPY_CMD".to_string())))?;
-            let paste_command = ClipboardCommand::from_string(paste_str)
-                .ok_or_else(|| AppError::ClipboardError(ClipboardError::CommandMissing("MX_PASTE_CMD".to_string())))?;
+            let copy_command = ClipboardCommand::from_string(copy_str).ok_or_else(|| {
+                AppError::ClipboardError(ClipboardError::CommandMissing("MX_COPY_CMD".to_string()))
+            })?;
+            let paste_command = ClipboardCommand::from_string(paste_str).ok_or_else(|| {
+                AppError::ClipboardError(ClipboardError::CommandMissing("MX_PASTE_CMD".to_string()))
+            })?;
             return Ok(Self { copy_command, paste_command });
         }
 
@@ -57,8 +59,11 @@ impl SystemClipboard {
         }
 
         if let Ok(custom) = env::var("MX_CLIPBOARD_CMD") {
-            let command = ClipboardCommand::from_string(&custom)
-                .ok_or_else(|| AppError::ClipboardError(ClipboardError::CommandMissing("MX_CLIPBOARD_CMD".to_string())))?;
+            let command = ClipboardCommand::from_string(&custom).ok_or_else(|| {
+                AppError::ClipboardError(ClipboardError::CommandMissing(
+                    "MX_CLIPBOARD_CMD".to_string(),
+                ))
+            })?;
             return Ok(Self { copy_command: command.clone(), paste_command: command });
         }
 
@@ -76,7 +81,9 @@ impl SystemClipboard {
                     "Get-Clipboard",
                 ]),
             }),
-            other => Err(AppError::ClipboardError(ClipboardError::UnsupportedPlatform(other.to_string()))),
+            other => Err(AppError::ClipboardError(ClipboardError::UnsupportedPlatform(
+                other.to_string(),
+            ))),
         }
     }
 
@@ -141,9 +148,11 @@ impl Clipboard for SystemClipboard {
             })?;
         }
 
-        let status = child
-            .wait()
-            .map_err(|err| AppError::ClipboardError(ClipboardError::ExecutionFailed(format!("Clipboard command failed: {err}"))))?;
+        let status = child.wait().map_err(|err| {
+            AppError::ClipboardError(ClipboardError::ExecutionFailed(format!(
+                "Clipboard command failed: {err}"
+            )))
+        })?;
 
         if status.success() {
             Ok(())
@@ -171,7 +180,9 @@ impl Clipboard for SystemClipboard {
             })
         } else {
             let _stderr = String::from_utf8_lossy(&output.stderr);
-            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(output.status.code().unwrap_or(-1))))
+            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(
+                output.status.code().unwrap_or(-1),
+            )))
         }
     }
 }

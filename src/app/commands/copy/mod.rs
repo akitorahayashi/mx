@@ -140,7 +140,10 @@ mod tests {
 
         let error = execute("unknown", &catalog, &clipboard, Some(&workspace_store))
             .expect_err("missing snippet should fail");
-        assert!(matches!(error, AppError::NotFound(crate::domain::error::NotFoundError::Snippet(_))));
+        assert!(matches!(
+            error,
+            AppError::NotFound(crate::domain::error::NotFoundError::Snippet(_))
+        ));
     }
 
     #[test]

@@ -146,7 +146,10 @@ impl ContextFileStore for LocalContextFileStore {
             return Ok(target_path);
         }
 
-        Err(AppError::NotFound(crate::domain::error::NotFoundError::File(format!("File not found: {}", target_path.display()))))
+        Err(AppError::NotFound(crate::domain::error::NotFoundError::File(format!(
+            "File not found: {}",
+            target_path.display()
+        ))))
     }
 
     fn read_workspace_file(&self, relative_path: &Path) -> Result<String, std::io::Error> {
