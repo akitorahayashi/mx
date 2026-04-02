@@ -56,10 +56,11 @@ mod tests {
         assert_eq!(err.kind(), io::ErrorKind::Other); // AppError::ClipboardError maps to Other
         let err_msg = err.to_string().to_lowercase();
         assert!(
-            err_msg.contains("is a directory") ||
-            err_msg.contains("access is denied") ||
-            err_msg.contains("permission denied"),
-            "Unexpected error message: {}", err_msg
+            err_msg.contains("is a directory")
+                || err_msg.contains("access is denied")
+                || err_msg.contains("permission denied"),
+            "Unexpected error message: {}",
+            err_msg
         );
     }
 
@@ -75,10 +76,11 @@ mod tests {
         assert_eq!(err.kind(), io::ErrorKind::Other); // AppError::ClipboardError maps to Other
         let err_msg = err.to_string().to_lowercase();
         assert!(
-            err_msg.contains("is a directory") ||
-            err_msg.contains("access is denied") ||
-            err_msg.contains("permission denied"),
-            "Unexpected error message: {}", err_msg
+            err_msg.contains("is a directory")
+                || err_msg.contains("access is denied")
+                || err_msg.contains("permission denied"),
+            "Unexpected error message: {}",
+            err_msg
         );
     }
 }
