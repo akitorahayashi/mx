@@ -355,10 +355,7 @@ mod tests {
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.copy("test content");
 
-        assert!(matches!(
-            result,
-            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))
-        ));
+        assert!(matches!(result, Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))));
     }
 
     #[test]
@@ -399,10 +396,7 @@ mod tests {
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.paste();
 
-        assert!(matches!(
-            result,
-            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))
-        ));
+        assert!(matches!(result, Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))));
     }
 
     #[test]
