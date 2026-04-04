@@ -136,7 +136,7 @@ impl Clipboard for SystemClipboard {
             .args(&self.copy_command.args)
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
-            .stderr(Stdio::null());
+            .stderr(Stdio::piped());
 
         let mut child = command.spawn().map_err(|err| {
             AppError::ClipboardError(ClipboardError::ExecutionFailed(format!(
@@ -162,7 +162,15 @@ impl Clipboard for SystemClipboard {
         if status.success() {
             Ok(())
         } else {
-            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(status.code().unwrap_or(-1))))
+            let mut stderr = String::new();
+            if let Some(mut reader) = child.stderr.take() {
+                use std::io::Read;
+                let _ = reader.read_to_string(&mut stderr);
+            }
+            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(
+                status.code().unwrap_or(-1),
+                stderr,
+            )))
         }
     }
 
@@ -186,6 +194,7 @@ impl Clipboard for SystemClipboard {
         } else {
             Err(AppError::ClipboardError(ClipboardError::NonZeroExit(
                 output.status.code().unwrap_or(-1),
+                String::from_utf8_lossy(&output.stderr).into_owned(),
             )))
         }
     }
@@ -355,7 +364,7 @@ mod tests {
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.copy("test content");
 
-        assert!(matches!(result, Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))));
+        assert!(matches!(result, Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_, _)))));
     }
 
     #[test]
@@ -396,7 +405,7 @@ mod tests {
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.paste();
 
-        assert!(matches!(result, Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))));
+        assert!(matches!(result, Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_, _)))));
     }
 
     #[test]

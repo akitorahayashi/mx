@@ -26,15 +26,6 @@ fn extract_relative_path(raw_path: &str) -> Result<SafePath, AppError> {
         )));
     }
 
-    // Reject raw dot/double-dot segments before path normalization erases them.
-    for segment in stripped.split('/') {
-        if segment == "." || segment == ".." || segment.is_empty() {
-            return Err(AppError::PathTraversal(PathTraversalError::Detected(format!(
-                "Path contains unsafe segments: '{raw_path}'"
-            ))));
-        }
-    }
-
     let rel = Path::new(stripped);
     if rel.extension().map(|e| e != "md").unwrap_or(false) {
         return Err(AppError::InvalidKey(InvalidKeyError::Other(format!(

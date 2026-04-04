@@ -12,11 +12,29 @@ impl SafePath {
     /// Attempts to create a SafePath from a given Path.
     /// Fails if the path contains empty, absolute, or traversal segments.
     pub fn try_from_path(path: &Path) -> Result<Self, AppError> {
+        let path_str = path.to_str().ok_or_else(|| {
+            AppError::PathTraversal(PathTraversalError::Detected("Invalid UTF-8 path".to_string()))
+        })?;
+
+        // Strictly reject any segments that are '.', '..', or empty (e.g., //)
+        // This ensures the path is clean and avoids any traversal attempts or redundant segments.
+        for segment in path_str.split(['/', '\\']) {
+            if segment == "." || segment == ".." || segment.is_empty() {
+                return Err(AppError::PathTraversal(PathTraversalError::Detected(format!(
+                    "Invalid path. Path contains unsafe or redundant segments: '{path_str}'"
+                ))));
+            }
+        }
+
         let mut inner = PathBuf::new();
         for component in path.components() {
             match component {
                 Component::Normal(segment) => inner.push(segment),
-                Component::CurDir => {} // Skip current directory segments for normalization
+                Component::CurDir => {
+                    return Err(AppError::PathTraversal(PathTraversalError::Detected(
+                        "Path contains unsafe segments ('.')".to_string(),
+                    )));
+                }
                 _ => {
                     return Err(AppError::PathTraversal(PathTraversalError::Detected(
                         "Invalid path. Cannot create or access files outside of the allowed directory."

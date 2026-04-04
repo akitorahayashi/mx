@@ -57,8 +57,8 @@ pub enum ClipboardError {
     UnsupportedPlatform(String),
     #[error("Command execution failed: {0}")]
     ExecutionFailed(String),
-    #[error("Command exited with non-zero status: {0}")]
-    NonZeroExit(i32),
+    #[error("Command exited with non-zero status ({0}). Stderr: {1}")]
+    NonZeroExit(i32, String),
     #[error("Invalid UTF-8 in clipboard content: {0}")]
     InvalidUtf8(String),
     #[error("Clipboard Error: {0}")]

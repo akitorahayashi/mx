@@ -16,12 +16,6 @@ pub fn normalize_query(raw: &str) -> Result<SafePath, AppError> {
         normalized = stripped.to_string();
     }
 
-    if normalized.split('/').any(|segment| segment.is_empty()) {
-        return Err(AppError::ConfigError(ConfigError::Other(
-            "Snippet paths cannot contain empty, absolute, or traversal segments".to_string(),
-        )));
-    }
-
     let safe_path = SafePath::try_from_path(Path::new(&normalized)).map_err(|_| {
         AppError::ConfigError(ConfigError::Other(
             "Snippet paths cannot contain empty, absolute, or traversal segments".to_string(),
