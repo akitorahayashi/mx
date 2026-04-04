@@ -1,4 +1,4 @@
-use crate::domain::error::{AppError, NotFoundError};
+use crate::domain::error::{AppError, ConfigError, NotFoundError};
 use crate::domain::ports::SnippetStore;
 use std::env;
 use std::fs;
@@ -17,11 +17,8 @@ impl FilesystemSnippetStore {
             return Ok(Self { commands_root });
         }
 
-        let home = env::var("HOME").map_err(|_| {
-            AppError::ConfigError(crate::domain::error::ConfigError::Other(
-                "HOME environment variable not set".to_string(),
-            ))
-        })?;
+        let home = env::var("HOME")
+            .map_err(|_| AppError::ConfigError(ConfigError::MissingEnvVar("HOME".to_string())))?;
         let root = PathBuf::from(home).join(".config").join("mx");
         Ok(Self { commands_root: root.join("commands") })
     }
