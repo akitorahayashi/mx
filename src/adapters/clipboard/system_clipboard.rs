@@ -331,9 +331,10 @@ mod tests {
     #[test]
     #[serial]
     fn copy_succeeds_when_command_succeeds() {
-        // We use 'cargo --version' because it is guaranteed to exist and exit with 0 across platforms.
-        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo --version");
-        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo --version");
+        // We use a command that reads from stdin to avoid BrokenPipe errors.
+        let cmd = if cfg!(windows) { "findstr ." } else { "cat" };
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", cmd);
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", cmd);
 
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.copy("test content");
@@ -359,7 +360,8 @@ mod tests {
     #[serial]
     fn copy_returns_error_when_program_not_found() {
         let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "nonexistent_command_12345");
-        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo --version");
+        let cmd = if cfg!(windows) { "findstr ." } else { "cat" };
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", cmd);
 
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.copy("test content");
@@ -371,15 +373,16 @@ mod tests {
     #[test]
     #[serial]
     fn paste_succeeds_and_returns_output() {
-        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo --version");
-        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "cargo --version");
+        let cmd = if cfg!(windows) { "findstr ." } else { "cat" };
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", cmd);
+        let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "echo test-output");
 
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.paste();
 
         assert!(result.is_ok());
         let output = result.unwrap();
-        assert!(output.contains("cargo"));
+        assert_eq!(output.trim(), "test-output");
     }
 
     #[test]
@@ -398,7 +401,8 @@ mod tests {
     #[test]
     #[serial]
     fn paste_returns_error_when_program_not_found() {
-        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", "cargo --version");
+        let cmd = if cfg!(windows) { "findstr ." } else { "cat" };
+        let _copy_lock = EnvVarLock::set("MX_COPY_CMD", cmd);
         let _paste_lock = EnvVarLock::set("MX_PASTE_CMD", "nonexistent_command_12345");
 
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
