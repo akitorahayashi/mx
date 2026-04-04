@@ -12,9 +12,11 @@ impl SafePath {
     /// Attempts to create a SafePath from a given Path.
     /// Fails if the path contains empty, absolute, or traversal segments.
     pub fn try_from_path(path: &Path) -> Result<Self, AppError> {
+        let mut inner = PathBuf::new();
         for component in path.components() {
             match component {
-                Component::Normal(_) | Component::CurDir => {}
+                Component::Normal(segment) => inner.push(segment),
+                Component::CurDir => {} // Skip current directory segments for normalization
                 _ => {
                     return Err(AppError::path_traversal(
                         "Invalid path. Cannot create or access files outside of the allowed directory.",
@@ -23,7 +25,7 @@ impl SafePath {
             }
         }
 
-        Ok(Self { inner: path.to_path_buf() })
+        Ok(Self { inner })
     }
 }
 
@@ -49,17 +51,18 @@ impl std::ops::Deref for SafePath {
 
 impl std::fmt::Display for SafePath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut parts = Vec::new();
-        for component in self.inner.components() {
-            match component {
-                Component::Normal(segment) => {
-                    parts.push(segment.to_string_lossy().to_string());
-                }
-                Component::CurDir => continue,
-                _ => continue,
+        let mut components = self.inner.components().filter_map(|c| match c {
+            Component::Normal(s) => Some(s.to_string_lossy()),
+            _ => None,
+        });
+
+        if let Some(first) = components.next() {
+            write!(f, "{}", first)?;
+            for component in components {
+                write!(f, "/{}", component)?;
             }
         }
-        write!(f, "{}", parts.join("/"))
+        Ok(())
     }
 }
 

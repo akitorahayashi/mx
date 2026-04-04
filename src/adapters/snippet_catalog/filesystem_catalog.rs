@@ -76,12 +76,11 @@ impl SnippetCatalog for FilesystemSnippetCatalog {
 
     fn resolve_snippet(&self, raw_query: &str) -> Result<SnippetEntry, AppError> {
         let normalized = normalize_query(raw_query)?;
-        let query_key = candidate_key(&normalized.to_string());
+        let normalized_str = normalized.to_string();
+        let query_key = candidate_key(&normalized_str);
 
         let mut exact_matches = Vec::new();
         let mut key_matches = Vec::new();
-
-        let normalized_str = normalized.to_string();
 
         for snippet in self.enumerate_snippets()? {
             if snippet.relative_path == normalized_str {
