@@ -83,4 +83,11 @@ mod tests {
             err_msg
         );
     }
+
+    #[test]
+    fn file_clipboard_paste_returns_empty_string_when_file_missing() {
+        let dir = tempdir().unwrap();
+        let clip = FileClipboard { path: dir.path().join("nonexistent.txt") };
+        assert_eq!(clip.paste().unwrap(), "");
+    }
 }
