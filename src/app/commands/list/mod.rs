@@ -19,17 +19,16 @@ pub fn execute(catalog: &dyn SnippetCatalog) -> Result<Vec<ListEntry>, AppError>
         .map(|snippet| {
             let content = fs::read_to_string(&snippet.absolute_path)?;
             let (title, description) =
-                if crate::domain::snippet::frontmatter::parse_frontmatter(&content).is_some() {
-                    if let Some(fm) = parse_frontmatter_metadata(&content) {
-                        (fm.title, fm.description)
-                    } else {
-                        return Err(AppError::config_error(format!(
-                            "Failed to parse frontmatter in snippet: {}",
-                            snippet.absolute_path.display()
-                        )));
-                    }
-                } else {
-                    (None, None)
+                match crate::domain::snippet::frontmatter::parse_frontmatter(&content) {
+                    Some(_) => parse_frontmatter_metadata(&content)
+                        .map(|fm| (fm.title, fm.description))
+                        .ok_or_else(|| {
+                            AppError::config_error(format!(
+                                "Failed to parse frontmatter in snippet: {}",
+                                snippet.absolute_path.display()
+                            ))
+                        })?,
+                    None => (None, None),
                 };
 
             Ok(ListEntry {
