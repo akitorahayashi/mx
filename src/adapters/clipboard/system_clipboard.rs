@@ -179,7 +179,6 @@ impl Clipboard for SystemClipboard {
                 AppError::ClipboardError(ClipboardError::InvalidUtf8(err.to_string()))
             })
         } else {
-            let _stderr = String::from_utf8_lossy(&output.stderr);
             Err(AppError::ClipboardError(ClipboardError::NonZeroExit(
                 output.status.code().unwrap_or(-1),
             )))
