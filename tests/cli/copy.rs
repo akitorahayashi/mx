@@ -1,12 +1,11 @@
 use crate::harness::{install_sample_catalog, TestContext};
 use predicates::prelude::*;
-use std::fs;
 
 #[test]
 fn copy_subcommand_works() {
     let ctx = TestContext::new();
     install_sample_catalog(&ctx);
-    let clipboard = ctx.clipboard_file("clipboard.txt");
+    let _ = ctx.clipboard_file("clipboard.txt");
 
     ctx.cli()
         .args(["copy", "wc"])
@@ -14,20 +13,20 @@ fn copy_subcommand_works() {
         .success()
         .stdout(predicate::str::contains("Copied 'wc'"));
 
-    let captured = fs::read_to_string(&clipboard).expect("clipboard file should exist");
-    assert!(captured.contains("/wc"), "clipboard should hold snippet contents");
+    ctx.cli().args(["touch", "tk"]).assert().success();
+    ctx.cli().args(["cat", "tk"]).assert().success().stdout(predicate::str::contains("/wc"));
 }
 
 #[test]
 fn copy_alias_c_works() {
     let ctx = TestContext::new();
     install_sample_catalog(&ctx);
-    let clipboard = ctx.clipboard_file("clipboard_alias.txt");
+    let _ = ctx.clipboard_file("clipboard_alias.txt");
 
     ctx.cli().args(["c", "wc"]).assert().success().stdout(predicate::str::contains("Copied 'wc'"));
 
-    let captured = fs::read_to_string(&clipboard).expect("clipboard file should exist");
-    assert!(captured.contains("/wc"), "clipboard should hold snippet contents");
+    ctx.cli().args(["touch", "tk"]).assert().success();
+    ctx.cli().args(["cat", "tk"]).assert().success().stdout(predicate::str::contains("/wc"));
 }
 
 #[test]

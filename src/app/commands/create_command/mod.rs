@@ -1,5 +1,6 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, ConfigError, InvalidKeyError, PathTraversalError};
 use crate::domain::ports::SnippetStore;
+use crate::domain::SafePath;
 use std::path::{Path, PathBuf};
 
 const TEMPLATE: &str = include_str!("../../../assets/command_template.md");
@@ -10,33 +11,35 @@ pub struct CreateCommandOutcome {
     pub path: PathBuf,
 }
 
-fn extract_relative_path(raw_path: &str) -> Result<PathBuf, AppError> {
+fn extract_relative_path(raw_path: &str) -> Result<SafePath, AppError> {
     let normalized = raw_path.trim_start_matches("./");
     let stripped = normalized.strip_prefix(".mx/commands/").ok_or_else(|| {
-        AppError::invalid_key(format!("Path must be under .mx/commands/ (got '{raw_path}')"))
+        AppError::InvalidKey(InvalidKeyError::NotInCommands {
+            expected: ".mx/commands/".to_string(),
+            actual: raw_path.to_string(),
+        })
     })?;
 
     if stripped.is_empty() {
-        return Err(AppError::invalid_key("Path cannot be empty after .mx/commands/"));
-    }
-
-    // Reject raw dot/double-dot segments before path normalization erases them.
-    for segment in stripped.split('/') {
-        if segment == "." || segment == ".." || segment.is_empty() {
-            return Err(AppError::path_traversal(format!(
-                "Path contains unsafe segments: '{raw_path}'"
-            )));
-        }
+        return Err(AppError::InvalidKey(InvalidKeyError::EmptyAfterPrefix(
+            ".mx/commands/".to_string(),
+        )));
     }
 
     let rel = Path::new(stripped);
     if rel.extension().map(|e| e != "md").unwrap_or(false) {
-        return Err(AppError::invalid_key(format!(
+        return Err(AppError::InvalidKey(InvalidKeyError::Other(format!(
             "Path must have a .md extension (got '{raw_path}')"
-        )));
+        ))));
     }
 
-    Ok(rel.to_path_buf())
+    let safe_path = SafePath::try_from_path(rel).map_err(|_| {
+        AppError::PathTraversal(PathTraversalError::Detected(format!(
+            "Path contains unsafe segments: '{raw_path}'"
+        )))
+    })?;
+
+    Ok(safe_path)
 }
 
 pub fn execute(
@@ -47,19 +50,17 @@ pub fn execute(
     let relative = extract_relative_path(raw_path)?;
 
     if store.snippet_exists(&relative) && !force {
-        return Err(AppError::config_error(format!(
+        return Err(AppError::ConfigError(ConfigError::DuplicateSnippet(format!(
             "Snippet already exists: '{}'. Use --force to overwrite.",
             relative.display()
-        )));
+        ))));
     }
 
     let path = store.write_snippet(&relative, TEMPLATE)?;
     let key = relative
         .file_stem()
         .and_then(|s| s.to_str())
-        .ok_or_else(|| {
-            AppError::invalid_key(format!("Path must end with a valid filename: '{raw_path}'"))
-        })?
+        .ok_or_else(|| AppError::InvalidKey(InvalidKeyError::NoFilename(raw_path.to_string())))?
         .to_string();
 
     Ok(CreateCommandOutcome { key, path })

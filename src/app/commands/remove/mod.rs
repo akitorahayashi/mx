@@ -1,5 +1,6 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, PathTraversalError};
 use crate::domain::ports::{SnippetCatalog, SnippetStore};
+use crate::domain::SafePath;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -15,7 +16,13 @@ pub fn execute(
 ) -> Result<RemoveOutcome, AppError> {
     let entry = catalog.resolve_snippet(snippet)?;
     let relative = std::path::Path::new(&entry.relative_path).with_extension("md");
-    let path = store.remove_snippet(&relative)?;
+    let safe_path = SafePath::try_from_path(&relative).map_err(|_| {
+        AppError::PathTraversal(PathTraversalError::Detected(format!(
+            "Path contains unsafe segments: '{}'",
+            relative.display()
+        )))
+    })?;
+    let path = store.remove_snippet(&safe_path)?;
     Ok(RemoveOutcome { key: entry.key, path })
 }
 
@@ -51,6 +58,6 @@ mod tests {
         let store = InMemorySnippetStore::new();
 
         let err = execute("missing", &catalog, &store).expect_err("should fail");
-        assert!(matches!(err, AppError::NotFound(_)));
+        assert!(matches!(err, AppError::NotFound(crate::domain::error::NotFoundError::Snippet(_))));
     }
 }

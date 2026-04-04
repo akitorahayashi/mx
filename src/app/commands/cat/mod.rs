@@ -18,9 +18,9 @@ mod tests {
     fn execute_reads_existing_context_file() {
         let store = InMemoryContextStore::default();
         let relative_path = resolve_context_path("tk");
-        let status = store
-            .prepare_context_file(&relative_path, false)
-            .expect("context file should be prepared");
+        let safe_path = crate::domain::SafePath::try_from_path(&relative_path).unwrap();
+        let status =
+            store.prepare_context_file(&safe_path, false).expect("context file should be prepared");
         store
             .write_context_contents(&status.path, "task body")
             .expect("context file should be written");
@@ -33,6 +33,9 @@ mod tests {
     fn execute_rejects_path_traversal() {
         let store = InMemoryContextStore::default();
         let result = execute("../secret", &store);
-        assert!(matches!(result, Err(AppError::PathTraversal(_))));
+        assert!(matches!(
+            result,
+            Err(AppError::PathTraversal(crate::domain::error::PathTraversalError::Detected(_)))
+        ));
     }
 }

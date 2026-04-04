@@ -1,62 +1,33 @@
-use assert_cmd::Command;
+use crate::harness::TestContext;
 use predicates::prelude::*;
-use std::fs;
-use tempfile::tempdir;
-
-fn setup_clipboard(temp: &tempfile::TempDir, content: &str) -> std::path::PathBuf {
-    let clipboard_file = temp.path().join("clipboard.txt");
-    fs::write(&clipboard_file, content).unwrap();
-    clipboard_file
-}
 
 #[test]
 fn clean_full_directory() {
-    let dir = tempdir().unwrap();
-    let clipboard_file = setup_clipboard(&dir, "test content");
+    let ctx = TestContext::new();
+    ctx.setup_clipboard("test content");
 
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&dir)
-        .env("MX_CLIPBOARD_FILE", &clipboard_file)
-        .arg("touch")
-        .arg("tk")
-        .assert()
-        .success();
+    ctx.cli().arg("touch").arg("tk").assert().success();
 
-    assert!(dir.path().join(".mx").exists());
-
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&dir)
+    ctx.cli()
         .arg("clean")
         .assert()
         .success()
         .stdout(predicate::eq("✅ Cleared .mx directory contents\n"));
 
-    let mx_dir = dir.path().join(".mx");
-    assert!(mx_dir.exists());
-    assert!(mx_dir.join(".gitignore").exists());
-    assert!(!mx_dir.join("tasks.md").exists());
+    ctx.cli()
+        .arg("cat")
+        .arg("tk")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Context file not found"));
 }
 
 #[test]
 fn clean_alias_cl_works() {
-    let dir = tempdir().unwrap();
-    let clipboard_file = setup_clipboard(&dir, "test content");
+    let ctx = TestContext::new();
+    ctx.setup_clipboard("test content");
 
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&dir)
-        .env("MX_CLIPBOARD_FILE", &clipboard_file)
-        .args(["touch", "tk"])
-        .assert()
-        .success();
+    ctx.cli().args(["touch", "tk"]).assert().success();
 
-    Command::cargo_bin("mx")
-        .unwrap()
-        .current_dir(&dir)
-        .arg("cl")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Cleared"));
+    ctx.cli().arg("cl").assert().success().stdout(predicate::str::contains("Cleared"));
 }

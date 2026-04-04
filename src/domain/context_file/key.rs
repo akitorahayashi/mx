@@ -1,7 +1,7 @@
 use crate::domain::context_file::alias_registry::resolve_alias;
-use crate::domain::context_file::path_policy::validate_path;
 use crate::domain::error::AppError;
-use std::path::PathBuf;
+use crate::domain::SafePath;
+use std::path::{Path, PathBuf};
 
 pub fn resolve_context_path(key: &str) -> PathBuf {
     let mut current_key = key;
@@ -33,10 +33,10 @@ pub fn resolve_context_path(key: &str) -> PathBuf {
     path
 }
 
-pub fn resolve_validated_context_path(key: &str) -> Result<PathBuf, AppError> {
+pub fn resolve_validated_context_path(key: &str) -> Result<SafePath, AppError> {
     let resolved = resolve_context_path(key);
-    validate_path(key, &resolved)?;
-    Ok(resolved)
+    SafePath::try_from_path(Path::new(key))?;
+    SafePath::try_from_path(&resolved)
 }
 
 #[cfg(test)]

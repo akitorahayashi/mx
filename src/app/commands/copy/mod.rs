@@ -1,7 +1,7 @@
-use crate::domain::context_file::validate_path;
 use crate::domain::error::AppError;
 use crate::domain::ports::{Clipboard, ContextFileStore, SnippetCatalog};
 use crate::domain::snippet::strip_frontmatter;
+use crate::domain::SafePath;
 use std::borrow::Cow;
 use std::fs;
 use std::path::Path;
@@ -72,7 +72,7 @@ fn render_placeholder(raw_token: &str, workspace_store: &dyn ContextFileStore) -
         return format!("{{{{{raw_token}}}}}");
     }
 
-    if let Err(err) = validate_path(trimmed, Path::new(trimmed)) {
+    if let Err(err) = SafePath::try_from_path(Path::new(trimmed)) {
         return format!("[mx error: {}]", err);
     }
 
@@ -140,7 +140,10 @@ mod tests {
 
         let error = execute("unknown", &catalog, &clipboard, Some(&workspace_store))
             .expect_err("missing snippet should fail");
-        assert!(matches!(error, AppError::NotFound(_)));
+        assert!(matches!(
+            error,
+            AppError::NotFound(crate::domain::error::NotFoundError::Snippet(_))
+        ));
     }
 
     #[test]
