@@ -5,6 +5,7 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug)]
 pub struct FilesystemSnippetStore {
     commands_root: PathBuf,
 }
@@ -12,10 +13,7 @@ pub struct FilesystemSnippetStore {
 impl FilesystemSnippetStore {
     pub fn from_env() -> Result<Self, AppError> {
         if let Ok(custom) = env::var("MX_COMMANDS_ROOT") {
-            let custom_path = PathBuf::from(custom);
-            let legacy = custom_path.join("commands");
-            let commands_root = if legacy.is_dir() { legacy } else { custom_path };
-            return Ok(Self { commands_root });
+            return Ok(Self { commands_root: PathBuf::from(custom) });
         }
 
         let home = env::var("HOME")
@@ -85,5 +83,77 @@ impl SnippetStore for FilesystemSnippetStore {
         }
 
         Ok(target)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serial_test::serial;
+    use std::ffi::OsString;
+    use tempfile::tempdir;
+
+    struct EnvGuard {
+        key: &'static str,
+        original: Option<OsString>,
+    }
+
+    impl EnvGuard {
+        fn set(key: &'static str, value: &Path) -> Self {
+            let original = env::var_os(key);
+            env::set_var(key, value);
+            Self { key, original }
+        }
+
+        fn remove(key: &'static str) -> Self {
+            let original = env::var_os(key);
+            env::remove_var(key);
+            Self { key, original }
+        }
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            if let Some(value) = &self.original {
+                env::set_var(self.key, value);
+            } else {
+                env::remove_var(self.key);
+            }
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn from_env_default_resolves_to_home_config_mx_commands() {
+        let _env_remove_root = EnvGuard::remove("MX_COMMANDS_ROOT");
+        let dir = tempdir().unwrap();
+        let _env_home = EnvGuard::set("HOME", dir.path());
+
+        let store = FilesystemSnippetStore::from_env().unwrap();
+        assert_eq!(store.commands_root, dir.path().join(".config").join("mx").join("commands"));
+    }
+
+    #[test]
+    #[serial]
+    fn from_env_with_mx_commands_root_resolves_to_custom_path() {
+        let dir = tempdir().unwrap();
+        let custom_root = dir.path().join("my_custom_root");
+        let _env_root = EnvGuard::set("MX_COMMANDS_ROOT", &custom_root);
+
+        let store = FilesystemSnippetStore::from_env().unwrap();
+        assert_eq!(store.commands_root, custom_root);
+    }
+
+    #[test]
+    #[serial]
+    fn from_env_fails_when_home_not_set() {
+        let _env_remove_root = EnvGuard::remove("MX_COMMANDS_ROOT");
+        let _env_remove_home = EnvGuard::remove("HOME");
+
+        let result = FilesystemSnippetStore::from_env();
+        assert!(matches!(
+            result,
+            Err(AppError::ConfigError(ConfigError::MissingEnvVar(ref key))) if key == "HOME"
+        ));
     }
 }

@@ -1,4 +1,4 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, PathTraversalError};
 use std::path::{Component, Path, PathBuf};
 
 /// A strongly typed wrapper around a path that has been validated
@@ -18,9 +18,10 @@ impl SafePath {
                 Component::Normal(segment) => inner.push(segment),
                 Component::CurDir => {} // Skip current directory segments for normalization
                 _ => {
-                    return Err(AppError::path_traversal(
-                        "Invalid path. Cannot create or access files outside of the allowed directory.",
-                    ));
+                    return Err(AppError::PathTraversal(PathTraversalError::Detected(
+                        "Invalid path. Cannot create or access files outside of the allowed directory."
+                            .to_string(),
+                    )));
                 }
             }
         }

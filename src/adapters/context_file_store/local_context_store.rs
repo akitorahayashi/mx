@@ -177,6 +177,7 @@ mod tests {
         assert_eq!(fs::read_to_string(&target).unwrap(), "original");
     }
 
+    #[test]
     fn adapter_rejects_writes_outside_mx() {
         let workspace = tempdir().unwrap();
         let store = LocalContextFileStore::new(workspace.path().to_path_buf());

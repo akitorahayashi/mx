@@ -1,4 +1,4 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, ConfigError};
 use crate::domain::ports::SnippetCatalog;
 use crate::domain::snippet::parse_frontmatter_metadata;
 use std::fs;
@@ -23,7 +23,7 @@ pub fn execute(catalog: &dyn SnippetCatalog) -> Result<Vec<ListEntry>, AppError>
                     Some(_) => parse_frontmatter_metadata(&content)
                         .map(|fm| (fm.title, fm.description))
                         .ok_or_else(|| {
-                            AppError::config_error(format!(
+                            ConfigError::Other(format!(
                                 "Failed to parse frontmatter in snippet: {}",
                                 snippet.absolute_path.display()
                             ))

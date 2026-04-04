@@ -1,4 +1,4 @@
-use crate::domain::error::AppError;
+use crate::domain::error::{AppError, PathTraversalError};
 use crate::domain::ports::{SnippetCatalog, SnippetStore};
 use crate::domain::SafePath;
 use std::path::PathBuf;
@@ -17,7 +17,10 @@ pub fn execute(
     let entry = catalog.resolve_snippet(snippet)?;
     let relative = std::path::Path::new(&entry.relative_path).with_extension("md");
     let safe_path = SafePath::try_from_path(&relative).map_err(|_| {
-        AppError::path_traversal(format!("Path contains unsafe segments: '{}'", relative.display()))
+        AppError::PathTraversal(PathTraversalError::Detected(format!(
+            "Path contains unsafe segments: '{}'",
+            relative.display()
+        )))
     })?;
     let path = store.remove_snippet(&safe_path)?;
     Ok(RemoveOutcome { key: entry.key, path })

@@ -317,8 +317,11 @@ mod tests {
         let _clip_lock = EnvVarLock::remove("MX_CLIPBOARD_CMD");
 
         let result = SystemClipboard::detect_for_os("templeos");
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Unsupported platform 'templeos'"));
+        assert!(matches!(
+            result,
+            Err(AppError::ClipboardError(ClipboardError::UnsupportedPlatform(ref platform)))
+                if platform == "templeos"
+        ));
     }
 
     // We intentionally removed the `detect_linux_fails_when_tools_missing` test.
@@ -352,8 +355,10 @@ mod tests {
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.copy("test content");
 
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("exited with status"));
+        assert!(matches!(
+            result,
+            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))
+        ));
     }
 
     #[test]
@@ -394,8 +399,10 @@ mod tests {
         let clip = SystemClipboard::detect_for_os("macos").unwrap();
         let result = clip.paste();
 
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("exited with status"));
+        assert!(matches!(
+            result,
+            Err(AppError::ClipboardError(ClipboardError::NonZeroExit(_)))
+        ));
     }
 
     #[test]

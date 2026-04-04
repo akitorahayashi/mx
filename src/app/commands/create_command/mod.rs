@@ -43,7 +43,9 @@ fn extract_relative_path(raw_path: &str) -> Result<SafePath, AppError> {
     }
 
     let safe_path = SafePath::try_from_path(rel).map_err(|_| {
-        AppError::path_traversal(format!("Path contains unsafe segments: '{raw_path}'"))
+        AppError::PathTraversal(PathTraversalError::Detected(format!(
+            "Path contains unsafe segments: '{raw_path}'"
+        )))
     })?;
 
     Ok(safe_path)
