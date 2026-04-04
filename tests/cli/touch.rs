@@ -2,16 +2,10 @@ use crate::harness::TestContext;
 use predicates::prelude::*;
 use std::fs;
 
-fn setup_clipboard(ctx: &TestContext, content: &str) -> std::path::PathBuf {
-    let clipboard_file = ctx.clipboard_file("clipboard.txt");
-    fs::write(&clipboard_file, content).unwrap();
-    clipboard_file
-}
-
 #[test]
 fn touch_creates_context_files() {
     let ctx = TestContext::new();
-    let _ = setup_clipboard(&ctx, "test content");
+    ctx.setup_clipboard("test content");
 
     ctx.cli()
         .arg("touch")
@@ -31,7 +25,7 @@ fn touch_force_overwrites() {
     fs::write(&tasks_md, "original content").unwrap();
 
     let clipboard_content = "new clipboard content";
-    let _ = setup_clipboard(&ctx, clipboard_content);
+    ctx.setup_clipboard(clipboard_content);
 
     ctx.cli()
         .arg("t")
