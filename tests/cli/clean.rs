@@ -1,17 +1,10 @@
 use crate::harness::TestContext;
 use predicates::prelude::*;
-use std::fs;
-
-fn setup_clipboard(ctx: &TestContext, content: &str) -> std::path::PathBuf {
-    let clipboard_file = ctx.clipboard_file("clipboard.txt");
-    fs::write(&clipboard_file, content).unwrap();
-    clipboard_file
-}
 
 #[test]
 fn clean_full_directory() {
     let ctx = TestContext::new();
-    let _ = setup_clipboard(&ctx, "test content");
+    ctx.setup_clipboard("test content");
 
     ctx.cli().arg("touch").arg("tk").assert().success();
 
@@ -32,7 +25,7 @@ fn clean_full_directory() {
 #[test]
 fn clean_alias_cl_works() {
     let ctx = TestContext::new();
-    let _ = setup_clipboard(&ctx, "test content");
+    ctx.setup_clipboard("test content");
 
     ctx.cli().args(["touch", "tk"]).assert().success();
 

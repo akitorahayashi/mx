@@ -65,6 +65,12 @@ impl TestContext {
         file
     }
 
+    pub fn setup_clipboard(&self, content: &str) -> PathBuf {
+        let file = self.clipboard_file("clipboard.txt");
+        fs::write(&file, content).expect("Failed to write to clipboard file");
+        file
+    }
+
     pub fn set_env<S: AsRef<str>>(&self, key: &str, value: S) {
         self.env_vars.borrow_mut().insert(key.to_string(), value.as_ref().to_string());
     }
