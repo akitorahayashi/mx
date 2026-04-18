@@ -1,0 +1,138 @@
+use crate::error::{AppError, ConfigError};
+use crate::snippets::{parse_frontmatter_metadata, SnippetCatalog};
+use std::fs;
+
+#[derive(Debug, Clone)]
+pub struct ListEntry {
+    pub snippet: String,
+    pub relative_path: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+}
+
+pub fn execute(catalog: &dyn SnippetCatalog) -> Result<Vec<ListEntry>, AppError> {
+    let snippets = catalog.enumerate_snippets()?;
+
+    let mut entries: Vec<ListEntry> = snippets
+        .into_iter()
+        .map(|snippet| {
+            let content = fs::read_to_string(&snippet.absolute_path)?;
+            let (title, description) = match parse_frontmatter_metadata(&content) {
+                Ok(Some(fm)) => (fm.title, fm.description),
+                Ok(None) => (None, None),
+                Err(e) => {
+                    return Err(ConfigError::Other(format!(
+                        "Failed to parse frontmatter in snippet: {}: {}",
+                        snippet.absolute_path.display(),
+                        e
+                    ))
+                    .into())
+                }
+            };
+
+            Ok(ListEntry {
+                snippet: snippet.key,
+                relative_path: snippet.relative_path,
+                title,
+                description,
+            })
+        })
+        .collect::<Result<Vec<_>, AppError>>()?;
+
+    entries.sort_by(|a, b| a.snippet.cmp(&b.snippet));
+    Ok(entries)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::snippets::InMemoryCatalog;
+    use crate::snippets::SnippetEntry;
+    use std::fs;
+    use tempfile::TempDir;
+
+    fn entry_with_file(key: &str, rel: &str, content: &str) -> (SnippetEntry, TempDir) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(format!("{key}.md"));
+        fs::write(&path, content).unwrap();
+        (
+            SnippetEntry {
+                key: key.to_string(),
+                relative_path: rel.to_string(),
+                absolute_path: path,
+            },
+            dir,
+        )
+    }
+
+    #[test]
+    fn execute_sorts_entries_by_snippet_name() {
+        let (e1, _d1) = entry_with_file("wc", "w/wc", "");
+        let (e2, _d2) = entry_with_file("aa", "a/aa", "");
+        let catalog = InMemoryCatalog::new(vec![e1, e2]);
+
+        let entries = execute(&catalog).expect("list command should succeed");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].snippet, "aa");
+        assert_eq!(entries[1].snippet, "wc");
+    }
+
+    #[test]
+    fn execute_reads_title_and_description_from_frontmatter() {
+        let (e, _dir) = entry_with_file(
+            "wc",
+            "w/wc",
+            "---\ntitle: Work on Tasks\ndescription: Critical planning\n---\nbody\n",
+        );
+        let catalog = InMemoryCatalog::new(vec![e]);
+
+        let entries = execute(&catalog).unwrap();
+        assert_eq!(entries[0].title.as_deref(), Some("Work on Tasks"));
+        assert_eq!(entries[0].description.as_deref(), Some("Critical planning"));
+    }
+
+    #[test]
+    fn execute_returns_none_title_when_no_frontmatter() {
+        let (e, _dir) = entry_with_file("wc", "w/wc", "plain body\n");
+        let catalog = InMemoryCatalog::new(vec![e]);
+
+        let entries = execute(&catalog).unwrap();
+        assert!(entries[0].title.is_none());
+        assert!(entries[0].description.is_none());
+    }
+
+    #[test]
+    fn execute_handles_mix_of_frontmatter_and_plain_snippets() {
+        let (e1, _d1) = entry_with_file("aa", "a/aa", "---\ntitle: AA\n---\nbody\n");
+        let (e2, _d2) = entry_with_file("zz", "z/zz", "no frontmatter\n");
+        let catalog = InMemoryCatalog::new(vec![e1, e2]);
+
+        let entries = execute(&catalog).unwrap();
+        assert_eq!(entries[0].snippet, "aa");
+        assert_eq!(entries[0].title.as_deref(), Some("AA"));
+        assert_eq!(entries[1].snippet, "zz");
+        assert!(entries[1].title.is_none());
+    }
+
+    #[test]
+    fn execute_fails_on_missing_file() {
+        let catalog = InMemoryCatalog::new(vec![SnippetEntry {
+            key: "wc".to_string(),
+            relative_path: "w/wc".to_string(),
+            absolute_path: std::path::PathBuf::from("does_not_exist.md"),
+        }]);
+        let result = execute(&catalog);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn execute_fails_on_invalid_frontmatter() {
+        let (e, _dir) = entry_with_file("wc", "w/wc", "---\ntitle: [unclosed array\n---\nbody\n");
+        let catalog = InMemoryCatalog::new(vec![e]);
+
+        let result = execute(&catalog);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(err.to_string().contains("Failed to parse frontmatter in snippet"));
+    }
+}

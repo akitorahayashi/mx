@@ -4,27 +4,22 @@ on:
   push:
     branches: [ "main" ]
     paths-ignore:
-      - '**.md'
+      - "**.md"
   pull_request:
     branches: [ "main" ]
     paths-ignore:
-      - '**.md'
+      - "**.md"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  lint:
+  static-checks:
+    name: Static Checks
     permissions:
       contents: read
-    uses: ./.github/workflows/run-linters.yml
-
-  build:
-    name: Build
-    permissions:
-      contents: read
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/run-static-checks.yml
 
   test:
     name: Test
@@ -37,3 +32,9 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/collect-coverage.yml
+
+  build:
+    name: Build
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
