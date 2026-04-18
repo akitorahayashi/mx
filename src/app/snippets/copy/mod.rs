@@ -17,12 +17,12 @@ pub fn execute(
     snippet: &str,
     catalog: &dyn SnippetCatalog,
     clipboard: &dyn Clipboard,
-    workspace_store: Option<&dyn WorkspaceFileReader>,
+    workspace_files: Option<&dyn WorkspaceFileReader>,
 ) -> Result<CopyOutcome, AppError> {
     let snippet_entry = catalog.resolve_snippet(snippet)?;
     let raw = fs::read_to_string(&snippet_entry.absolute_path)?;
     let content = strip_frontmatter(&raw);
-    let expanded = expand_placeholders(content, workspace_store);
+    let expanded = expand_placeholders(content, workspace_files);
     clipboard.copy(expanded.as_ref())?;
 
     Ok(CopyOutcome {
@@ -34,9 +34,9 @@ pub fn execute(
 
 fn expand_placeholders<'a>(
     content: &'a str,
-    workspace_store: Option<&dyn WorkspaceFileReader>,
+    workspace_files: Option<&dyn WorkspaceFileReader>,
 ) -> Cow<'a, str> {
-    let Some(store) = workspace_store else {
+    let Some(store) = workspace_files else {
         return Cow::Borrowed(content);
     };
 
@@ -66,7 +66,7 @@ fn expand_placeholders<'a>(
     Cow::Owned(output)
 }
 
-fn render_placeholder(raw_token: &str, workspace_store: &dyn WorkspaceFileReader) -> String {
+fn render_placeholder(raw_token: &str, workspace_files: &dyn WorkspaceFileReader) -> String {
     let trimmed = raw_token.trim();
     if trimmed.is_empty() {
         return format!("{{{{{raw_token}}}}}");
@@ -77,7 +77,7 @@ fn render_placeholder(raw_token: &str, workspace_store: &dyn WorkspaceFileReader
         Err(err) => return format!("[mx error: {}]", err),
     };
 
-    match workspace_store.read_workspace_file(&safe_path) {
+    match workspace_files.read_workspace_file(&safe_path) {
         Ok(contents) => contents,
         Err(err) => format!("[mx missing: {trimmed} ({})]", err.kind()),
     }
@@ -114,10 +114,10 @@ mod tests {
     fn execute_copies_snippet_with_placeholder_expansion() {
         let (catalog, _dir, snippet_path) = build_catalog_with_snippet("header {{.mx/info.md}}");
         let clipboard = InMemoryClipboard::default();
-        let workspace_store = InMemoryWorkspaceFileReader::default();
-        workspace_store.set_file(".mx/info.md", "expanded");
+        let workspace_files = InMemoryWorkspaceFileReader::default();
+        workspace_files.set_file(".mx/info.md", "expanded");
 
-        let outcome = execute("wc", &catalog, &clipboard, Some(&workspace_store))
+        let outcome = execute("wc", &catalog, &clipboard, Some(&workspace_files))
             .expect("copy command should succeed");
 
         assert_eq!(outcome.snippet, "wc");
@@ -139,9 +139,9 @@ mod tests {
     fn execute_surfaces_missing_snippet_errors() {
         let catalog = InMemoryCatalog::new(Vec::new());
         let clipboard = InMemoryClipboard::default();
-        let workspace_store = InMemoryWorkspaceFileReader::default();
+        let workspace_files = InMemoryWorkspaceFileReader::default();
 
-        let error = execute("unknown", &catalog, &clipboard, Some(&workspace_store))
+        let error = execute("unknown", &catalog, &clipboard, Some(&workspace_files))
             .expect_err("missing snippet should fail");
         assert!(matches!(error, AppError::NotFound(crate::error::NotFoundError::Snippet(_))));
     }
@@ -150,9 +150,9 @@ mod tests {
     fn execute_marks_invalid_placeholder_as_error() {
         let (catalog, _dir, _) = build_catalog_with_snippet("{{../secret}}");
         let clipboard = InMemoryClipboard::default();
-        let workspace_store = InMemoryWorkspaceFileReader::default();
+        let workspace_files = InMemoryWorkspaceFileReader::default();
 
-        execute("wc", &catalog, &clipboard, Some(&workspace_store))
+        execute("wc", &catalog, &clipboard, Some(&workspace_files))
             .expect("copy command should succeed with placeholder marker");
         assert!(clipboard.contents().contains("[mx error:"));
     }
@@ -161,10 +161,10 @@ mod tests {
     fn execute_keeps_unclosed_placeholder_literal() {
         let (catalog, _dir, _) = build_catalog_with_snippet("prefix {{.mx/info.md");
         let clipboard = InMemoryClipboard::default();
-        let workspace_store = InMemoryWorkspaceFileReader::default();
-        workspace_store.set_file(".mx/info.md", "expanded");
+        let workspace_files = InMemoryWorkspaceFileReader::default();
+        workspace_files.set_file(".mx/info.md", "expanded");
 
-        execute("wc", &catalog, &clipboard, Some(&workspace_store))
+        execute("wc", &catalog, &clipboard, Some(&workspace_files))
             .expect("copy command should succeed");
         assert_eq!(clipboard.contents(), "prefix {{.mx/info.md");
     }
@@ -184,10 +184,10 @@ mod tests {
         let (catalog, _dir, _) =
             build_catalog_with_snippet("---\ntitle: T\n---\nheader {{.mx/info.md}}");
         let clipboard = InMemoryClipboard::default();
-        let workspace_store = InMemoryWorkspaceFileReader::default();
-        workspace_store.set_file(".mx/info.md", "injected");
+        let workspace_files = InMemoryWorkspaceFileReader::default();
+        workspace_files.set_file(".mx/info.md", "injected");
 
-        execute("wc", &catalog, &clipboard, Some(&workspace_store)).expect("copy should succeed");
+        execute("wc", &catalog, &clipboard, Some(&workspace_files)).expect("copy should succeed");
         assert_eq!(clipboard.contents(), "header injected");
     }
 

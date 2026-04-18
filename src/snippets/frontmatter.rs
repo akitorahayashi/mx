@@ -63,9 +63,13 @@ pub struct SnippetFrontmatter {
     pub aliases: Option<Vec<String>>,
 }
 
-pub fn parse_frontmatter_metadata(content: &str) -> Option<SnippetFrontmatter> {
-    let yaml = parse_frontmatter(content)?;
-    serde_yaml::from_str(yaml).ok()
+pub fn parse_frontmatter_metadata(
+    content: &str,
+) -> Result<Option<SnippetFrontmatter>, serde_yaml::Error> {
+    let Some(yaml) = parse_frontmatter(content) else {
+        return Ok(None);
+    };
+    Ok(Some(serde_yaml::from_str(yaml)?))
 }
 
 #[cfg(test)]
@@ -117,7 +121,7 @@ mod tests {
     #[test]
     fn parse_frontmatter_metadata_deserializes_fields() {
         let content = "---\ntitle: My Title\ndescription: My desc\n---\nbody\n";
-        let fm = parse_frontmatter_metadata(content).unwrap();
+        let fm = parse_frontmatter_metadata(content).unwrap().unwrap();
         assert_eq!(fm.title.as_deref(), Some("My Title"));
         assert_eq!(fm.description.as_deref(), Some("My desc"));
     }
@@ -125,13 +129,13 @@ mod tests {
     #[test]
     fn parse_frontmatter_metadata_handles_missing_fields() {
         let content = "---\ntitle: Only Title\n---\nbody\n";
-        let fm = parse_frontmatter_metadata(content).unwrap();
+        let fm = parse_frontmatter_metadata(content).unwrap().unwrap();
         assert_eq!(fm.title.as_deref(), Some("Only Title"));
         assert!(fm.description.is_none());
     }
 
     #[test]
     fn parse_frontmatter_metadata_none_when_no_frontmatter() {
-        assert!(parse_frontmatter_metadata("no frontmatter").is_none());
+        assert!(parse_frontmatter_metadata("no frontmatter").unwrap().is_none());
     }
 }

@@ -1,5 +1,5 @@
 use crate::error::{AppError, ConfigError};
-use crate::snippets::{parse_frontmatter, parse_frontmatter_metadata, SnippetCatalog};
+use crate::snippets::{parse_frontmatter_metadata, SnippetCatalog};
 use std::fs;
 
 #[derive(Debug, Clone)]
@@ -17,16 +17,17 @@ pub fn execute(catalog: &dyn SnippetCatalog) -> Result<Vec<ListEntry>, AppError>
         .into_iter()
         .map(|snippet| {
             let content = fs::read_to_string(&snippet.absolute_path)?;
-            let (title, description) = match parse_frontmatter(&content) {
-                Some(_) => parse_frontmatter_metadata(&content)
-                    .map(|fm| (fm.title, fm.description))
-                    .ok_or_else(|| {
-                        ConfigError::Other(format!(
-                            "Failed to parse frontmatter in snippet: {}",
-                            snippet.absolute_path.display()
-                        ))
-                    })?,
-                None => (None, None),
+            let (title, description) = match parse_frontmatter_metadata(&content) {
+                Ok(Some(fm)) => (fm.title, fm.description),
+                Ok(None) => (None, None),
+                Err(e) => {
+                    return Err(ConfigError::Other(format!(
+                        "Failed to parse frontmatter in snippet: {}: {}",
+                        snippet.absolute_path.display(),
+                        e
+                    ))
+                    .into())
+                }
             };
 
             Ok(ListEntry {
