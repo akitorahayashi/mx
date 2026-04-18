@@ -8,7 +8,9 @@ mod fixed_workspace_locator;
 #[cfg(test)]
 mod in_memory_workspace_file_reader;
 #[cfg(test)]
-pub mod test_support;
+pub use fixed_workspace_locator::FixedWorkspaceLocator;
+#[cfg(test)]
+pub use in_memory_workspace_file_reader::InMemoryWorkspaceFileReader;
 
 pub use current_directory_locator::CurrentDirectoryLocator;
 pub use safe_path::SafePath;

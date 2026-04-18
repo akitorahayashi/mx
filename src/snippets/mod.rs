@@ -15,7 +15,11 @@ mod in_memory_checkout;
 #[cfg(test)]
 mod in_memory_snippet_store;
 #[cfg(test)]
-pub mod test_support;
+pub use in_memory_catalog::InMemoryCatalog;
+#[cfg(test)]
+pub use in_memory_checkout::InMemoryCheckout;
+#[cfg(test)]
+pub use in_memory_snippet_store::InMemorySnippetStore;
 
 pub use catalog_entry::SnippetEntry;
 pub use filesystem_catalog::FilesystemSnippetCatalog;

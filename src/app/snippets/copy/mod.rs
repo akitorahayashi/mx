@@ -86,9 +86,9 @@ fn render_placeholder(raw_token: &str, workspace_files: &dyn WorkspaceFileReader
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clipboard::test_support::InMemoryClipboard;
-    use crate::project_fs::test_support::InMemoryWorkspaceFileReader;
-    use crate::snippets::test_support::InMemoryCatalog;
+    use crate::clipboard::InMemoryClipboard;
+    use crate::project_fs::InMemoryWorkspaceFileReader;
+    use crate::snippets::InMemoryCatalog;
     use crate::snippets::SnippetEntry;
     use std::fs;
     use tempfile::TempDir;

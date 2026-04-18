@@ -69,7 +69,7 @@ pub fn execute(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::snippets::test_support::InMemorySnippetStore;
+    use crate::snippets::InMemorySnippetStore;
 
     #[test]
     fn creates_template_at_given_path() {

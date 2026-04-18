@@ -46,7 +46,7 @@ pub fn execute(catalog: &dyn SnippetCatalog) -> Result<Vec<ListEntry>, AppError>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::snippets::test_support::InMemoryCatalog;
+    use crate::snippets::InMemoryCatalog;
     use crate::snippets::SnippetEntry;
     use std::fs;
     use tempfile::TempDir;

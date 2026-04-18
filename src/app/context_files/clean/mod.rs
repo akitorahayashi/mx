@@ -31,8 +31,8 @@ pub fn execute(
 mod tests {
     use super::*;
     use crate::context_files::resolve_context_path;
-    use crate::context_files::test_support::InMemoryContextStore;
     use crate::context_files::ContextFileStore;
+    use crate::context_files::InMemoryContextStore;
 
     #[test]
     fn execute_removes_root_when_no_key_is_provided() {

@@ -83,8 +83,8 @@ fn build_contents(body: &str, title: Option<&str>, description: Option<&str>) ->
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clipboard::test_support::InMemoryClipboard;
-    use crate::snippets::test_support::InMemorySnippetStore;
+    use crate::clipboard::InMemoryClipboard;
+    use crate::snippets::InMemorySnippetStore;
 
     #[test]
     fn adds_snippet_from_clipboard() {

@@ -11,8 +11,8 @@ pub fn execute(key: &str, store: &dyn ContextFileStore) -> Result<String, AppErr
 mod tests {
     use super::*;
     use crate::context_files::resolve_context_path;
-    use crate::context_files::test_support::InMemoryContextStore;
     use crate::context_files::ContextFileStore;
+    use crate::context_files::InMemoryContextStore;
 
     #[test]
     fn execute_reads_existing_context_file() {

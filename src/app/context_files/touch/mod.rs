@@ -37,10 +37,10 @@ pub fn execute(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::clipboard::test_support::InMemoryClipboard;
+    use crate::clipboard::InMemoryClipboard;
     use crate::context_files::resolve_context_path;
-    use crate::context_files::test_support::InMemoryContextStore;
     use crate::context_files::ContextFileStore;
+    use crate::context_files::InMemoryContextStore;
 
     #[test]
     fn execute_creates_context_file_with_clipboard_content() {

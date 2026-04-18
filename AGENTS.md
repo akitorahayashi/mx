@@ -45,7 +45,7 @@ The project has a comprehensive testing strategy:
     - Unit tests are located alongside the source code in the `src/` directory.
     - Integration tests are in the `tests/` directory, covering both the CLI and the library's public API.
 - CI: A GitHub Actions workflow (`run-tests.yml`) automatically runs all tests on macOS for every pull request and push to the main branch.
-- Test Support: In-memory stubs are owner-local and exposed through `src/snippets/test_support.rs`, `src/context_files/test_support.rs`, `src/clipboard/test_support.rs`, and `src/project_fs/test_support.rs`.
+- Test Support: In-memory stubs are owner-local and exposed directly through their domain modules (`src/snippets/mod.rs`, `src/context_files/mod.rs`, `src/clipboard/mod.rs`, and `src/project_fs/mod.rs`) for tests.
 
 
 ## Development Guidelines

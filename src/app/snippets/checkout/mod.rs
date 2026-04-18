@@ -51,8 +51,8 @@ fn write_gitignore(target_root: &Path) -> Result<PathBuf, AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::snippets::test_support::{InMemoryCatalog, InMemoryCheckout};
     use crate::snippets::SnippetEntry;
+    use crate::snippets::{InMemoryCatalog, InMemoryCheckout};
     use std::path::PathBuf;
     use tempfile::tempdir;
 

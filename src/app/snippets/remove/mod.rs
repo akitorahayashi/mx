@@ -29,8 +29,8 @@ pub fn execute(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::snippets::test_support::{InMemoryCatalog, InMemorySnippetStore};
     use crate::snippets::SnippetEntry;
+    use crate::snippets::{InMemoryCatalog, InMemorySnippetStore};
     use std::path::PathBuf;
 
     fn entry(key: &str, rel: &str) -> SnippetEntry {
