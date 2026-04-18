@@ -1,5 +1,5 @@
-use mx::domain::context_file::resolve_context_path;
-use mx::domain::SafePath;
+use mx::context_files::resolve_context_path;
+use mx::project_fs::SafePath;
 use std::path::{Path, PathBuf};
 
 #[test]

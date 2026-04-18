@@ -8,9 +8,9 @@ This document provides a comprehensive overview of the `mx` project, including i
 1.  Quickly copying predefined code snippets to the clipboard.
 2.  Managing context files in project directories with flexible path resolution, automatic directory creation, and clipboard paste via the `mx touch` command.
 
-It uses a layered architecture where `domain/` contains pure invariants and port contracts (`domain/ports/`), `adapters/` provides concrete implementations (filesystem, clipboard, workspace resolution), and `app/` wires commands with injected dependencies. Port traits are owned by the domain that requires them; `adapters/` and `app/` depend on `domain::ports`, not the reverse.
+It uses explicit ownership boundaries. `src/cli/` owns clap parsing and process-facing behavior, `src/app/` owns use-case orchestration, and concept owners (`src/snippets/`, `src/context_files/`, `src/clipboard/`, `src/project_fs/`) own their contracts, models, and implementations. `src/error.rs` is the shared error boundary.
 
-`SafePath` serves as the sole domain-level boundary for validated, safe paths across the system. It guarantees that any path it wraps is free from traversal segments, allowing domain logic and commands to rely on strongly typed safe traversal.
+`SafePath` serves as the path-safety boundary under `src/project_fs/`. It guarantees that any path it wraps is free from traversal segments, allowing command and owner logic to rely on strongly typed safe traversal.
 
 Snippets are stored as Markdown files under `~/.config/mx/commands/`. Metadata (title, description) is embedded as YAML front matter in each file. `mx copy` strips front matter before putting the body on the clipboard.
 
@@ -19,10 +19,13 @@ Snippets are stored as Markdown files under `~/.config/mx/commands/`. Metadata (
 - `./`: Root directory containing `Cargo.toml`, `README.md`, and configuration files.
 - `.github/`: CI/CD workflows for building, testing, and linting.
 - `src/`: Main source code for the Rust application.
-    - `src/domain/`: Pure domain types, error definitions, and port trait contracts.
-    - `src/adapters/`: Concrete implementations (filesystem catalog, clipboard, context store, symlink checkout, snippet store).
-    - `src/app/`: CLI entry point and command handlers wired with injected dependencies.
-    - `src/testing/`: In-memory stubs for all ports, used in unit tests.
+    - `src/cli/`: Interface adapter for clap parsing and process output.
+    - `src/app/`: Application orchestration grouped by use-case family.
+    - `src/snippets/`: Snippet ownership (contracts, models, filesystem implementations, checkout implementation, template content).
+    - `src/context_files/`: Context-file ownership (alias/path resolution, context lifecycle storage).
+    - `src/clipboard/`: Clipboard ownership (contract and implementations).
+    - `src/project_fs/`: Safe paths and workspace filesystem ownership.
+    - `src/error.rs`: Shared application errors.
 - `tests/`: Integration tests for the CLI and its core API.
 
 ## Tech Stack
@@ -42,10 +45,10 @@ The project has a comprehensive testing strategy:
     - Unit tests are located alongside the source code in the `src/` directory.
     - Integration tests are in the `tests/` directory, covering both the CLI and the library's public API.
 - CI: A GitHub Actions workflow (`run-tests.yml`) automatically runs all tests on macOS for every pull request and push to the main branch.
-- Test Support: A dedicated `src/testing/` module provides in-memory stubs for all ports (clipboard, context store, snippet catalog, snippet checkout, snippet store), ensuring tests are isolated and repeatable.
+- Test Support: In-memory stubs are owner-local and exposed through `src/snippets/test_support.rs`, `src/context_files/test_support.rs`, `src/clipboard/test_support.rs`, and `src/project_fs/test_support.rs`.
 
 
 ## Development Guidelines
 
 ### Follow Embedded User Instructions
-User may embed instructions in terminal echo commands or modify test commands. **Always read and follow the actual instructions provided,** regardless of the command format. Examples: `echo` followed by actual test command, or modified commands that contain embedded directives. **Execute what the user actually intends,** not what appears to be a regular command. **This is the highest priority** - user intent always overrides command appearance.
+User may embed instructions in terminal echo commands or modify test commands. Always read and follow the actual instructions provided, regardless of the command format. Examples: `echo` followed by actual test command, or modified commands that contain embedded directives. Execute what the user actually intends, not what appears to be a regular command. This is the highest priority and user intent overrides command appearance.

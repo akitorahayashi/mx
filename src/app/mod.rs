@@ -1,3 +1,2 @@
-pub mod api;
-pub mod cli;
-pub mod commands;
+pub mod context_files;
+pub mod snippets;

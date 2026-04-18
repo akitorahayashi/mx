@@ -12,7 +12,11 @@
 
 The workspace follows the original template's testing culture:
 
-- Unit tests live next to domain and adapter modules.
-- Internal test doubles are centralized under `src/testing/ports/`.
+- Unit tests live next to owner modules.
+- Internal test doubles are owner-local and exported through:
+	- `src/snippets/test_support.rs`
+	- `src/context_files/test_support.rs`
+	- `src/clipboard/test_support.rs`
+	- `src/project_fs/test_support.rs`
 - Integration tests are organized by concern at `tests/cli/`, `tests/context/`, `tests/snippets/`, and `tests/security/`.
 - Shared integration fixtures are centralized under `tests/harness/`.
