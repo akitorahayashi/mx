@@ -3,7 +3,7 @@ use crate::project_fs::SafePath;
 use crate::snippets::SnippetStore;
 use std::path::{Path, PathBuf};
 
-const TEMPLATE: &str = include_str!("../../../snippets/command_template.md");
+const TEMPLATE: &str = include_str!("../../../assets/command_template.md");
 
 #[derive(Debug, Clone)]
 pub struct CreateCommandOutcome {
