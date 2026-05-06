@@ -31,6 +31,10 @@ impl FilesystemSnippetCatalog {
         Ok(Self { commands_root: root.as_ref().join("commands") })
     }
 
+    pub fn commands_root(&self) -> &Path {
+        &self.commands_root
+    }
+
     fn join_paths(snippets: &[SnippetEntry]) -> String {
         snippets.iter().map(|snippet| snippet.relative_path.clone()).collect::<Vec<_>>().join(", ")
     }

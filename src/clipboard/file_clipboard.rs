@@ -1,5 +1,7 @@
 use crate::clipboard::Clipboard;
 use crate::error::AppError;
+#[cfg(test)]
+use std::cell::RefCell;
 use std::fs;
 use std::path::PathBuf;
 
@@ -31,6 +33,35 @@ impl Clipboard for FileClipboard {
                 Err(AppError::ClipboardError(crate::error::ClipboardError::Other(err.to_string())))
             }
         }
+    }
+}
+
+#[cfg(test)]
+#[derive(Default)]
+pub struct InMemoryClipboard {
+    buffer: RefCell<String>,
+}
+
+#[cfg(test)]
+impl InMemoryClipboard {
+    pub fn contents(&self) -> String {
+        self.buffer.borrow().clone()
+    }
+
+    pub fn set_contents(&self, value: &str) {
+        self.buffer.replace(value.to_string());
+    }
+}
+
+#[cfg(test)]
+impl Clipboard for InMemoryClipboard {
+    fn copy(&self, text: &str) -> Result<(), AppError> {
+        self.buffer.replace(text.to_string());
+        Ok(())
+    }
+
+    fn paste(&self) -> Result<String, AppError> {
+        Ok(self.buffer.borrow().clone())
     }
 }
 

@@ -2,9 +2,9 @@
 
 `mx` is a Rust CLI that unifies two daily workflows:
 
-1. **Snippet copy** – type `mx copy <snippet>` (alias `mx c`) to stream any markdown snippet under
+1. Snippet copy: type `mx copy <snippet>` (alias `mx c`) to stream any markdown snippet under
    `~/.config/mx/commands/` into your clipboard.
-2. **Context Orchestration** – type `mx touch <key>` (alias `mx t`) to create context files in your project with clipboard content, and `mx cat <key>` (alias `mx ct`) to view their contents.
+2. Context orchestration: type `mx touch <key>` (alias `mx t`) to create context files in your project with clipboard content, and `mx cat <key>` (alias `mx ct`) to view their contents.
 
 ## Storage layout
 
@@ -16,16 +16,17 @@
     ... (any nested directory structure)
 ```
 
-- **Snippet lookup** scans `commands/` recursively for `.md` files. Both `mx c wc` and `mx c w/wc` resolve to
+- Snippet lookup scans `commands/` recursively for `.md` files. Both `mx c wc` and `mx c w/wc` resolve to
   `commands/w/wc.md`.
+- `mx which` (alias: `mx wh`) prints the absolute commands root path. `mx which <snippet>` prints the absolute path for the resolved snippet file.
 
 ## Architecture
 
 The crate is organized by explicit ownership boundaries:
 
 - `src/cli/`: clap parsing, terminal output, and process-facing behavior.
-- `src/app/`: use-case orchestration grouped by family (`app/snippets`, `app/context_files`).
-- `src/snippets/`: snippet models, lookup/store contracts, checkout contracts, and filesystem implementations.
+- `src/app/`: use-case orchestration modules at the app root (`list`, `copy`, `which`, `touch`, `cat`, `clean`).
+- `src/snippets/`: snippet models, lookup contracts, and filesystem catalog implementation.
 - `src/context_files/`: context alias/path resolution and context lifecycle storage.
 - `src/clipboard/`: clipboard contract and system/file implementations.
 - `src/project_fs/`: safe path validation and project-root filesystem concerns.

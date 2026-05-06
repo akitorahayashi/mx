@@ -4,6 +4,14 @@
 # List available snippets
 mx list (alias: ls)
 
+# Print absolute commands root or snippet file path (alias: mx wh)
+mx which
+mx which wc
+mx wh
+mx wh wc
+code "$(mx which)"
+code "$(mx which wc)"
+
 # Show version
 mx --version
 
@@ -63,26 +71,26 @@ mx t config.yaml     # Creates .mx/config.yaml (preserves extension)
 
 ## Dynamic Path Resolution
 
-- **Pending Prefix**: `pd-` prefix places the file under `pending/`.
+- Pending prefix: `pd-` prefix places the file under `pending/`.
     - `mx t pd-tk` -> `.mx/pending/tasks.md`
     - `mx t pd-feature/spec` -> `.mx/pending/feature/spec.md`
-- **Numbered Aliases**: `tk` followed by a number (e.g., `tk1`, `tk2`) maps to `tasks/tasks{N}.md`.
+- Numbered aliases: `tk` followed by a number (e.g., `tk1`, `tk2`) maps to `tasks/tasks{N}.md`.
 
 When no alias matches, the input is treated as a relative path:
 
-- **Extension completion**: If no extension is specified, `.md` is automatically appended
-- **Directory creation**: Parent directories are created automatically (e.g., `sdd/rq` creates `.mx/sdd/rq.md`)
-- **Security**: Path traversal attempts (using `..`) are rejected to prevent creating files outside `.mx/`
+- Extension completion: If no extension is specified, `.md` is automatically appended
+- Directory creation: Parent directories are created automatically (e.g., `sdd/rq` creates `.mx/sdd/rq.md`)
+- Security: Path traversal attempts (using `..`) are rejected to prevent creating files outside `.mx/`
 
 ## Default Clipboard Paste Behavior
 
 `mx touch` automatically pastes clipboard contents into newly created context files. This is the default behavior.
 
-**Important**: `mx touch` will **not** overwrite existing files by default. It will display a warning `⚠️ Context file already exists`.
+`mx touch` does not overwrite existing files by default. It displays a warning `⚠️ Context file already exists`.
 
 To overwrite an existing file, use the `--force` (or `-f`) flag. This will overwrite the file with the current clipboard content.
 
-**Common workflow**:
+Common workflow:
 1. Copy error message or specification from browser
 2. Run `mx t er` to save it as `.mx/error.md`
 3. View it with `mx ct er` or reference it in your work using template placeholders like `{{.mx/error.md}}`

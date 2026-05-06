@@ -3,9 +3,7 @@ mod file_clipboard;
 mod system_clipboard;
 
 #[cfg(test)]
-mod in_memory_clipboard;
-#[cfg(test)]
-pub use in_memory_clipboard::InMemoryClipboard;
+pub use file_clipboard::InMemoryClipboard;
 
 use crate::error::AppError;
 use std::env;
