@@ -1,10 +1,7 @@
-mod add;
 mod cat;
-mod checkout;
 mod clean;
 mod copy;
-mod create_command;
 mod help_and_version;
 mod list;
-mod remove;
 mod touch;
+mod which;
