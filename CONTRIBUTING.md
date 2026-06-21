@@ -23,12 +23,12 @@
 
 ### Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `rust-toolchain.toml` | Pinned Rust toolchain version |
-| `Cargo.toml` | Dependencies and package metadata |
-| `rustfmt.toml` | Formatter configuration |
-| `clippy.toml` | Linter configuration |
+| File                  | Purpose                           |
+| --------------------- | --------------------------------- |
+| `rust-toolchain.toml` | Pinned Rust toolchain version     |
+| `Cargo.toml`          | Dependencies and package metadata |
+| `rustfmt.toml`        | Formatter configuration           |
+| `clippy.toml`         | Linter configuration              |
 
 ## Procedural Verification
 
@@ -37,6 +37,7 @@
 All commands are run before submitting changes:
 
 ```bash
+just fix
 just check
 just test
 ```
